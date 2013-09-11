@@ -84,17 +84,48 @@ let rec interp (init_state : state) : state =
   let word = load_word state.pc in
   if word == 0 then init_state else
   let first_six (word : int) : int =
-    (word land 0xFC) lsr 26
+    (word lsr 26) land 0x3F
   in
-  let last_six (word: int) : int =
+  let last_six (word : int) : int =
     word land 0x3F
   in
+  let first_five (word : int) : int =
+    (word lsr 21) land 0x1F
+  in
+  let second_five (word : int) : int =
+    (word lsr 16) land 0x1F
+  in
+  let third_five (word : int) : int =
+    (word lsr 11) land 0x1F
+  in
+  let last_sixteen (word : int) : int =
+    word land 0xFFFF
+  in
+  let reg = state.r in
+  let next_pc = Int32.add state.pc 4l in
   if first_six word == 0x0 and last_six word == 0x20 then
     (* Add *)
+    let r2 = first_five word in
+    let r3 = second_five word in
+    let r1 = third_five word in
+    let sum = Int32.add (rf_lookup r2 reg) (rf_lookup r3 reg) in
+    let reg = rf_update r1 sum reg in
+    {r = reg; pc = next_pc; m = state.m}
   else if first_six word == 0x4 then
     (* Beq *)
+    let rs = first_five word in
+    let rt = second_five word in
+    let offset = last_sixteen word in
+    if rf_lookup rs reg == rf_lookup rt reg then
+      let new_pc = Int32.add state.pc (Int32.of_int (4 * offset)) in
+      {r = reg; pc = new_pc; m = state.m}
+    else
+      {r = reg; pc = next_pc; m = state.m}
   else if first_six word == 0x0 and last_six word == 0x8 then
     (* Jr *)
+    let r1 = first_five word in
+    let new_pc = rf_lookup r1 reg in
+    {r = reg; pc = new_pc; m = state.m}
   else if first_six word == 0x3 then
     (* Jal *)
   else if first_six word == 0xF then
