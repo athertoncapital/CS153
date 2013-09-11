@@ -73,7 +73,7 @@ let rec assem (prog : program) : state =
 
 (* Given a starting state, simulate the Mips machine code to get a final state *)
 let rec interp (init_state : state) : state =
-  let mem = state.m in
+  let mem = init_state.m in
   let load_word (pc : int32) : int =
     let d = Int32.to_int (b2i32 (mem_lookup pc mem)) in
     let c = Int32.to_int (b2i32 (mem_lookup (Int32.add pc 1l) mem)) in
@@ -81,7 +81,7 @@ let rec interp (init_state : state) : state =
     let a = Int32.to_int (b2i32 (mem_lookup (Int32.add pc 3l) mem))in
     a lsl 24 + b lsl 16 + c lsl 8 + d
   in
-  let word = load_word state.pc in
+  let word = load_word init_state.pc in
   if word == 0 then init_state else
   let first_six (word : int) : int =
     (word lsr 26) land 0x3F
@@ -101,39 +101,63 @@ let rec interp (init_state : state) : state =
   let last_sixteen (word : int) : int =
     word land 0xFFFF
   in
-  let reg = state.r in
-  let next_pc = Int32.add state.pc 4l in
-  if first_six word == 0x0 and last_six word == 0x20 then
+  let reg = init_state.r in
+  let next_pc = Int32.add init_state.pc 4l in
+  if first_six word == 0x0 && last_six word == 0x20 then
     (* Add *)
     let r2 = first_five word in
     let r3 = second_five word in
     let r1 = third_five word in
     let sum = Int32.add (rf_lookup r2 reg) (rf_lookup r3 reg) in
     let reg = rf_update r1 sum reg in
-    {r = reg; pc = next_pc; m = state.m}
+    {r = reg; pc = next_pc; m = mem}
   else if first_six word == 0x4 then
     (* Beq *)
     let rs = first_five word in
     let rt = second_five word in
     let offset = last_sixteen word in
     if rf_lookup rs reg == rf_lookup rt reg then
-      let new_pc = Int32.add state.pc (Int32.of_int (4 * offset)) in
-      {r = reg; pc = new_pc; m = state.m}
+      let new_pc = Int32.add init_state.pc (Int32.of_int (4 * offset)) in
+      {r = reg; pc = new_pc; m = mem}
     else
-      {r = reg; pc = next_pc; m = state.m}
-  else if first_six word == 0x0 and last_six word == 0x8 then
+      {r = reg; pc = next_pc; m = mem}
+  else if first_six word == 0x0 && last_six word == 0x8 then
     (* Jr *)
     let r1 = first_five word in
     let new_pc = rf_lookup r1 reg in
-    {r = reg; pc = new_pc; m = state.m}
+    {r = reg; pc = new_pc; m = mem}
   else if first_six word == 0x3 then
     (* Jal *)
+    (* TODO: implement this *)
+    {r = reg; pc = next_pc; m = mem}
   else if first_six word == 0xF then
     (* Lui *)
+    let rt = second_five word in
+    let imm = last_sixteen word in
+    let reg = rf_update rt (Int32.of_int (imm lsl 16)) reg in
+    {r = reg; pc = next_pc; m = mem}
   else if first_six word == 0xD then
     (* Ori *)
+    let rs = first_five word in
+    let rt = second_five word in
+    let imm = last_sixteen word in
+    let result = (Int32.to_int (rf_lookup rs reg)) lor imm in
+    let reg = rf_update rt (Int32.of_int result) reg in
+    {r = reg; pc = next_pc; m = mem}
   else if first_six word == 0x23 then
     (* Lw *)
+    let rs = first_five word in
+    let rt = second_five word in
+    let offset = last_sixteen word in
+    let result = load_word (Int32.of_int (rs + offset)) in
+    let reg = rf_update rt (Int32.of_int result) reg in
+    {r = reg; pc = next_pc; m = mem}
   else if first_six word == 0x2B then
     (* Sw *)
+    let rs = first_five word in
+    let rt = second_five word in
+    let offset = last_sixteen word in
+    let result = rf_lookup rt reg in
+    let mem = store_memory result (Int32.add (rf_lookup rs reg) (Int32.of_int offset)) mem in
+    {r = reg; pc = next_pc; m = mem}
   else raise FatalError
