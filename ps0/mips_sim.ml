@@ -47,25 +47,26 @@ let to_i32 (inst : inst) : int32 =
 let rec load_memory (word : int32) (pc : int32) (mem: memory) : memory =
   if Int32.compare word Int32.zero == 0 then mem else
     let new_mem = mem_update pc (mk_byte word) mem in
-    load_memory (Int32.shift_right_logical word 8) (Int32.succ pc) new_mem
+      load_memory (Int32.shift_right_logical word 8) (Int32.succ pc) new_mem
 
 (* Map a program, a list of Mips assembly instructions, down to a starting 
    state. You can start the PC at any address you wish. Just make sure that 
    you put the generated machine code where you started the PC in memory! *)
 
 let rec assem (prog : program) : state =
-  let rec assem_helper prog state =
+  let rec assem_helper prog pc mem =
     match prog with
       | inst::ls -> (
           match inst with
-            |  Li (r1, i1) ->
-              let mem = load_memory state.pc (to_i32(Lui(r1, (Int32.shift_right_logical i1 16)))) state.m in
-                let mem = load_memory (Int32.add state.pc 4l) (to_i32(Ori(r1, R0, Int32.logand 0x0000FFFFl i1 ))) mem in
-                  assem_helper ls {r = state.r; pc = Int32.add state.pc 8l; m = mem}
-            | _ -> assem_helper ls {r = state.r; pc = Int32.add state.pc 4l ; m = load_memory (to_i32 inst) state.pc state.m}
+            | Li (r1, i1) ->
+              let mem = load_memory (to_i32 (Lui(r1, (Int32.shift_right_logical i1 16)))) pc mem in
+                let mem = load_memory (Int32.add pc 4l) (to_i32 (Ori(r1, R0, Int32.logand 0x0000FFFFl i1))) mem in
+                  assem_helper ls (Int32.add pc 8l) mem
+            | _ -> assem_helper ls (Int32.add pc 4l) (load_memory (to_i32 inst) pc mem)
           )
-      | [] -> {r = rf_update 0 0l state.r; pc = 0l; m = state.m }
-  in assem_helper prog {r = empty_rf; pc = 0l; m = empty_mem}
+      | [] -> mem
+  in let loaded_mem = assem_helper prog Int32.zero empty_mem in
+    {r = empty_rf; pc = Int32.zero; m = loaded_mem}
 
 
 (* Given a starting state, simulate the Mips machine code to get a final state *)
