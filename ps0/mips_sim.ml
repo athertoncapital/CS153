@@ -32,17 +32,20 @@ let string_of_mem (m : memory) : string =
 (* State *)
 type state = { r : regfile; pc : int32; m : memory }
 
+let int32_to_int16 (num : int32) : int =
+  (Int32.to_int num) land 0x0000FFFF
+
 let to_i32 (inst : inst) : int32 =
   match inst with
     Add (r1, r2, r3) -> Int32.of_int (((((((0 lsl 5) + reg2ind r2) lsl 5) + reg2ind r3) lsl 5 + reg2ind r1) lsl 11) + 0x20)
-  | Beq (r1, r2, i1) -> Int32.of_int (((((4 lsl 5) + reg2ind r1) lsl 5) + reg2ind r2) lsl 16 + (Int32.to_int i1))
+  | Beq (r1, r2, i1) -> Int32.of_int (((((4 lsl 5) + reg2ind r1) lsl 5) + reg2ind r2) lsl 16 + (int32_to_int16 i1))
   | Jr (r1) -> Int32.of_int ((((0 lsl 5) + reg2ind r1) lsl 21) + 8)
-  | Jal (i1) -> Int32.of_int ((3 lsl 26) + (Int32.to_int i1))
+  | Jal (i1) -> Int32.of_int ((3 lsl 26) + (int32_to_int16 i1))
   | Li (r1, i1) -> raise FatalError
-  | Lui (r1, i1) -> Int32.of_int (((((15 lsl 10) + reg2ind r1) lsl 16) + (Int32.to_int i1)))
-  | Ori (r1, r2, i1) -> Int32.of_int ((((((13 lsl 5) + reg2ind r2) lsl 5) + reg2ind r1) lsl 16) + (Int32.to_int i1))
-  | Lw (r1, r2, i1) -> Int32.of_int (((((35 lsl 5) + reg2ind r2) lsl 5) + reg2ind r1) lsl 16 + (Int32.to_int i1))
-  | Sw (r1, r2, i1) -> Int32.of_int (((((43 lsl 5) + reg2ind r2) lsl 5) + reg2ind r1) lsl 16 + (Int32.to_int i1))
+  | Lui (r1, i1) -> Int32.of_int (((((15 lsl 10) + reg2ind r1) lsl 16) + (int32_to_int16 i1)))
+  | Ori (r1, r2, i1) -> Int32.of_int ((((((13 lsl 5) + reg2ind r2) lsl 5) + reg2ind r1) lsl 16) + (int32_to_int16 i1))
+  | Lw (r1, r2, i1) -> Int32.of_int (((((35 lsl 5) + reg2ind r2) lsl 5) + reg2ind r1) lsl 16 + (int32_to_int16 i1))
+  | Sw (r1, r2, i1) -> Int32.of_int (((((43 lsl 5) + reg2ind r2) lsl 5) + reg2ind r1) lsl 16 + (int32_to_int16 i1))
 
 let rec load_memory (word : int32) (pc : int32) (mem: memory) : memory =
   if Int32.compare word Int32.zero == 0 then mem else
