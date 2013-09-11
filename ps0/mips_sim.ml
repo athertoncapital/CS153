@@ -54,15 +54,15 @@ let rec load_memory (word : int32) (pc : int32) (mem: memory) : memory =
    you put the generated machine code where you started the PC in memory! *)
 
 let rec assem (prog : program) : state =
-  let rec assem_helper prog pc mem =
+  let rec assem_helper prog mem_loc mem =
     match prog with
       | inst::ls -> (
           match inst with
             | Li (r1, i1) ->
-              let mem = load_memory (to_i32 (Lui(r1, (Int32.shift_right_logical i1 16)))) pc mem in
-                let mem = load_memory (Int32.add pc 4l) (to_i32 (Ori(r1, R0, Int32.logand 0x0000FFFFl i1))) mem in
-                  assem_helper ls (Int32.add pc 8l) mem
-            | _ -> assem_helper ls (Int32.add pc 4l) (load_memory (to_i32 inst) pc mem)
+              let mem = load_memory (to_i32 (Lui(r1, (Int32.shift_right_logical i1 16)))) mem_loc mem in
+                let mem = load_memory (to_i32 (Ori(r1, R0,Int32.logand 0x0000FFFFl i1))) (Int32.add mem_loc 4l) mem in
+                  assem_helper ls (Int32.add mem_loc 8l) mem
+            | _ -> assem_helper ls (Int32.add mem_loc 4l) (load_memory (to_i32 inst) mem_loc mem)
           )
       | [] -> mem
   in let loaded_mem = assem_helper prog Int32.zero empty_mem in
