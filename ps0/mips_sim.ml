@@ -40,7 +40,7 @@ let to_i32 (inst : inst) : int32 =
   | Jal (i1) -> Int32.of_int((3 lsl 26) + Int32.to_int(i1))
   | Li (r1, i1) -> raise FatalError
   | Lui (r1, i1) -> Int32.of_int(((((15 lsl 10) + reg2ind r1) lsl 16) + Int32.to_int(i1)))
-  | Ori (r1, r2, i1) -> Int32.of_int((((((13 lsl 5) + reg2ind r1) lsl 5) + reg2ind r2) lsl 16) + Int32.to_int(i1))
+  | Ori (r1, r2, i1) -> Int32.of_int((((((13 lsl 5) + reg2ind r2) lsl 5) + reg2ind r1) lsl 16) + Int32.to_int(i1))
   | Lw (r1, r2, i1) -> Int32.of_int(((((35 lsl 5) + reg2ind r2) lsl 5) + reg2ind r1) lsl 16 + Int32.to_int(i1))
   | Sw (r1, r2, i1) -> Int32.of_int(((((43 lsl 5) + reg2ind r2) lsl 5) + reg2ind r1) lsl 16 + Int32.to_int(i1))
 
