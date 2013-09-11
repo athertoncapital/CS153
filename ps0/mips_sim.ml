@@ -32,30 +32,38 @@ let string_of_mem (m : memory) : string =
 (* State *)
 type state = { r : regfile; pc : int32; m : memory }
 
-let to_byte (inst : inst) : byte =
+let to_i32 (inst : inst) : int32 =
   match inst with
-    Add (r1, r2, r3) -> mk_byte(Int32.of_int(((((((0 lsl 5) + reg2ind r1) lsl 5) + reg2ind r2) lsl 5 + reg2ind r3) lsl 11) + 32))
-  | Beq (r1, r2, i1) -> mk_byte(Int32.of_int(((((4 lsl 5) + reg2ind r1) lsl 5) + reg2ind r2) lsl 16 + Int32.to_int(i1)))
-  | Jr (r1) -> mk_byte(Int32.of_int((((0 lsl 5) + reg2ind r1) lsl 21) + 8))
-  | Jal (i1) -> mk_byte(Int32.of_int((3 lsl 26) + Int32.to_int(i1)))
+    Add (r1, r2, r3) -> Int32.of_int(((((((0 lsl 5) + reg2ind r2) lsl 5) + reg2ind r3) lsl 5 + reg2ind r1) lsl 11) + 32)
+  | Beq (r1, r2, i1) -> Int32.of_int(((((4 lsl 5) + reg2ind r1) lsl 5) + reg2ind r2) lsl 16 + Int32.to_int(i1))
+  | Jr (r1) -> Int32.of_int((((0 lsl 5) + reg2ind r1) lsl 21) + 8)
+  | Jal (i1) -> Int32.of_int((3 lsl 26) + Int32.to_int(i1))
   | Li (r1, i1) -> raise FatalError
-  | Lui (r1, i1) -> mk_byte(Int32.of_int(((((15 lsl 10) + reg2ind r1) lsl 16) + Int32.to_int(i1))))
-  | Ori (r1, r2, i1) -> mk_byte(Int32.of_int((((((13 lsl 5) + reg2ind r1) lsl 5) + reg2ind r2) lsl 16) + Int32.to_int(i1)))
-  | Lw (r1, r2, i1) -> mk_byte(Int32.of_int(((((35 lsl 5) + reg2ind r2) lsl 5) + reg2ind r1) lsl 16 + Int32.to_int(i1)))
-  | Sw (r1, r2, i1) -> mk_byte(Int32.of_int(((((43 lsl 5) + reg2ind r2) lsl 5) + reg2ind r1) lsl 16 + Int32.to_int(i1)))
+  | Lui (r1, i1) -> Int32.of_int(((((15 lsl 10) + reg2ind r1) lsl 16) + Int32.to_int(i1)))
+  | Ori (r1, r2, i1) -> Int32.of_int((((((13 lsl 5) + reg2ind r1) lsl 5) + reg2ind r2) lsl 16) + Int32.to_int(i1))
+  | Lw (r1, r2, i1) -> Int32.of_int(((((35 lsl 5) + reg2ind r2) lsl 5) + reg2ind r1) lsl 16 + Int32.to_int(i1))
+  | Sw (r1, r2, i1) -> Int32.of_int(((((43 lsl 5) + reg2ind r2) lsl 5) + reg2ind r1) lsl 16 + Int32.to_int(i1))
 
 (* Map a program, a list of Mips assembly instructions, down to a starting 
    state. You can start the PC at any address you wish. Just make sure that 
    you put the generated machine code where you started the PC in memory! *)
 
+let rec load_memory (word : int32) (pc : int32) (mem: memory) : memory =
+  let word, pc, mem = (Int32.shift_right_logical word 8), (Int32.succ pc), (mem_update pc (mk_byte word) mem) in
+    let word, pc, mem = (Int32.shift_right_logical word 8), (Int32.succ pc), (mem_update pc (mk_byte word) mem) in
+      let word, pc, mem = (Int32.shift_right_logical word 8), (Int32.succ pc), (mem_update pc (mk_byte word) mem) in
+        mem_update pc (mk_byte(word)) mem
 
 let rec assem (prog : program) : state =
   let rec assem_helper prog state =
     match prog with 
       inst::ls -> (
         match inst with
-          Li (r1, i1) -> assem_helper ls {r = state.r; pc = Int32.add state.pc 64l ; m = mem_update (Int32.add state.pc 32l) (to_byte(Ori(r1, R0, Int32.logand 0x0000000Fl i1 ))) (mem_update state.pc (to_byte(Lui(r1, (Int32.shift_right_logical i1 16)))) state.m)}
-        | _ -> assem_helper ls {r = state.r; pc = Int32.add state.pc 32l ; m = mem_update state.pc (to_byte inst) state.m}
+          Li (r1, i1) ->
+            let mem = load_memory state.pc (to_i32(Lui(r1, (Int32.shift_right_logical i1 16)))) state.m in
+              let mem = load_memory (Int32.add state.pc 4l) (to_i32(Ori(r1, R0, Int32.logand 0x0000000Fl i1 ))) mem in
+                assem_helper ls {r = state.r; pc = Int32.add state.pc 8l; m = mem}
+        | _ -> assem_helper ls {r = state.r; pc = Int32.add state.pc 4l ; m = load_memory (to_i32 inst) state.pc state.m}
         )
     | [] -> {r = rf_update 0 0l state.r; pc = 0l; m = state.m }
 
