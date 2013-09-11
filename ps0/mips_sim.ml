@@ -37,15 +37,15 @@ let int32_to_int16 (num : int32) : int =
 
 let to_i32 (inst : inst) : int32 =
   match inst with
-    Add (r1, r2, r3) -> Int32.of_int (((((((0 lsl 5) + reg2ind r2) lsl 5) + reg2ind r3) lsl 5 + reg2ind r1) lsl 11) + 0x20)
-  | Beq (r1, r2, i1) -> Int32.of_int (((((4 lsl 5) + reg2ind r1) lsl 5) + reg2ind r2) lsl 16 + (int32_to_int16 i1))
-  | Jr (r1) -> Int32.of_int ((((0 lsl 5) + reg2ind r1) lsl 21) + 8)
-  | Jal (i1) -> Int32.of_int ((3 lsl 26) + (int32_to_int16 i1))
+    Add (r1, r2, r3) -> Int32.of_int ((((0 lsl 5 + reg2ind r2) lsl 5 + reg2ind r3) lsl 5 + reg2ind r1) lsl 11 + 0x20)
+  | Beq (r1, r2, i1) -> Int32.of_int (((4 lsl 5 + reg2ind r1) lsl 5 + reg2ind r2) lsl 16 + int32_to_int16 i1)
+  | Jr (r1) -> Int32.of_int ((0 lsl 5 + reg2ind r1) lsl 21 + 8)
+  | Jal (i1) -> Int32.of_int (3 lsl 26 + Int32.to_int i1)
   | Li (r1, i1) -> raise FatalError
-  | Lui (r1, i1) -> Int32.of_int (((((15 lsl 10) + reg2ind r1) lsl 16) + (int32_to_int16 i1)))
-  | Ori (r1, r2, i1) -> Int32.of_int ((((((13 lsl 5) + reg2ind r2) lsl 5) + reg2ind r1) lsl 16) + (int32_to_int16 i1))
-  | Lw (r1, r2, i1) -> Int32.of_int (((((35 lsl 5) + reg2ind r2) lsl 5) + reg2ind r1) lsl 16 + (int32_to_int16 i1))
-  | Sw (r1, r2, i1) -> Int32.of_int (((((43 lsl 5) + reg2ind r2) lsl 5) + reg2ind r1) lsl 16 + (int32_to_int16 i1))
+  | Lui (r1, i1) -> Int32.of_int ((15 lsl 10 + reg2ind r1) lsl 16 + int32_to_int16 i1)
+  | Ori (r1, r2, i1) -> Int32.of_int (((13 lsl 5 + reg2ind r2) lsl 5 + reg2ind r1) lsl 16 + int32_to_int16 i1)
+  | Lw (r1, r2, i1) -> Int32.of_int (((35 lsl 5 + reg2ind r2) lsl 5 + reg2ind r1) lsl 16 + int32_to_int16 i1)
+  | Sw (r1, r2, i1) -> Int32.of_int (((43 lsl 5 + reg2ind r2) lsl 5 + reg2ind r1) lsl 16 + int32_to_int16 i1)
 
 let rec load_memory (word : int32) (pc : int32) (mem: memory) : memory =
   if Int32.compare word Int32.zero == 0 then mem else
@@ -63,7 +63,7 @@ let rec assem (prog : program) : state =
           match inst with
             | Li (r1, i1) ->
               let mem = load_memory (to_i32 (Lui(r1, (Int32.shift_right_logical i1 16)))) mem_loc mem in
-                let mem = load_memory (to_i32 (Ori(r1, R0,Int32.logand 0x0000FFFFl i1))) (Int32.add mem_loc 4l) mem in
+                let mem = load_memory (to_i32 (Ori(r1, R0, Int32.logand 0x0000FFFFl i1))) (Int32.add mem_loc 4l) mem in
                   assem_helper ls (Int32.add mem_loc 8l) mem
             | _ -> assem_helper ls (Int32.add mem_loc 4l) (load_memory (to_i32 inst) mem_loc mem)
           )
