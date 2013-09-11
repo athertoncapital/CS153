@@ -57,10 +57,10 @@ let rec assem (prog : program) : state =
           Li (r1, i1) -> assem_helper ls {r = state.r; pc = Int32.add state.pc 64l ; m = mem_update (Int32.add state.pc 32l) (to_byte(Ori(r1, R0, Int32.logand 0x0000000Fl i1 ))) (mem_update state.pc (to_byte(Lui(r1, (Int32.shift_right_logical i1 16)))) state.m)}
         | _ -> assem_helper ls {r = state.r; pc = Int32.add state.pc 32l ; m = mem_update state.pc (to_byte inst) state.m}
         )
-    | [] -> {r = rf_update 0 0l state.r; pc = state.pc; m = state.m }
+    | [] -> {r = rf_update 0 0l state.r; pc = 0l; m = state.m }
 
   in assem_helper prog {r = empty_rf; pc = 0l; m = empty_mem}
 
 
 (* Given a starting state, simulate the Mips machine code to get a final state *)
-let rec interp (init_state : state) : state = raise TODO
+let rec interp (init_state : state) : state = init_state
