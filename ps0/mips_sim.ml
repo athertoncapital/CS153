@@ -63,7 +63,7 @@ let rec assem (prog : program) : state =
           match inst with
             | Li (r1, i1) ->
               let mem = store_memory (to_i32 (Lui (r1, (Int32.shift_right_logical i1 16)))) mem_loc mem in
-                let mem = store_memory (to_i32 (Ori (r1, R0, Int32.logand 0x0000FFFFl i1))) (Int32.add mem_loc 4l) mem in
+                let mem = store_memory (to_i32 (Ori (r1, r1, Int32.logand 0x0000FFFFl i1))) (Int32.add mem_loc 4l) mem in
                   assem_helper ls (Int32.add mem_loc 8l) mem
             | _ -> assem_helper ls (Int32.add mem_loc 4l) (store_memory (to_i32 inst) mem_loc mem)
           )
