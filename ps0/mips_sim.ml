@@ -44,16 +44,18 @@ let int32_to_int16 (num : int32) : int32 =
   I32.(num land 0x0000FFFFl)
 
 let to_i32 (inst : inst) : int32 =
+  let helper op1 reg1 reg2 last16: int32 =
+    I32.(int32_to_int16 last16 lor reg2ind_i32 reg2 lsl 16 lor reg2ind_i32 reg1 lsl 21 lor op1 lsl 26) in
   match inst with
-    Add (r1, r2, r3) -> I32.(0x0l lsl 5 lor reg2ind_i32 r2 lsl 5 lor reg2ind_i32 r3 lsl 5 lor reg2ind_i32 r1 lsl 11 lor 0x20l)
-  | Beq (r1, r2, i1) -> I32.(0x4l lsl 5 lor reg2ind_i32 r1 lsl 5 lor reg2ind_i32 r2 lsl 16 lor int32_to_int16 i1)
-  | Jr (r1) -> I32.(0x0l lsl 5 lor reg2ind_i32 r1 lsl 21 lor 0x8l)
-  | Jal (i1) -> I32.(0x3l lsl 26 lor i1)
+    Add (r1, r2, r3) -> helper 0x0l r2 r3 I32.(0x20l lor reg2ind_i32 r1 lsl 11)
+  | Beq (r1, r2, i1) -> helper 0x4l r1 r2 i1
+  | Jr (r1) -> helper 0x0l r1 R0 0x8l
+  | Jal (i1) -> I32.(i1 lor 0x3l lsl 26)
   | Li (r1, i1) -> raise FatalError
-  | Lui (r1, i1) -> I32.(0xFl lsl 10 lor reg2ind_i32 r1 lsl 16 lor int32_to_int16 i1)
-  | Ori (r1, r2, i1) -> I32.(0xDl lsl 5 lor reg2ind_i32 r2 lsl 5 lor reg2ind_i32 r1 lsl 16 lor int32_to_int16 i1)
-  | Lw (r1, r2, i1) -> I32.(0x23l lsl 5 lor reg2ind_i32 r2 lsl 5 lor reg2ind_i32 r1 lsl 16 lor int32_to_int16 i1)
-  | Sw (r1, r2, i1) -> I32.(0x2Bl lsl 5 lor reg2ind_i32 r2 lsl 5 lor reg2ind_i32 r1 lsl 16 lor int32_to_int16 i1)
+  | Lui (r1, i1) -> helper 0xFl R0 r1 i1
+  | Ori (r1, r2, i1) -> helper 0xDl r2 r1 i1
+  | Lw (r1, r2, i1) -> helper 0x23l r2 r1 i1
+  | Sw (r1, r2, i1) -> helper 0x2Bl r2 r1 i1
 
 let rec store_memory (word : int32) (pc : int32) (mem : memory) : memory =
   if Int32.compare word Int32.zero == 0 then mem else
