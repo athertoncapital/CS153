@@ -50,7 +50,7 @@ let to_i32 (inst : inst) : int32 =
     Add (r1, r2, r3) -> helper 0x0l r2 r3 I32.(0x20l lor reg2ind_i32 r1 lsl 11)
   | Beq (r1, r2, i1) -> helper 0x4l r1 r2 i1
   | Jr (r1) -> helper 0x0l r1 R0 0x8l
-  | Jal (i1) -> I32.(i1 lor 0x3l lsl 26)
+  | Jal (i1) -> I32.((i1 land 0x3FFFFFFl) lor 0x3l lsl 26)
   | Li (r1, i1) -> raise FatalError
   | Lui (r1, i1) -> helper 0xFl R0 r1 i1
   | Ori (r1, r2, i1) -> helper 0xDl r2 r1 i1
