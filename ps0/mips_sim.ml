@@ -140,8 +140,7 @@ let rec interp (init_state : state) : state =
   else if first_six word = 0x3 then
     (* Jal *)
     let reg = rf_update 31 next_pc reg in
-    let offset = last_sixteen word in
-    let new_pc = Int32.add init_state.pc I32.(4l * offset) in
+    let new_pc = I32.(4l * (word land 0x3FFFFFFl)) in
     {r = reg; pc = new_pc; m = mem}
   else if first_six word = 0xF then
     (* Lui *)
