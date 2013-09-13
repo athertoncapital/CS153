@@ -34,7 +34,7 @@ type state = { r : regfile; pc : int32; m : memory }
 
 module I32 = struct
   open Int32
-  let (+), ( * ), (lsl), (lsr), (land), (lor), to_int = add, mul, shift_left, shift_right_logical, logand, logor, to_int
+  let (+), (-), ( * ), (lsl), (lsr), (land), (lor), to_int = add, sub, mul, shift_left, shift_right_logical, logand, logor, to_int
 end
 
 let reg2ind_i32 (r: reg) : int32 = 
@@ -43,19 +43,27 @@ let reg2ind_i32 (r: reg) : int32 =
 let int32_to_int16 (num : int32) : int32 =
   I32.(num land 0x0000FFFFl)
 
+let int32_to_signed_int16 (num : int32) : int32 = 
+  if num > 32767l or num < (-32768l) then raise FatalError
+    else if num < 0l then I32.(65536l + num) else num
+
+let signed_int16_to_int32 (num : int32) : int32 =
+  if num < 0l or num > 65535l then raise FatalError else
+  if num > 32767l then I32.(num - 65536l) else num
+
 let to_i32 (inst : inst) : int32 =
   let helper op1 reg1 reg2 last16: int32 =
-    I32.(int32_to_int16 last16 lor reg2ind_i32 reg2 lsl 16 lor reg2ind_i32 reg1 lsl 21 lor op1 lsl 26) in
+    I32.(last16 lor reg2ind_i32 reg2 lsl 16 lor reg2ind_i32 reg1 lsl 21 lor op1 lsl 26) in
   match inst with
     Add (r1, r2, r3) -> helper 0x0l r2 r3 I32.(0x20l lor reg2ind_i32 r1 lsl 11)
-  | Beq (r1, r2, i1) -> helper 0x4l r1 r2 i1
+  | Beq (r1, r2, i1) -> helper 0x4l r1 r2 (int32_to_signed_int16 i1)
   | Jr (r1) -> helper 0x0l r1 R0 0x8l
   | Jal (i1) -> I32.((i1 land 0x3FFFFFFl) lor 0x3l lsl 26)
   | Li (r1, i1) -> raise FatalError
-  | Lui (r1, i1) -> helper 0xFl R0 r1 i1
-  | Ori (r1, r2, i1) -> helper 0xDl r2 r1 i1
-  | Lw (r1, r2, i1) -> helper 0x23l r2 r1 i1
-  | Sw (r1, r2, i1) -> helper 0x2Bl r2 r1 i1
+  | Lui (r1, i1) -> helper 0xFl R0 r1 (int32_to_int16 i1)
+  | Ori (r1, r2, i1) -> helper 0xDl r2 r1 (int32_to_int16 i1)
+  | Lw (r1, r2, i1) -> helper 0x23l r2 r1 (int32_to_signed_int16 i1)
+  | Sw (r1, r2, i1) -> helper 0x2Bl r2 r1 (int32_to_signed_int16 i1)
 
 let rec store_memory (word : int32) (pc : int32) (mem : memory) : memory =
   if Int32.compare word Int32.zero = 0 then mem else
@@ -126,7 +134,7 @@ let rec interp (init_state : state) : state =
     (* Beq *)
     let rs = first_five word in
     let rt = second_five word in
-    let offset = last_sixteen word in
+    let offset = signed_int16_to_int32 (last_sixteen word) in
     if rf_lookup rs reg = rf_lookup rt reg then
       let new_pc = Int32.add init_state.pc I32.(4l * offset) in
       {r = reg; pc = new_pc; m = mem}
@@ -160,7 +168,7 @@ let rec interp (init_state : state) : state =
     (* Lw *)
     let rs = first_five word in
     let rt = second_five word in
-    let offset = last_sixteen word in
+    let offset = signed_int16_to_int32 (last_sixteen word) in
     let result = load_word I32.((rf_lookup rs reg) + offset) in
     let reg = rf_update rt result reg in
     {r = reg; pc = next_pc; m = mem}
@@ -168,7 +176,7 @@ let rec interp (init_state : state) : state =
     (* Sw *)
     let rs = first_five word in
     let rt = second_five word in
-    let offset = last_sixteen word in
+    let offset = signed_int16_to_int32 (last_sixteen word) in
     let result = rf_lookup rt reg in
     let mem = store_memory result (Int32.add (rf_lookup rs reg) offset) mem in
     {r = reg; pc = next_pc; m = mem}
