@@ -1,3 +1,12 @@
+(* Neal Wu, Tianen Li
+  wu.neal51@gmail, tli516@gmail.com 
+
+  Notes on implementation:
+  For Jal and Ori, we assumed the immediate value was an unsigned integer
+  For Lw, Sw, Beq, the offsets are signed 16 bit integers
+  
+  *)
+
 open Mips_ast
 open Byte
 
