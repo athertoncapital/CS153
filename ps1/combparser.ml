@@ -28,8 +28,11 @@ let rec make_stmt_parser (():unit) : (token, stmt) parser =
   let rparen_p = token_p RPAREN in
   let exp_p = lazy (make_exp_parser ()) in
   let stmt_p = lazy (make_stmt_parser ()) in 
-  let singleton_parser = lazy_seq (exp_p, lazy semi_p) in
-  let singleton_stmt_parser = map (fun (e, _) -> ((Exp e), dummy_pos)) singleton_parser in
+  let singleton_parser = lazy_seq (lazy (opt (make_exp_parser())), lazy semi_p) in
+  let singleton_stmt_parser = map (fun (o, _) -> match o with
+        Some e -> ((Exp e) , dummy_pos)
+      | None -> (skip, dummy_pos))
+    singleton_parser in
   let seq_parser = lazy_seq (lazy singleton_stmt_parser, stmt_p) in
   let seq_stmt_parser = map (fun (s1, s2) -> ((Seq (s1, s2)), dummy_pos)) seq_parser in
   let block_parser = seq (token_p LBRACE, lazy_seq (stmt_p, lazy (token_p RBRACE))) in
