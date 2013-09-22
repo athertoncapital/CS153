@@ -38,4 +38,4 @@ yacc: com
 	$(COMPILER) -o ps1yacc ast.cmo parse.cmo lex.cmo eval.cmo fishyacc.cmo
 
 clean:
-	-rm *.cmo *.cmi ps1comb ps1yacc parse.ml parse.mli lex.ml
+	-rm *.cmo *.cmi ps1comb ps1yacc ps1combtoplevel parse.ml parse.mli lex.ml
