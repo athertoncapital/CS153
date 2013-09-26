@@ -1,0 +1,144 @@
+
+<!-- saved from url=(0048)http://sites.fas.harvard.edu/~lib153/hw/ps0.html -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>CS153: Principles of Programming Language Compilation</title>
+<style type="text/css"></style></head>
+<body bgcolor="#fffbec" text="#000000" link="#802000" alink="#ff2020" vlink="#606060">
+<table border="0" align="left" cellpadding="10">
+
+<!-- The side navigation bar -->
+<tbody><tr>
+<td width="120" bgcolor="#efe5cc" valign="top">
+
+<center>
+<a href="http://www.fas.harvard.edu/">
+ <img src="./ps0_files/harvard.gif" alt="Harvard University, FAS" width="72" height="70" border="0" align="bottom"></a>
+</center>
+<hr>
+
+<a href="http://sites.fas.harvard.edu/~lib153/index.html">Home</a><br>
+<a href="http://sites.fas.harvard.edu/~lib153/syllabus.html">Syllabus</a><br>
+<a href="http://sites.fas.harvard.edu/~lib153/lectures.html">Lecture Notes</a><br>
+
+<p>
+<a href="http://sites.fas.harvard.edu/~lib153/ml.html">ML Resources</a><br>
+<a href="http://sites.fas.harvard.edu/~lib153/spim.html">MIPS and SPIM</a><br>
+</p></td>
+<td valign="top">
+
+
+<font size="5">Computer Science 153</font><br>
+<font size="3"><b>Principles of Programming Language Compilation</b></font>
+
+
+
+	
+<h2>Problem Set 0: An introduction to <tt>ML</tt> and MIPS</h2>
+<h3 align="left">
+Due Friday, 13 Sep 2013, 11:59pm.</h3>
+<hr>
+
+<p>
+The goal of this problem set is to expose you to programming in <tt>ML</tt> 
+and to learn a few details of the MIPS instruction set architecture.
+</p><p>
+
+</p><p>
+<b>Instructions:</b> We have provided skeleton code which you can find 
+<a href="http://sites.fas.harvard.edu/~lib153/hw/ps0.zip">here</a>. Your job
+is to fill in the parts of the skeleton code marked <tt>TODO</tt>. To submit your work,
+create a zip archive containing all of the files provided in the original 
+skeleton code distribution. Please run <tt>make clean</tt> to get rid of the
+unnecessary binary files first.
+</p><p>
+Please name the zip archive <tt>ps0-lastname1-lastname2.zip</tt>, where 
+lastname is replaced with you and your partner's last name. We require you to work with a partner
+(there is a lot of code here).
+</p><p>
+If the zip archive does not compile with make, then they will not be accepted.  
+If you are having trouble getting your code to compile, please post your issue
+on <a href="http://piazza.com/harvard/fall2013/cs153">Piazza</a>, 
+or come see a TF during office hours. If you run out of time, it's better to 
+comment out the parts that aren't working than to submit something that won't compile.
+</p><p>
+For now, you can submit your assignment by emailing the zip archive to the TF
+(email found on the course homepage). 
+We are working on setting up a git-like repository which you can use to submit 
+future assignments. Pay attention to the <a href="http://piazza.com/harvard/fall2013/cs153">Piazza</a> 
+for any announcments on a change in submission process. In particular, we may
+be releasing some basic test cases you can use as a sanity check, though you 
+are encouraged to write your own testing framework.
+
+</p><p>
+There are two parts to this assignment. The first part consists of
+writing a MIPS assembler. In the second part, you will implement
+an interpreter for a subset of the MIPS instruction set.
+</p><hr>
+
+<h2>Part 1: MIPS Assembler</h2>
+
+In this part, you will build an assembler for a subset of MIPS assembly. 
+The assembler translates assembly code into machine code, the code that runs
+on hardware. This exercise will demonstrate how we get from assembly code,
+something that is still somewhat human-readable, to machine code. 
+
+To do this part of the assignment, you will need to understand how MIPS assembly
+is encoded at the level of bits. To this end, the MIPS documentation is your 
+friend. You can find information about how to encode instructions (and
+their semantics) in chapter A.10.2 (starting with page A-49) of the 
+<a href="http://sites.fas.harvard.edu/~lib153/HP_AppA.pdf">SPIM Simulator</a> chapter. 
+
+Your job is to write the assem function in <tt>mips_sim.ml</tt>. 
+<pre><b>let rec</b> assem (prog : program) : state
+</pre>
+At a high level, you will transform a list of assembly instructions, a program,
+into an intial starting state. A state consists of a register file, memory and
+program counter. Refer to the skeleton code for more information. 
+
+<hr>
+<h2>Part 2: MIPS Interpreter</h2>
+
+In this part, you will build an interpreter for MIPS code,
+similar to the SPIM simulator.  The goal of this exercise
+is to become more familiar with the MIPS instruction set
+architecture and to gain more experience writing ML code.
+
+The interpreter is structured as a function:
+<pre><b>let rec</b> interp (init_state : state) : state
+</pre>
+Your job is to write the interp function which simulates one step of 
+execution at a time until program termination (for the purposes of this 
+assignment, treat <tt>0x00000000</tt> as the program termination "instruction"). 
+During a step, you should fetch a word's worth (4 bytes) of values from memory, starting at the address 
+given by the program counter.  (It doesn't matter which Endian-ness you
+pick, but be consistent.)
+
+<p>
+You should then decode the instruction
+and perform the associated operation.  For example, if the
+instruction bytes decode to an "<tt>add $1,$2,$3</tt>", then you
+should update register one, with the sum of the values in 
+registers two and three, and update the program counter so that it
+points to the next instruction.
+
+Look closely at the <tt>Int32</tt> module OCaml standard library as it provides
+most of the functions that you will need for doing bit manipulation.
+
+</p><p>
+<b>Important!!</b> Note that the load immediate (<tt>li</tt>) instruction is a 
+pseudoinstruction. This means that its ok to use it in a MIPS assembly program, 
+with the caveat that MIPS hardware does not actually support this instruction. Instead,
+the hardware supports a <tt>li</tt> instruction by encoding it as two instructions,
+a <tt>lui</tt> and <tt>ori</tt>.
+
+Thus, your assembler should accept any MIPS assembly
+program that contains a <tt>li</tt> instruction, but your interp function should 
+only accept <tt>lui</tt> and <tt>ori</tt> instructions to model the MIPS hardware. 
+</p><hr>
+</td>
+</tr>
+</tbody></table>
+
+
+
+<div id="window-resizer-tooltip"><a href="http://sites.fas.harvard.edu/~lib153/hw/ps0.html#" title="Edit settings" style="background-image: url(chrome-extension://kkelicaakdanhinjdeammmilcgefonfh/images/icon_19.png);"></a><span class="tooltipTitle">Window size: </span><span class="tooltipWidth" id="winWidth"></span> x <span class="tooltipHeight" id="winHeight"></span><br><span class="tooltipTitle">Viewport size: </span><span class="tooltipWidth" id="vpWidth"></span> x <span class="tooltipHeight" id="vpHeight"></span></div></body></html>
