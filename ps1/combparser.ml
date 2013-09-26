@@ -19,8 +19,8 @@ let make_next_binop_parser = make_next_parser binop_map
 
 let rec make_aexp_parser () =
   let int_parser = satisfy_opt (function INT i -> Some (Int i, dummy_pos) | _ -> None) in
-  let sub_parser = seq (satisfy (fun t -> t == LPAREN), 
-    lazy_seq (lazy (make_exp_parser ()), lazy (satisfy (fun t -> t == RPAREN)))) in 
+  let sub_parser = seq (satisfy (fun t -> t = LPAREN), 
+    lazy_seq (lazy (make_exp_parser ()), lazy (satisfy (fun t -> t = RPAREN)))) in 
   let sub_exp_parser = map (fun (_, (e, _)) -> e) sub_parser in
   let var_parser = satisfy_opt (function ID v -> Some (Var v, dummy_pos) | _ -> None) in
   alts [int_parser; var_parser; sub_exp_parser]
@@ -29,7 +29,10 @@ and make_bexp_parser () =
   let neg_parser = satisfy_opt (function MINUS -> Some Minus | _ -> None) in
   let neg_exp_parser = lazy_seq (lazy neg_parser, lazy (make_bexp_parser())) in
   let signed_exp_parser = map (fun (_, e) -> (Binop ((Int 0, dummy_pos), Minus, e), dummy_pos)) neg_exp_parser in
-  alt (make_aexp_parser(), signed_exp_parser)
+  let not_parser = satisfy_opt (function NOT -> Some 1 | _ -> None) in
+  let not_mapping = fun (_, e) -> (Not e, dummy_pos) in
+  let not_exp_parser = map (not_mapping) (lazy_seq(lazy not_parser, lazy (make_bexp_parser()))) in
+  alt (make_aexp_parser(), signed_exp_parser, not_exp_parser)
 
 and make_cexp_parser () = 
   make_next_binop_parser (make_bexp_parser) (function STAR -> Some Times | SLASH -> Some Div | _ -> None)
@@ -42,25 +45,19 @@ and make_eexp_parser () =
     EQ -> Some Eq | NEQ -> Some Neq | LT -> Some Lt | LTE -> Some Lte | GT -> Some Gt | GTE -> Some Gte | _ -> None)
 
 and make_fexp_parser () =
-  let not_parser = satisfy_opt (function NOT -> Some 1 | _ -> None) in
-  let not_mapping = fun (_, e) -> (Not e, dummy_pos) in
-  let not_exp_parser = map (not_mapping) (lazy_seq(lazy not_parser, lazy (make_eexp_parser()))) in
-  alt (make_eexp_parser(), not_exp_parser)
+  let and_mapping = map (fun (e1, (_, e2)) -> (And (e1, e2), dummy_pos)) in
+  make_next_parser (and_mapping) (make_eexp_parser) (function AND -> Some 1 | _ -> None)
 
 and make_gexp_parser () =
-  let and_mapping = map (fun (e1, (_, e2)) -> (And (e1, e2), dummy_pos)) in
-  make_next_parser (and_mapping) (make_fexp_parser) (function AND -> Some 1 | _ -> None)
-
-and make_hexp_parser () =
   let or_mapping = map (fun (e1, (_, e2)) -> (Or (e1, e2), dummy_pos)) in
-  make_next_parser (or_mapping) (make_gexp_parser) (function OR -> Some 1 | _ -> None)
+  make_next_parser (or_mapping) (make_fexp_parser) (function OR -> Some 1 | _ -> None)
 
 and make_exp_parser () = 
   let var_parser = satisfy_opt (function ID v -> Some v | _ -> None) in
   let eq_parser = satisfy_opt (function ASSIGN -> Some 1 | _ -> None) in
   let assign_parser = seq(var_parser, lazy_seq(lazy eq_parser, lazy (make_gexp_parser()))) in
   let assign_exp_parser = map (fun (v, (_, e)) -> (Assign (v, e), dummy_pos)) assign_parser in
-  alt (make_hexp_parser(), assign_exp_parser)
+  alt (make_gexp_parser(), assign_exp_parser)
 
 let token_p tk = satisfy (fun t -> t == tk)
 let semi_p = token_p SEMI
