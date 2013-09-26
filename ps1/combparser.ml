@@ -59,7 +59,7 @@ and make_exp_parser () =
   let assign_exp_parser = map (fun (v, (_, e)) -> (Assign (v, e), dummy_pos)) assign_parser in
   alt (make_gexp_parser(), assign_exp_parser)
 
-let token_p tk = satisfy (fun t -> t == tk)
+let token_p tk = satisfy (fun t -> t = tk)
 let semi_p = token_p SEMI
 
 
