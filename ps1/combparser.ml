@@ -32,7 +32,7 @@ and make_bexp_parser () =
   let not_parser = satisfy_opt (function NOT -> Some 1 | _ -> None) in
   let not_mapping = fun (_, e) -> (Not e, dummy_pos) in
   let not_exp_parser = map (not_mapping) (lazy_seq(lazy not_parser, lazy (make_bexp_parser()))) in
-  alt (make_aexp_parser(), signed_exp_parser, not_exp_parser)
+  alts [make_aexp_parser(); signed_exp_parser; not_exp_parser]
 
 and make_cexp_parser () = 
   make_next_binop_parser (make_bexp_parser) (function STAR -> Some Times | SLASH -> Some Div | _ -> None)
