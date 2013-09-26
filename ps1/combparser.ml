@@ -90,8 +90,7 @@ let rec make_stmt_parser (():unit) : (token, stmt) parser =
       | None -> (If (e, s1, (skip, dummy_pos)), dummy_pos)
       | _ -> failwith "parse error") 
     if_parser in
-  let exp_stmt_parser = map (fun e -> (Exp e, dummy_pos)) (make_exp_parser ()) in
-  alts [return_stmt_parser; for_stmt_parser; while_stmt_parser; if_stmt_parser; exp_stmt_parser; block_stmt_parser; seq_stmt_parser; singleton_stmt_parser]
+  alts [return_stmt_parser; for_stmt_parser; while_stmt_parser; if_stmt_parser; block_stmt_parser; seq_stmt_parser; singleton_stmt_parser]
 
 let parse(ts:token list) : program = 
   let program_parser = make_stmt_parser () in
