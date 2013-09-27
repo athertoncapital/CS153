@@ -22,6 +22,17 @@ let parse_error s =
  */
 %type <Ast.program> program
 %type <Ast.stmt> stmt
+%type <Ast.stmt> astmt
+%type <Ast.stmt> bstmt
+%type <Ast.stmt> cstmt
+%type <Ast.exp> exp
+%type <Ast.exp> aexp
+%type <Ast.exp> bexp
+%type <Ast.exp> cexp
+%type <Ast.exp> dexp
+%type <Ast.exp> eexp
+%type <Ast.exp> fexp
+%type <Ast.exp> gexp
 
 /* The %token directive gives a definition of all of the terminals
  * (i.e., tokens) in the grammar. This will be used to generate the
@@ -40,5 +51,65 @@ let parse_error s =
 program:
   stmt EOF { $1 }
 
+aexp:
+  INT { $1 }
+| LPAREN exp RPAREN { $2 }
+| ID { $1 }
+
+bexp:
+  aexp { $1 }
+| NOT bexp {(Not($2), 0)}
+| MINUS bexp {(Minus(0, $2), 0)}
+
+cexp:
+  bexp { $1 }
+| cexp TIMES cexp {(Binop($1, Times, $3), 0)}
+| cexp SLASH cexp {(Binop($1, Div, $3), 0)}
+
+dexp:
+  cexp { $1 }
+| dexp PLUS dexp {(Binop($1, Plus, $3), 0)}
+| dexp MINUS dexp {(Binop($1, Minus, $3), 0)}
+
+eexp:
+  dexp { $1 }
+| eexp EQ eexp {(Binop($1, Eq, $3), 0)}
+| eexp NEQ eexp {(Binop($1, Eq, $3), 0)}
+| eexp LT eexp {(Binop($1, Lt, $3), 0)}
+| eexp LTE eexp {(Binop($1, Lte, $3), 0)}
+| eexp GT eexp {(Binop($1, Gt, $3), 0)}
+| eexp GTE eexp {(Binop($1, Gte, $3), 0)}
+
+fexp:
+  eexp { $1 }
+| fexp AND fexp {(And($1, $3), 0)}
+
+gexp:
+  fexp { $1 }
+| gexp OR gexp {(Or($1, $3), 0)}
+
+exp:
+  gexp { $1 }
+| ID ASSIGN exp {(Assign($1, $3), 0)}
+
+astmt:
+| RETURN exp { (Return($2), 0) }
+| exp SEMI { (Exp($1), 0) }
+| LBRACE stmt RBRACE { $2 }
+| LBRACE RBRACE { (Ast.skip, 0) }
+| SEMI { (Ast.skip, 0) }
+
+bstmt:
+  astmt { $1 }
+| FOR LPAREN exp SEMI exp SEMI exp RPAREN bstmt { (For ($3, $5, $7, $9), 0) }
+| WHILE LPAREN exp RPAREN bstmt { (While($3, $5), 0) }
+| IF LPAREN exp RPAREN bstmt ELSE bstmt { (If($3, $5, $7), 0) }
+
+cstmt :
+  bstmt { $1 }
+| IF LPAREN exp RPAREN cstmt { (If($3, $5, (Ast.skip, 0)), 0) }
+
+
 stmt :
-  /* empty */ { (Ast.skip, 0) } 
+  cstmt { $1 }
+| cstmt stmt { (Seq($1, $2), 0) }

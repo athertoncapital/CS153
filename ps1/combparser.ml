@@ -55,7 +55,7 @@ and make_gexp_parser () =
 and make_exp_parser () = 
   let var_parser = satisfy_opt (function ID v -> Some v | _ -> None) in
   let eq_parser = satisfy_opt (function ASSIGN -> Some 1 | _ -> None) in
-  let assign_parser = seq(var_parser, lazy_seq(lazy eq_parser, lazy (make_gexp_parser()))) in
+  let assign_parser = seq(var_parser, lazy_seq(lazy eq_parser, lazy (make_exp_parser()))) in
   let assign_exp_parser = map (fun (v, (_, e)) -> (Assign (v, e), dummy_pos)) assign_parser in
   alt (make_gexp_parser(), assign_exp_parser)
 
