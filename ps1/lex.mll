@@ -55,40 +55,40 @@ let id = ['a'-'z' 'A'-'Z']['a'-'z' 'A'-'Z' '0'-'9' '_']*
 (* TODO: comments and EOF *)
 
 rule lexer = parse
-  | '+' { PLUS :: lexer lexbuf }
-  | '-' { MINUS :: lexer lexbuf }
-  | '*' { STAR :: lexer lexbuf }
-  | '/' { SLASH :: lexer lexbuf }
-  | "&&" { AND :: lexer lexbuf }
-  | "||" { OR :: lexer lexbuf }
-  | '!' { NOT :: lexer lexbuf }
-  | '(' { LPAREN :: lexer lexbuf }
-  | ')' { RPAREN :: lexer lexbuf }
-  | '{' { LBRACE :: lexer lexbuf }
-  | '}' { RBRACE :: lexer lexbuf }
-  | '=' { ASSIGN :: lexer lexbuf }
-  | "==" { EQ :: lexer lexbuf }
-  | '<' { LT :: lexer lexbuf }
-  | '>' { GT :: lexer lexbuf }
-  | ">=" { GTE :: lexer lexbuf }
-  | "<=" { LTE :: lexer lexbuf }
-  | "!=" { NEQ :: lexer lexbuf }
-  | [' ' '\t' '\n'] { WHITESPACE :: lexer lexbuf }
-  | ';' { SEMI :: lexer lexbuf }
-  | "if" { IF :: lexer lexbuf }
-  | "else" { ELSE :: lexer lexbuf }
-  | "for" { FOR :: lexer lexbuf }
-  | "while" { WHILE :: lexer lexbuf }
-  | "return" { RETURN :: lexer lexbuf }
-  | "/*" { COMMENT :: comment lexbuf }
+  | '+' { PLUS }
+  | '-' { MINUS }
+  | '*' { STAR }
+  | '/' { SLASH }
+  | "&&" { AND }
+  | "||" { OR }
+  | '!' { NOT }
+  | '(' { LPAREN }
+  | ')' { RPAREN }
+  | '{' { LBRACE }
+  | '}' { RBRACE }
+  | '=' { ASSIGN }
+  | "==" { EQ }
+  | '<' { LT }
+  | '>' { GT }
+  | ">=" { GTE }
+  | "<=" { LTE }
+  | "!=" { NEQ }
+  | [' ' '\t' '\n'] { WHITESPACE }
+  | ';' { SEMI }
+  | "if" { IF }
+  | "else" { ELSE }
+  | "for" { FOR }
+  | "while" { WHILE }
+  | "return" { RETURN }
+  | "/*" { comment lexbuf; COMMENT }
   | digit+ as inum
     { let num = int_of_string inum in
-      INT num :: lexer lexbuf
+      INT num
     }
   | id as word
-    { ID word :: lexer lexbuf
+    { ID word
     }
-  | eof { [] }
+  | eof { EOF }
 and comment = parse
   | "*/" { lexer lexbuf }
   | _ { comment lexbuf }
@@ -103,7 +103,7 @@ and comment = parse
     let lexbuf = Lexing.from_channel cin in
     let tokens = lexer lexbuf in
     let rec print_list = function [] -> () | e::l -> print_token e ; print_list l in
-    print_list tokens
+    print_token tokens
 
   let _ = Printexc.print main ()
 }

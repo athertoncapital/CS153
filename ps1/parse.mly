@@ -42,7 +42,35 @@ let parse_error s =
  * You will need to augment this with your own tokens...
  */
 %token <int> INT 
+%token <string> ID
 %token EOF
+%token LPAREN
+%token RPAREN
+%token NOT
+%token TIMES
+%token SLASH
+%token PLUS
+%token MINUS
+%token EQ
+%token NEQ
+%token LT
+%token LTE
+%token GT
+%token GTE
+%token AND
+%token OR
+%token ASSIGN
+%token SEMI
+%token LBRACE
+%token RBRACE
+%token IF
+%token ELSE
+%token FOR
+%token WHILE
+%token RETURN
+%token WHITESPACE
+%token COMMENT
+
 
 /* Here's where the real grammar starts -- you'll need to add 
  * more rules here... Do not remove the 2%'s!! */
@@ -52,14 +80,14 @@ program:
   stmt EOF { $1 }
 
 aexp:
-  INT { $1 }
+  INT { (Int($1), 0) }
 | LPAREN exp RPAREN { $2 }
-| ID { $1 }
+| ID { (Var($1), 0) }
 
 bexp:
   aexp { $1 }
 | NOT bexp {(Not($2), 0)}
-| MINUS bexp {(Minus(0, $2), 0)}
+| MINUS bexp {(Binop((Int(0), 0), Minus, $2), 0)}
 
 cexp:
   bexp { $1 }
