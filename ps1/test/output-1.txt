@@ -1,0 +1,82 @@
+01cexpr_01add.fish
+answer = 16
+01cexpr_02sub.fish
+answer = 8
+01cexpr_03mul.fish
+answer = 48
+01cexpr_04div.fish
+answer = 3
+01cexpr_05eq.fish
+answer = 2
+01cexpr_06neq.fish
+answer = 5
+01cexpr_07gt.fish
+answer = 1
+01cexpr_08gte.fish
+answer = 3
+01cexpr_09lt.fish
+answer = 4
+01cexpr_10lte.fish
+answer = 6
+01cexpr_11uminus.fish
+answer = -12
+01cexpr_12not.fish
+answer = 0
+01cexpr_13and.fish
+answer = 0
+01cexpr_14or.fish
+answer = 1
+01cexpr_15bigcon.fish
+answer = 250000
+01cexpr_16bigcon.fish
+answer = 50000
+02vexpr_01add.fish
+answer = 16
+02vexpr_02sub.fish
+answer = 8
+02vexpr_03mul.fish
+answer = 48
+02vexpr_04div.fish
+answer = 3
+02vexpr_05eq.fish
+answer = 0
+02vexpr_06neq.fish
+answer = 1
+02vexpr_07gt.fish
+answer = 1
+02vexpr_08gte.fish
+answer = 1
+02vexpr_09lt.fish
+answer = 0
+02vexpr_10lte.fish
+answer = 0
+02vexpr_11uminus.fish
+answer = -12
+02vexpr_12not.fish
+answer = 0
+02vexpr_13and.fish
+answer = 0
+02vexpr_14or.fish
+answer = 1
+02vexpr_15assignval.fish
+answer = 2
+03stmt_01if.fish
+answer = 5
+03stmt_02if.fish
+answer = 10
+03stmt_03while.fish
+answer = 45
+03stmt_04for.fish
+answer = 55
+03stmt_05if.fish
+answer = 7
+03stmt_06for.fish
+answer = 715
+04opt_01cfoldif.fish
+answer = 3
+04opt_02cfoldif.fish
+answer = 5
+09all_01adder.fish
+answer = 5
+09all_02fibo.fish
+answer = 1597

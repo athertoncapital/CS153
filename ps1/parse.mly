@@ -107,7 +107,7 @@ dexp:
 eexp:
   dexp { $1 }
 | eexp EQ eexp {(Binop($1, Eq, $3), 0)}
-| eexp NEQ eexp {(Binop($1, Eq, $3), 0)}
+| eexp NEQ eexp {(Binop($1, Neq, $3), 0)}
 | eexp LT eexp {(Binop($1, Lt, $3), 0)}
 | eexp LTE eexp {(Binop($1, Lte, $3), 0)}
 | eexp GT eexp {(Binop($1, Gt, $3), 0)}
