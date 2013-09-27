@@ -2,10 +2,22 @@
 
 {
   open Parse
+  open Lexing
+
+  let incr_lineno lexbuf =
+  let pos = lexbuf.lex_curr_p in
+  lexbuf.lex_curr_p <- { pos with
+    pos_lnum = pos.pos_lnum + 1;
+    pos_bol = pos.pos_cnum;
+  }
 }
 
 let digit = ['0'-'9']
 let id = ['a'-'z' 'A'-'Z']['a'-'z' 'A'-'Z' '0'-'9' '_']*
+let cr = '\013'
+let nl = '\010'
+let eol = (cr nl|nl|cr)
+let ws = ('\012'|'\t'|' ')*
 
 rule lexer = parse
   | '+' { PLUS }
@@ -26,7 +38,8 @@ rule lexer = parse
   | ">=" { GTE }
   | "<=" { LTE }
   | "!=" { NEQ }
-  | [' ' '\t' '\n'] { lexer lexbuf }
+  | ws { lexer lexbuf }
+  | eol { incr_lineno lexbuf; lexer lexbuf }
   | ';' { SEMI }
   | "if" { IF }
   | "else" { ELSE }
