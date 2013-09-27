@@ -8,3 +8,33 @@ Usage:
 ps1yacc [file-to-parse]
 
 ps1comb [file-to-parse]
+
+Notes on implementation:
+	ps1comb uses right associativity for all binary operations
+	ps1yacc uses left associativity for all binary operations, except assignment which is right associative
+
+	There is support for empty statements, but not for empty expressions. That is, "" will not parse but ";" will
+	Therefore, for does not support empty expressions. Things like "while();" and "for(;;);" will not parse.
+
+	we implemented the following order of operations, from highest precedence to lowest procedence:
+	1.) Parentheses
+	2.) Negation / Not
+	3.) *, /
+	4.) +, -
+	5.) Comparisions
+	6.) And
+	7.) Or
+	8.) Assignments
+	9.) Return statements, single expression statements, block statements, empty statements
+	10.) For, While, If/Else
+	11.) Sequential statements
+
+	For dangling if/else, we match the else to the closest if. That is,
+	if (a) if (b) c; else d; is equivalent to
+	if (a) {
+		if(b)
+			c;
+		else
+			d;
+	}
+
