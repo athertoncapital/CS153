@@ -85,64 +85,63 @@ program:
   stmt EOF { $1 }
 
 aexp:
-  INT { (Int($1), 0) }
+  INT { (Int($1), rhs 1) }
 | LPAREN exp RPAREN { $2 }
-| ID { (Var($1), 0) }
+| ID { (Var($1), rhs 1) }
 
 bexp:
   aexp { $1 }
-| NOT bexp {(Not($2), 0)}
-| MINUS bexp {(Binop((Int(0), 0), Minus, $2), 0)}
+| NOT bexp {(Not($2), rhs 1)}
+| MINUS bexp {(Binop(Ast.skip, Minus, $2), rhs 1)}
 
 cexp:
   bexp { $1 }
-| cexp STAR cexp {(Binop($1, Times, $3), 0)}
-| cexp SLASH cexp {(Binop($1, Div, $3), 0)}
+| cexp STAR cexp {(Binop($1, Times, $3), rhs 1)}
+| cexp SLASH cexp {(Binop($1, Div, $3), rhs 1)}
 
 dexp:
   cexp { $1 }
-| dexp PLUS dexp {(Binop($1, Plus, $3), 0)}
-| dexp MINUS dexp {(Binop($1, Minus, $3), 0)}
+| dexp PLUS dexp {(Binop($1, Plus, $3), rhs 1)}
+| dexp MINUS dexp {(Binop($1, Minus, $3), rhs 1)}
 
 eexp:
   dexp { $1 }
-| eexp EQ eexp {(Binop($1, Eq, $3), 0)}
-| eexp NEQ eexp {(Binop($1, Neq, $3), 0)}
-| eexp LT eexp {(Binop($1, Lt, $3), 0)}
-| eexp LTE eexp {(Binop($1, Lte, $3), 0)}
-| eexp GT eexp {(Binop($1, Gt, $3), 0)}
-| eexp GTE eexp {(Binop($1, Gte, $3), 0)}
+| eexp EQ eexp {(Binop($1, Eq, $3), rhs 1)}
+| eexp NEQ eexp {(Binop($1, Neq, $3), rhs 1)}
+| eexp LT eexp {(Binop($1, Lt, $3), rhs 1)}
+| eexp LTE eexp {(Binop($1, Lte, $3), rhs 1)}
+| eexp GT eexp {(Binop($1, Gt, $3), rhs 1)}
+| eexp GTE eexp {(Binop($1, Gte, $3), rhs 1)}
 
 fexp:
   eexp { $1 }
-| fexp AND fexp {(And($1, $3), 0)}
+| fexp AND fexp {(And($1, $3), rhs 1)}
 
 gexp:
   fexp { $1 }
-| gexp OR gexp {(Or($1, $3), 0)}
+| gexp OR gexp {(Or($1, $3), rhs 1)}
 
 exp:
   gexp { $1 }
-| ID ASSIGN exp {(Assign($1, $3), 0)}
+| ID ASSIGN exp {(Assign($1, $3), rhs 1)}
 
 astmt:
-| RETURN exp SEMI { (Return($2), 0) }
-| exp SEMI { (Exp($1), 0) }
+| RETURN exp SEMI { (Return($2), rhs 1) }
+| exp SEMI { (Exp($1), rhs 1) }
 | LBRACE stmt RBRACE { $2 }
-| LBRACE RBRACE { (Ast.skip, 0) }
-| SEMI { (Ast.skip, 0) }
+| LBRACE RBRACE { (Ast.skip, rhs 1) }
+| SEMI { (Ast.skip, rhs 1) }
 
 bstmt:
   astmt { $1 }
-| FOR LPAREN exp SEMI exp SEMI exp RPAREN bstmt { (For ($3, $5, $7, $9), 0) }
-| WHILE LPAREN exp RPAREN bstmt { (While($3, $5), 0) }
-| IF LPAREN exp RPAREN bstmt ELSE bstmt { (If($3, $5, $7), 0) }
+| FOR LPAREN exp SEMI exp SEMI exp RPAREN bstmt { (For ($3, $5, $7, $9), rhs 1) }
+| WHILE LPAREN exp RPAREN bstmt { (While($3, $5), rhs 1) }
+| IF LPAREN exp RPAREN bstmt ELSE bstmt { (If($3, $5, $7), rhs 1) }
 
 cstmt :
   bstmt { $1 }
-| IF LPAREN exp RPAREN cstmt { (If($3, $5, (Ast.skip, 0)), 0) }
-
+| IF LPAREN exp RPAREN cstmt { (If($3, $5, (Ast.skip, 0)), rhs 1) }
 
 stmt :
   cstmt { $1 }
-| cstmt stmt { (Seq($1, $2), 0) }
+| cstmt stmt { (Seq($1, $2), rhs 1) }

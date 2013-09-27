@@ -20,7 +20,7 @@ comb: utility com
 	$(COMPILER) -c combparser.ml
 	$(COMPILER) -c fishcomb.ml
 	$(COMPILER) -o ps1comb ast.cmo eval.cmo explode.cmo lcombinators.cmo comblexer.cmo combparser.cmo fishcomb.cmo
-	
+
 toplevel: utility com
 	$(TOPLEVEL) -c lcombinators.ml
 	$(TOPLEVEL) -c comblexer.ml
@@ -37,5 +37,14 @@ yacc: com
 	$(COMPILER) -c fishyacc.ml
 	$(COMPILER) -o ps1yacc ast.cmo parse.cmo lex.cmo eval.cmo fishyacc.cmo
 
+yacctoplevel: com
+	ocamlyacc parse.mly
+	$(TOPLEVEL) -c parse.mli
+	$(TOPLEVEL) -c parse.ml
+	ocamllex lex.mll
+	$(TOPLEVEL) -c lex.ml
+	$(TOPLEVEL) -c fishyacc.ml
+	$(TOPLEVEL) -o ps1yacctoplevel ast.cmo parse.cmo lex.cmo eval.cmo
+
 clean:
-	-rm *.cmo *.cmi ps1comb ps1yacc ps1combtoplevel parse.ml parse.mli lex.ml
+	-rm *.cmo *.cmi ps1comb ps1yacc ps1combtoplevel ps1yacctoplevel parse.ml parse.mli lex.ml
