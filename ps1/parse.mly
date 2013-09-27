@@ -25,6 +25,7 @@ let parse_error s =
 %type <Ast.stmt> astmt
 %type <Ast.stmt> bstmt
 %type <Ast.stmt> cstmt
+%type <Ast.stmt> dstmt
 %type <Ast.exp> exp
 %type <Ast.exp> aexp
 %type <Ast.exp> bexp
