@@ -1,5 +1,6 @@
 #!/bin/bash
 
+cd test
 cd ..
 make all > /dev/null
 cd test
@@ -7,6 +8,10 @@ cd test
 (for file in `ls | grep .fish`; do echo $file; ../ps1comb $file; done) > output-1.txt
 
 (for file in `ls | grep .fish`; do echo $file; ../ps1yacc $file; done) > output-2.txt
+
+cd ..
+make clean
+cd test
 
 diff -s output-1.txt output-2.txt
 
