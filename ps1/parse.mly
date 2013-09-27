@@ -47,7 +47,7 @@ let parse_error s =
 %token LPAREN
 %token RPAREN
 %token NOT
-%token TIMES
+%token STAR
 %token SLASH
 %token PLUS
 %token MINUS
@@ -71,6 +71,11 @@ let parse_error s =
 %token WHITESPACE
 %token COMMENT
 
+%left OR
+%left AND
+%left EQ NEQ LT LTE GT GTE
+%left PLUS MINUS
+%left STAR SLASH
 
 /* Here's where the real grammar starts -- you'll need to add 
  * more rules here... Do not remove the 2%'s!! */
@@ -91,7 +96,7 @@ bexp:
 
 cexp:
   bexp { $1 }
-| cexp TIMES cexp {(Binop($1, Times, $3), 0)}
+| cexp STAR cexp {(Binop($1, Times, $3), 0)}
 | cexp SLASH cexp {(Binop($1, Div, $3), 0)}
 
 dexp:
@@ -121,7 +126,7 @@ exp:
 | ID ASSIGN exp {(Assign($1, $3), 0)}
 
 astmt:
-| RETURN exp { (Return($2), 0) }
+| RETURN exp SEMI { (Return($2), 0) }
 | exp SEMI { (Exp($1), 0) }
 | LBRACE stmt RBRACE { $2 }
 | LBRACE RBRACE { (Ast.skip, 0) }

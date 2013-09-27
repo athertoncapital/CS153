@@ -1,6 +1,6 @@
 {
-    open Printf
-
+    open Parse
+(*
     type token = 
       | INT of int
       | ID of string 
@@ -47,6 +47,7 @@
         | WHILE -> printf "while\n"
         | RETURN -> printf "return\n"
         | EOF -> printf "eof\n"
+        *)
 }
 
 let digit = ['0'-'9']
@@ -73,14 +74,14 @@ rule lexer = parse
   | ">=" { GTE }
   | "<=" { LTE }
   | "!=" { NEQ }
-  | [' ' '\t' '\n'] { WHITESPACE }
+  | [' ' '\t' '\n'] { lexer lexbuf }
   | ';' { SEMI }
   | "if" { IF }
   | "else" { ELSE }
   | "for" { FOR }
   | "while" { WHILE }
   | "return" { RETURN }
-  | "/*" { comment lexbuf; COMMENT }
+  | "/*" { comment lexbuf }
   | digit+ as inum
     { let num = int_of_string inum in
       INT num
@@ -94,7 +95,7 @@ and comment = parse
   | _ { comment lexbuf }
 
 {
-  let main () =
+  (*let main () =
     let cin =
       if Array.length Sys.argv > 1
       then open_in Sys.argv.(1)
@@ -105,7 +106,7 @@ and comment = parse
     let rec print_list = function [] -> () | e::l -> print_token e ; print_list l in
     print_token tokens
 
-  let _ = Printexc.print main ()
+  let _ = Printexc.print main () *)
 }
 
 (*
