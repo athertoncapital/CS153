@@ -134,14 +134,20 @@ astmt:
 
 bstmt:
   astmt { $1 }
-| FOR LPAREN exp SEMI exp SEMI exp RPAREN cstmt { (For ($3, $5, $7, $9), rhs 1) }
-| WHILE LPAREN exp RPAREN cstmt { (While($3, $5), rhs 1) }
-| IF LPAREN exp RPAREN bstmt ELSE cstmt { (If($3, $5, $7), rhs 1) }
+| FOR LPAREN exp SEMI exp SEMI exp RPAREN bstmt { (For ($3, $5, $7, $9), rhs 1) }
+| WHILE LPAREN exp RPAREN bstmt { (While($3, $5), rhs 1) }
+| IF LPAREN exp RPAREN bstmt ELSE bstmt { (If($3, $5, $7), rhs 1) }
 
 cstmt :
-  bstmt { $1 }
-| IF LPAREN exp RPAREN cstmt { (If($3, $5, (Ast.skip, 0)), rhs 1) }
+| IF LPAREN exp RPAREN dstmt { (If($3, $5, (Ast.skip, 0)), rhs 1) }
+| IF LPAREN exp RPAREN bstmt ELSE cstmt { (If($3, $5, $7), rhs 1) }
+| FOR LPAREN exp SEMI exp SEMI exp RPAREN cstmt { (For ($3, $5, $7, $9), rhs 1) }
+| WHILE LPAREN exp RPAREN cstmt { (While($3, $5), rhs 1) }
+
+dstmt:
+| bstmt { $1 }
+| cstmt { $1 }
 
 stmt :
-  cstmt { $1 }
-| cstmt stmt { (Seq($1, $2), rhs 1) }
+| dstmt { $1 }
+| dstmt stmt { (Seq($1, $2), rhs 1) }
