@@ -154,6 +154,7 @@ and compile_stmt ((s, _):stmt) : inst list =
 let compile (p : program) : result = 
     let _ = reset() in
     let _ = collect_vars(p) in
+    let _ = VarSet.iter add_variable !variables in
     let insts = (Label "main") :: (compile_stmt p) in
     { code = insts; data = VarSet.elements (!variables) }
 
