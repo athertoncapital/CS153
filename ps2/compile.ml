@@ -1,4 +1,5 @@
 (* Compile Fish AST to MIPS AST *)
+open Ast
 open Mips
 
 exception IMPLEMENT_ME
@@ -13,12 +14,12 @@ let new_label() = "L" ^ (string_of_int (new_int()))
 
 (* sets of variables -- Ocaml Set and Set.S *)
 module VarSet = Set.Make(struct
-                           type t = Ast.var
+                           type t = var
                            let compare = String.compare
                          end)
 
 module VarMap = Map.Make(struct
-                           type t = Ast.var
+                           type t = var
                            let compare = String.compare
                          end)
 
@@ -42,7 +43,7 @@ let add_var v =
   if (VarSet.mem v !variables) then () else (variables := VarSet.add v !variables)
   
 (* find variables in expressions *)
-let rec exp_vars (e : exp) : unit =
+let rec exp_vars ((e, _) : exp) : unit =
   match e with
   | Int x -> ()
   | Var x -> add_var x
@@ -54,7 +55,7 @@ let rec exp_vars (e : exp) : unit =
 
 (* find all of the variables in a program and add them to
  * the set variables *)
-let rec collect_vars (p : Ast.program) : unit = 
+let rec collect_vars ((p, _) : program) : unit = 
   match p with
     | Exp e -> exp_vars e
     | Ast.Seq(x, y) -> collect_vars x; collect_vars y
@@ -74,22 +75,22 @@ let add_variable (v : var) : unit =
 
 (* copy r2 to r1; total hack *)
 let copy_register (r1 : reg) (r2 : reg) : inst =
-  Add (r1, r2, Immed 0)
+  Add (r1, r2, Immed (Word32.fromInt 0))
 
 let put_on_stack_int (i : int) : inst list =
-  [Add (R29, R29, Immed (-4)); Li (R8, i); Sw (R8, R29, 0)]
+  [Add (R29, R29, Immed (Word32.fromInt (-4))); Li (R8, Word32.fromInt i); Sw (R8, R29, Word32.fromInt 0)]
 
 let put_on_stack (r : reg) : inst list =
-  [Add (R29, R29, Immed (-4)); Sw (r, R29, 0)]
+  [Add (R29, R29, Immed (Word32.fromInt (-4))); Sw (r, R29, Word32.fromInt 0)]
 
 let pop_from_stack (r : reg) : inst list =
-  [Lw (r, R29, 0); Add (R29, R29, Immed 4)]
+  [Lw (r, R29, Word32.fromInt 0); Add (R29, R29, Immed (Word32.fromInt 4))]
 
 let load_variable (v : var) (r : reg) : inst list =
-  let offset = lookup_var v in [Lw (r, R30, offset)]
+  let offset = lookup_var v in [Lw (r, R30, Word32.fromInt offset)]
 
 let save_variable (v : var) (r : reg) : inst list =
-  let offset = lookup_var v in [Sw (r, R30, offset)]
+  let offset = lookup_var v in [Sw (r, R30, Word32.fromInt offset)]
 
 let binop_to_inst (b : binop) : inst =
   match b with
@@ -108,7 +109,7 @@ let binop_to_inst (b : binop) : inst =
  * Note that a "Return" is accomplished by placing the resulting
  * value in R2 and then doing a Jr R31.
  *)
-let rec compile_exp ((e,_) : Ast.exp) : inst list =
+let rec compile_exp ((e, _) : exp) : inst list =
     match e with
       | Int i -> put_on_stack_int i
 
@@ -116,35 +117,35 @@ let rec compile_exp ((e,_) : Ast.exp) : inst list =
 
       | Binop (e1, b, e2) -> (compile_exp e1) @ (compile_exp e2) @ (pop_from_stack R9) @ (pop_from_stack R8) @ [binop_to_inst b] @ (put_on_stack R8)
 
-      | Not e -> (compile_exp e) @ (pop_from_stack R8) @ [Li (R9, 0); Sne (R8, R8, R9)] @ (put_on_stack R8)
+      | Not e -> (compile_exp e) @ (pop_from_stack R8) @ [Li (R9, Word32.fromInt 0); Sne (R8, R8, R9)] @ (put_on_stack R8)
 
-      | Ast.And (e1, e2) -> compile_stmt (If (e1, Exp e2, Exp (Int 0)))
+      | Ast.And (e1, e2) -> compile_stmt (If (e1, (Exp e2, 0), (Exp (Int 0, 0), 0)), 0)
 (*
         (compile_exp e1) @ (compile_exp e2) @ (pop_from_stack R8) @ (pop_from_stack R9) @ [And (R8, R8, Reg R9)] @ (put_on_stack R8)
 *)
-      | Ast.Or (e1, e2) -> compile_stmt (If (e1, Exp (Int 1), Exp e2))
+      | Ast.Or (e1, e2) -> compile_stmt (If (e1, (Exp (Int 1, 0), 0), (Exp e2, 0)), 0)
 (*
         (compile_exp e1) @ (compile_exp e2) @ (pop_from_stack R8) @ (pop_from_stack R9) @ [Or (R8, R8, Reg R9)] @ (put_on_stack R8)
 *)
       | Assign (v, e) -> (compile_exp e) @ (pop_from_stack R8) @ (save_variable v R8) @ (put_on_stack R8)
-and compile_stmt ((s,_):Ast.stmt) : inst list = 
+and compile_stmt ((s, _):stmt) : inst list = 
   match s with
     | Exp e -> compile_exp e
 
     | Ast.Seq (s1, s2) -> (compile_stmt s1) @ (compile_stmt s2)
 
     | If (e, s1, s2) -> let (label1, label2) = (new_label (), new_label ()) in
-                        (compile_exp e) @ (pop_from_stack R8) @ [Li (R9, 0); Beq (R8, R9, label1)] @ (compile_stmt s1) @ [J label2; Label label1] @ (compile_stmt s2) @ [Label label2]
+                        (compile_exp e) @ (pop_from_stack R8) @ [Li (R9, Word32.fromInt 0); Beq (R8, R9, label1)] @ (compile_stmt s1) @ [J label2; Label label1] @ (compile_stmt s2) @ [Label label2]
 
     | While (e, s) -> let (label1, label2) = (new_label (), new_label ()) in
-                      [Label label1] @ (compile_exp e) @ (pop_from_stack R8) @ [Li (R9, 0); Beq (R8, R9, label2)] @ (compile_stmt s) @ [J label1; Label label2]
+                      [Label label1] @ (compile_exp e) @ (pop_from_stack R8) @ [Li (R9, Word32.fromInt 0); Beq (R8, R9, label2)] @ (compile_stmt s) @ [J label1; Label label2]
 
-    | For (e1, e2, e3, s) -> (compile_exp e1) @ (compile_stmt (While (e2, Ast.Seq (s, Exp e3))))
+    | For (e1, e2, e3, s) -> (compile_exp e1) @ (compile_stmt (While (e2, (Ast.Seq (s, (Exp e3, 0)), 0)), 0))
 
     | Return e -> (compile_exp e) @ (pop_from_stack R2) @ [Jr R31]
 
 (* compiles Fish AST down to MIPS instructions and a list of global vars *)
-let compile (p : Ast.program) : result = 
+let compile (p : program) : result = 
     let _ = reset() in
     let _ = collect_vars(p) in
     let insts = (Label "main") :: (compile_stmt p) in
