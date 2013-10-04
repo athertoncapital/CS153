@@ -42,7 +42,7 @@ adding in vars to VarSet, if the var is already in the set, do nothing *)
 let add_var v =
   if (VarSet.mem v !variables) then () else (variables := VarSet.add v !variables)
   
-(* find variables in expressions *)
+(* helper function for collect_vars: find variables in expressions *)
 let rec exp_vars ((e, _) : exp) : unit =
   match e with
   | Int x -> ()
@@ -53,8 +53,7 @@ let rec exp_vars ((e, _) : exp) : unit =
   | Ast.Or (x,y) -> exp_vars x; exp_vars y
   | Assign (x,y) -> add_var x; exp_vars y
 
-(* find all of the variables in a program and add them to
- * the set variables *)
+(* find all of the variables in a program and add them to the set variables *)
 let rec collect_vars ((p, _) : program) : unit = 
   match p with
     | Exp e -> exp_vars e
@@ -63,6 +62,11 @@ let rec collect_vars ((p, _) : program) : unit =
     | While(e, x) -> exp_vars e; collect_vars x
     | For(e1,e2,e3,x) -> exp_vars e1; exp_vars e2; exp_vars e3; collect_vars x
     | Return(e) -> exp_vars e
+
+(* compiles a Fish statement down to a list of MIPS instructions.
+ * Note that a "Return" is accomplished by placing the resulting
+ * value in R2 and then doing a Jr R31.
+ *)
 
 let var_offset = ref 0
 let new_offset() = (var_offset := (!var_offset) - 4; !var_offset)
@@ -73,7 +77,7 @@ let lookup_var (v : var) : int =
 let add_variable (v : var) : unit =
   var_to_offset := VarMap.add v (new_offset ()) !var_to_offset
 
-(* copy r2 to r1; total hack *)
+(* copy r2 to r1 *)
 let copy_register (r1 : reg) (r2 : reg) : inst =
   Add (r1, r2, Immed (Word32.fromInt 0))
 
@@ -105,10 +109,7 @@ let binop_to_inst (b : binop) : inst =
     | Gt -> Sgt (R8, R8, R9)
     | Gte -> Sge (R8, R8, R9)
 
-(* compiles a Fish statement down to a list of MIPS instructions.
- * Note that a "Return" is accomplished by placing the resulting
- * value in R2 and then doing a Jr R31.
- *)
+(* Evaluates an expression and puts the result onto the stack. *)
 let rec compile_exp ((e, _) : exp) : inst list =
     match e with
       | Int i -> put_on_stack_int i
@@ -119,20 +120,14 @@ let rec compile_exp ((e, _) : exp) : inst list =
 
       | Not e -> (compile_exp e) @ (pop_from_stack R8) @ [Li (R9, Word32.fromInt 0); Seq (R8, R8, R9)] @ (put_on_stack R8)
 
-      | Ast.And (e1, e2) ->
+      | Ast.And (e1, e2) -> compile_stmt (If (e1, (Exp e2, 0), (Exp (Int 0, 0), 0)), 0)
 (*
-compile_stmt (If (e1, (Exp e2, 0), (Exp (Int 0, 0), 0)), 0)
-*)
-
         (compile_exp e1) @ (compile_exp e2) @ (pop_from_stack R8) @ (pop_from_stack R9) @ [And (R8, R8, Reg R9)] @ (put_on_stack R8)
-
-      | Ast.Or (e1, e2) ->
-(*
-compile_stmt (If (e1, (Exp (Int 1, 0), 0), (Exp e2, 0)), 0)
 *)
-
+      | Ast.Or (e1, e2) -> compile_stmt (If (e1, (Exp (Int 1, 0), 0), (Exp e2, 0)), 0)
+(*
         (compile_exp e1) @ (compile_exp e2) @ (pop_from_stack R8) @ (pop_from_stack R9) @ [Or (R8, R8, Reg R9)] @ (put_on_stack R8)
-
+*)
       | Assign (v, e) -> (compile_exp e) @ (pop_from_stack R8) @ (save_variable v R8) @ (put_on_stack R8)
 and compile_stmt ((s, _):stmt) : inst list = 
   match s with
@@ -148,7 +143,7 @@ and compile_stmt ((s, _):stmt) : inst list =
 
     | For (e1, e2, e3, s) -> (compile_exp e1) @ (compile_stmt (While (e2, (Ast.Seq (s, (Exp e3, 0)), 0)), 0))
 
-    | Return e -> (compile_exp e) @ (pop_from_stack R2) @ [Jr R31]
+    | Return e -> (compile_exp e) @ (pop_from_stack R2) @ (* [copy_register R3 R2] @ *) [Jr R31]
 
 (* compiles Fish AST down to MIPS instructions and a list of global vars *)
 let compile (p : program) : result = 
