@@ -119,14 +119,20 @@ let rec compile_exp ((e, _) : exp) : inst list =
 
       | Not e -> (compile_exp e) @ (pop_from_stack R8) @ [Li (R9, Word32.fromInt 0); Sne (R8, R8, R9)] @ (put_on_stack R8)
 
-      | Ast.And (e1, e2) -> compile_stmt (If (e1, (Exp e2, 0), (Exp (Int 0, 0), 0)), 0)
+      | Ast.And (e1, e2) ->
 (*
+compile_stmt (If (e1, (Exp e2, 0), (Exp (Int 0, 0), 0)), 0)
+*)
+
         (compile_exp e1) @ (compile_exp e2) @ (pop_from_stack R8) @ (pop_from_stack R9) @ [And (R8, R8, Reg R9)] @ (put_on_stack R8)
-*)
-      | Ast.Or (e1, e2) -> compile_stmt (If (e1, (Exp (Int 1, 0), 0), (Exp e2, 0)), 0)
+
+      | Ast.Or (e1, e2) ->
 (*
-        (compile_exp e1) @ (compile_exp e2) @ (pop_from_stack R8) @ (pop_from_stack R9) @ [Or (R8, R8, Reg R9)] @ (put_on_stack R8)
+compile_stmt (If (e1, (Exp (Int 1, 0), 0), (Exp e2, 0)), 0)
 *)
+
+        (compile_exp e1) @ (compile_exp e2) @ (pop_from_stack R8) @ (pop_from_stack R9) @ [Or (R8, R8, Reg R9)] @ (put_on_stack R8)
+
       | Assign (v, e) -> (compile_exp e) @ (pop_from_stack R8) @ (save_variable v R8) @ (put_on_stack R8)
 and compile_stmt ((s, _):stmt) : inst list = 
   match s with
