@@ -117,7 +117,7 @@ let rec compile_exp ((e, _) : exp) : inst list =
 
       | Binop (e1, b, e2) -> (compile_exp e1) @ (compile_exp e2) @ (pop_from_stack R9) @ (pop_from_stack R8) @ [binop_to_inst b] @ (put_on_stack R8)
 
-      | Not e -> (compile_exp e) @ (pop_from_stack R8) @ [Li (R9, Word32.fromInt 0); Sne (R8, R8, R9)] @ (put_on_stack R8)
+      | Not e -> (compile_exp e) @ (pop_from_stack R8) @ [Li (R9, Word32.fromInt 0); Seq (R8, R8, R9)] @ (put_on_stack R8)
 
       | Ast.And (e1, e2) ->
 (*
@@ -155,8 +155,8 @@ let compile (p : program) : result =
     let _ = reset() in
     let _ = collect_vars(p) in
     let _ = VarSet.iter add_variable !variables in
-    let insts = (Label "main") :: (compile_stmt p) in
-    { code = insts; data = VarSet.elements (!variables) }
+      let insts = [Label "main"; copy_register R30 R29; Add (R29, R30, Immed (Word32.fromInt !var_offset))] @ (compile_stmt p) in
+    { code = insts; data = [] }
 
 (* converts the output of the compiler to a big string which can be 
  * dumped into a file, assembled, and run within the SPIM simulator
