@@ -73,7 +73,7 @@ add:
 	lw	$8, 0($29)
 	addi	$29, $29, 0x4
 	sw	$8, -8($30)
-	addi	$8, $4, 0x0
+	ori	$8, $4, 0x0
 	addi	$29, $29, 0xFFFFFFFC
 	sw	$8, 0($29)
 	addi	$29, $29, 0xFFFFFFFC
@@ -86,7 +86,7 @@ add:
 	slt	$8, $8, $9
 	addi	$29, $29, 0xFFFFFFFC
 	sw	$8, 0($29)
-	addi	$8, $4, 0x0
+	ori	$8, $4, 0x0
 	addi	$29, $29, 0xFFFFFFFC
 	sw	$8, 0($29)
 	addi	$29, $29, 0xFFFFFFFC
@@ -106,7 +106,7 @@ add:
 	or	$8, $8, $9
 	addi	$29, $29, 0xFFFFFFFC
 	sw	$8, 0($29)
-	addi	$8, $5, 0x0
+	ori	$8, $5, 0x0
 	addi	$29, $29, 0xFFFFFFFC
 	sw	$8, 0($29)
 	addi	$29, $29, 0xFFFFFFFC
@@ -126,7 +126,7 @@ add:
 	or	$8, $8, $9
 	addi	$29, $29, 0xFFFFFFFC
 	sw	$8, 0($29)
-	addi	$8, $5, 0x0
+	ori	$8, $5, 0x0
 	addi	$29, $29, 0xFFFFFFFC
 	sw	$8, 0($29)
 	addi	$29, $29, 0xFFFFFFFC
@@ -165,7 +165,31 @@ add:
 	sw	$8, 0($29)
 	lw	$2, 0($29)
 	addi	$29, $29, 0x4
-	addi	$3, $2, 0x0
+	lw	$8, 0($29)
+	addi	$29, $29, 0x4
+	sw	$8, -8($30)
+	lw	$8, 0($29)
+	addi	$29, $29, 0x4
+	sw	$8, -16($30)
+	lw	$8, 0($29)
+	addi	$29, $29, 0x4
+	sw	$8, -4($30)
+	lw	$8, 0($29)
+	addi	$29, $29, 0x4
+	sw	$8, -12($30)
+	lw	$8, 0($29)
+	addi	$29, $29, 0x4
+	sw	$8, -28($30)
+	lw	$8, 0($29)
+	addi	$29, $29, 0x4
+	sw	$8, -20($30)
+	lw	$8, 0($29)
+	addi	$29, $29, 0x4
+	sw	$8, -32($30)
+	lw	$8, 0($29)
+	addi	$29, $29, 0x4
+	sw	$8, -24($30)
+	ori	$3, $2, 0x0
 	jr	$31
 	j L13
 L14:
@@ -175,7 +199,7 @@ L14:
 	lw	$8, 0($29)
 	addi	$29, $29, 0x4
 L13:
-	addi	$8, $4, 0x0
+	ori	$8, $4, 0x0
 	addi	$29, $29, 0xFFFFFFFC
 	sw	$8, 0($29)
 	addi	$29, $29, 0xFFFFFFFC
@@ -215,7 +239,7 @@ L12:
 	lw	$8, 0($29)
 	addi	$29, $29, 0x4
 L11:
-	addi	$8, $4, 0x0
+	ori	$8, $4, 0x0
 	addi	$29, $29, 0xFFFFFFFC
 	sw	$8, 0($29)
 	addi	$29, $29, 0xFFFFFFFC
@@ -245,7 +269,7 @@ L11:
 	sw	$8, 0($29)
 	lw	$8, 0($29)
 	addi	$29, $29, 0x4
-	addi	$8, $5, 0x0
+	ori	$8, $5, 0x0
 	addi	$29, $29, 0xFFFFFFFC
 	sw	$8, 0($29)
 	addi	$29, $29, 0xFFFFFFFC
@@ -285,7 +309,7 @@ L10:
 	lw	$8, 0($29)
 	addi	$29, $29, 0x4
 L9:
-	addi	$8, $5, 0x0
+	ori	$8, $5, 0x0
 	addi	$29, $29, 0xFFFFFFFC
 	sw	$8, 0($29)
 	addi	$29, $29, 0xFFFFFFFC
@@ -722,8 +746,6 @@ L1:
 	sw	$8, 0($29)
 	lw	$2, 0($29)
 	addi	$29, $29, 0x4
-	addi	$3, $2, 0x0
-	jr	$31
 	lw	$8, 0($29)
 	addi	$29, $29, 0x4
 	sw	$8, -8($30)
@@ -748,8 +770,10 @@ L1:
 	lw	$8, 0($29)
 	addi	$29, $29, 0x4
 	sw	$8, -24($30)
+	ori	$3, $2, 0x0
+	jr	$31
 main:
-	addi	$30, $29, 0x0
+	ori	$30, $29, 0x0
 	addi	$29, $30, 0x0
 	sw	$4, 0($30)
 	sw	$5, 4($30)
@@ -759,8 +783,6 @@ main:
 	sw	$30, 0($29)
 	addi	$29, $29, 0xFFFFFFFC
 	sw	$31, 0($29)
-	addi	$29, $29, 0xFFFFFFF0
-	addi	$30, $29, 0x0
 	sw	$4, 0($30)
 	sw	$5, 4($30)
 	sw	$6, 8($30)
@@ -769,8 +791,6 @@ main:
 	sw	$30, 0($29)
 	addi	$29, $29, 0xFFFFFFFC
 	sw	$31, 0($29)
-	addi	$29, $29, 0xFFFFFFF0
-	addi	$30, $29, 0x0
 	addi	$29, $29, 0xFFFFFFFC
 	li	$8, 0x1
 	sw	$8, 0($29)
@@ -781,9 +801,11 @@ main:
 	sw	$8, 0($29)
 	lw	$5, 0($29)
 	addi	$29, $29, 0x4
+	addi	$29, $29, 0xFFFFFFF0
+	ori	$30, $29, 0x0
 	addi	$29, $29, 0xFFFFFFE0
 	jal add
-	addi	$29, $30, 0x0
+	ori	$29, $30, 0x0
 	addi	$29, $29, 0x10
 	lw	$31, 0($29)
 	addi	$29, $29, 0x4
@@ -805,8 +827,6 @@ main:
 	sw	$30, 0($29)
 	addi	$29, $29, 0xFFFFFFFC
 	sw	$31, 0($29)
-	addi	$29, $29, 0xFFFFFFF0
-	addi	$30, $29, 0x0
 	addi	$29, $29, 0xFFFFFFFC
 	li	$8, 0x1
 	sw	$8, 0($29)
@@ -817,9 +837,11 @@ main:
 	sw	$8, 0($29)
 	lw	$5, 0($29)
 	addi	$29, $29, 0x4
+	addi	$29, $29, 0xFFFFFFF0
+	ori	$30, $29, 0x0
 	addi	$29, $29, 0xFFFFFFE0
 	jal add
-	addi	$29, $30, 0x0
+	ori	$29, $30, 0x0
 	addi	$29, $29, 0x10
 	lw	$31, 0($29)
 	addi	$29, $29, 0x4
@@ -833,9 +855,11 @@ main:
 	sw	$2, 0($29)
 	lw	$5, 0($29)
 	addi	$29, $29, 0x4
+	addi	$29, $29, 0xFFFFFFF0
+	ori	$30, $29, 0x0
 	addi	$29, $29, 0xFFFFFFE0
 	jal add
-	addi	$29, $30, 0x0
+	ori	$29, $30, 0x0
 	addi	$29, $29, 0x10
 	lw	$31, 0($29)
 	addi	$29, $29, 0x4
@@ -849,7 +873,7 @@ main:
 	sw	$2, 0($29)
 	lw	$2, 0($29)
 	addi	$29, $29, 0x4
-	addi	$3, $2, 0x0
+	ori	$3, $2, 0x0
 	jr	$31
 
 

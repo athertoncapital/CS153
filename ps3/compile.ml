@@ -62,7 +62,7 @@ let lookup_var (fn: var) (v : var) : int =
 
 (* copy r2 to r1 *)
 let copy_register (r1 : reg) (r2 : reg) : inst =
-  Add (r1, r2, Immed (Word32.fromInt 0))
+  Mips.Or (r1, r2, Immed (Word32.fromInt 0))
 
 let put_on_stack_int (i : int) : inst list =
   [Add (R29, R29, Immed (Word32.fromInt (-4))); Li (R8, Word32.fromInt i); Sw (R8, R29, Word32.fromInt 0)]
@@ -160,7 +160,7 @@ and compile_stmt (fn: var) ((s, _):stmt) (termination: inst list) : inst list =
 
   | For (e1, e2, e3, s) -> (compile_exp fn e1) @ (pop_from_stack R8) @ (compile_stmt fn (While (e2, (Ast.Seq (s, (Exp e3, 0)), 0)), 0) termination)
 
-  | Return e -> (compile_exp fn e) @ (pop_from_stack R2) @ [copy_register R3 R2; Jr R31]
+  | Return e -> (compile_exp fn e) @ (pop_from_stack R2) @ termination @ [copy_register R3 R2; Jr R31]
 
   | Let (v, e, s) -> (load_variable fn v R8) @ (put_on_stack R8) @ (compile_exp fn e) @ (pop_from_stack R8) @ (save_variable fn v R8) @ (compile_stmt fn s ((pop_from_stack R8) @ (save_variable fn v R8) @ termination))
 
@@ -184,7 +184,7 @@ and prologue (caller : var) (callee: var) (es: exp list) : inst list =
   let store_new_args = store_args es 0 in
   let dec_sp = [Add(R29, R29, Immed(Word32.fromInt (-(VarMap.find callee !fun_to_frame_size))))] in
 
-  save_old_args @ save_old_fp @ save_old_ra @ move_sp @ move_fp @ store_new_args @ dec_sp
+  save_old_args @ save_old_fp @ save_old_ra @ store_new_args @ move_sp @ move_fp @ dec_sp
 
 and epilogue (caller : var) (es: exp list) : inst list =
   let arg_size = if List.length(es) <= 4 then 4 else List.length(es) in

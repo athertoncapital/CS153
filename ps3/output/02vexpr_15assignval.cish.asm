@@ -1,7 +1,7 @@
 	.text
 	.align	2
 main:
-	addi	$30, $29, 0x0
+	ori	$30, $29, 0x0
 	addi	$29, $30, 0xFFFFFFF8
 	lw	$8, -4($30)
 	addi	$29, $29, 0xFFFFFFFC
@@ -31,14 +31,14 @@ main:
 	sw	$8, 0($29)
 	lw	$2, 0($29)
 	addi	$29, $29, 0x4
-	addi	$3, $2, 0x0
-	jr	$31
 	lw	$8, 0($29)
 	addi	$29, $29, 0x4
 	sw	$8, -8($30)
 	lw	$8, 0($29)
 	addi	$29, $29, 0x4
 	sw	$8, -4($30)
+	ori	$3, $2, 0x0
+	jr	$31
 
 
 	.data

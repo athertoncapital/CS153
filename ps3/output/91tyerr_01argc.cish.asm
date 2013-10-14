@@ -1,15 +1,15 @@
 	.text
 	.align	2
 f:
-	addi	$8, $4, 0x0
+	ori	$8, $4, 0x0
 	addi	$29, $29, 0xFFFFFFFC
 	sw	$8, 0($29)
 	lw	$2, 0($29)
 	addi	$29, $29, 0x4
-	addi	$3, $2, 0x0
+	ori	$3, $2, 0x0
 	jr	$31
 main:
-	addi	$30, $29, 0x0
+	ori	$30, $29, 0x0
 	addi	$29, $30, 0x0
 	sw	$4, 0($30)
 	sw	$5, 4($30)
@@ -20,10 +20,10 @@ main:
 	addi	$29, $29, 0xFFFFFFFC
 	sw	$31, 0($29)
 	addi	$29, $29, 0xFFFFFFF0
-	addi	$30, $29, 0x0
+	ori	$30, $29, 0x0
 	addi	$29, $29, 0x0
 	jal f
-	addi	$29, $30, 0x0
+	ori	$29, $30, 0x0
 	addi	$29, $29, 0x10
 	lw	$31, 0($29)
 	addi	$29, $29, 0x4
@@ -37,7 +37,7 @@ main:
 	sw	$2, 0($29)
 	lw	$2, 0($29)
 	addi	$29, $29, 0x4
-	addi	$3, $2, 0x0
+	ori	$3, $2, 0x0
 	jr	$31
 
 
