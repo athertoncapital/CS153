@@ -178,7 +178,7 @@ and prologue (caller : var) (callee: var) (es: exp list) : inst list =
   let save_old_args = [Sw (R4, R30, Word32.fromInt 0)] @ [Sw (R5, R30, Word32.fromInt 4)] @ [Sw (R6, R30, Word32.fromInt 8)] @ [Sw (R7, R30, Word32.fromInt 12)] in
   let save_old_fp = put_on_stack R30 in
   let save_old_ra = put_on_stack R31 in
-  let arg_size = List.length(es) in
+  let arg_size = if List.length(es) <= 4 then 4 else List.length(es) in
   let move_sp = [Add(R29, R29, Immed(Word32.fromInt(-arg_size * 4)))] in
   let move_fp = [copy_register R30 R29] in
   let store_new_args = store_args es 0 in
@@ -187,7 +187,7 @@ and prologue (caller : var) (callee: var) (es: exp list) : inst list =
   save_old_args @ save_old_fp @ save_old_ra @ move_sp @ move_fp @ store_new_args @ dec_sp
 
 and epilogue (caller : var) (es: exp list) : inst list =
-  let arg_size = List.length(es) in
+  let arg_size = if List.length(es) <= 4 then 4 else List.length(es) in
   let move_sp_to_fp = [copy_register R29 R30] in
   let pop_args = [Add(R29, R29, Immed(Word32.fromInt(arg_size * 4)))] in
   let restore_ra = pop_from_stack R31 in
