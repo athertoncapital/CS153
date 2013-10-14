@@ -89,28 +89,15 @@ let save_variable (fn: var) (v : var) (r : reg) : inst list =
     else if offset > 0 then [Sw (r, R30, Word32.fromInt offset)]
     else [Lw (r, R16, Word32.fromInt offset)]
 
-(* helper function for body_vars: find variables in expressions *)
-let rec exp_vars ((e, _) : exp) : unit =
-  match e with
-	| Int x -> ()
-  | Var x -> add_var x
-  | Binop (x,v,y) -> exp_vars x; exp_vars y
-  | Not x -> exp_vars x
-  | Ast.And (x,y) -> exp_vars x; exp_vars y
-  | Ast.Or (x,y) -> exp_vars x; exp_vars y
-  | Assign (x,y) -> add_var x; exp_vars y
-  | Call (fn, es) -> List.iter exp_vars es
-
 (* find all of the variables in a program and add them to the set variables *)
 let rec body_vars ((p, _) : stmt) : unit = 
   match p with
-  | Exp e -> exp_vars e
   | Ast.Seq(x, y) -> body_vars x; body_vars y
-  | If(e,x,y) -> exp_vars e; body_vars x; body_vars y
-  | While(e, x) -> exp_vars e; body_vars x
-  | For(e1,e2,e3,x) -> exp_vars e1; exp_vars e2; exp_vars e3; body_vars x
-  | Return(e) -> exp_vars e
-  | Let(v, e, x) -> add_var v; exp_vars e; body_vars x
+  | If(e,x,y) -> body_vars x; body_vars y
+  | While(e, x) -> body_vars x
+  | For(e1,e2,e3,x) -> body_vars x
+  | Let(v, e, x) -> add_var v;
+  | _ -> ()
 
 let rec arg_vars (fn: var) (args: var list) : unit =
 	match args with
@@ -244,7 +231,6 @@ let result2string (res:result) : string =
   let debugcode = readfile "print.asm" in
     "\t.text\n" ^
     "\t.align\t2\n" ^
-    "\t.globl main\n" ^
     (String.concat "" strs) ^
     "\n\n" ^
     "\t.data\n" ^
