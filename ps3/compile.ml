@@ -26,7 +26,6 @@ module VarMap = Map.Make(struct
 let arguments : VarSet.t ref = ref (VarSet.empty)
 let variables : VarSet.t ref = ref (VarSet.empty)
 let var_to_offset : int VarMap.t ref = ref VarMap.empty
-let fun_to_frame_size : int VarMap.t ref = ref VarMap.empty
 
 let var_offset = ref 0
 let var_minus_offset = ref 0
@@ -34,6 +33,10 @@ let var_minus_offset = ref 0
 let reset_offsets() = (var_offset := 0; var_minus_offset := 0)
 
 let new_minus_offset() = (var_minus_offset := !var_minus_offset - 4; !var_minus_offset)
+
+let dec_minus_offset() = (var_minus_offset := !var_minus_offset - 4)
+
+let inc_minus_offset() = (var_minus_offset := !var_minus_offset + 4)
 
 let new_offset() = (let offset = !var_offset in var_offset := offset + 4; offset)
 
@@ -65,12 +68,15 @@ let copy_register (r1 : reg) (r2 : reg) : inst =
   Mips.Or (r1, r2, Immed (Word32.fromInt 0))
 
 let put_on_stack_int (i : int) : inst list =
+  dec_minus_offset();
   [Add (R29, R29, Immed (Word32.fromInt (-4))); Li (R8, Word32.fromInt i); Sw (R8, R29, Word32.fromInt 0)]
 
 let put_on_stack (r : reg) : inst list =
+  dec_minus_offset();
   [Add (R29, R29, Immed (Word32.fromInt (-4))); Sw (r, R29, Word32.fromInt 0)]
 
 let pop_from_stack (r : reg) : inst list =
+  inc_minus_offset();
   [Lw (r, R29, Word32.fromInt 0); Add (R29, R29, Immed (Word32.fromInt 4))]
 
 let load_variable (fn : var) (v : var) (r : reg) : inst list =
@@ -106,10 +112,7 @@ let rec arg_vars (fn: var) (args: var list) : unit =
 
 let fun_vars (f: Ast.funcsig) : unit =
   reset();
-	arg_vars f.name f.args;
-  body_vars f.body;
-  VarSet.iter (add_variable f.name) !variables;
-  fun_to_frame_size := VarMap.add f.name (- !var_minus_offset) !fun_to_frame_size
+	arg_vars f.name f.args
 
 let collect_vars (fns: Ast.funcsig list) : unit =
 	List.iter fun_vars fns
@@ -146,23 +149,38 @@ let rec compile_exp (fn: var) ((e, _) : exp) : inst list =
 
   | Call (c, es) -> (prologue fn c es) @ [Jal c] @ (epilogue fn es) @ (put_on_stack R2)
 
-and compile_stmt (fn: var) ((s, _):stmt) (termination: inst list) : inst list =
+and compile_stmt (fn: var) ((s, _):stmt) : inst list =
   match s with
   | Exp e -> (compile_exp fn e) @ (pop_from_stack R8)
 
-  | Ast.Seq (s1, s2) -> (compile_stmt fn s1 termination) @ (compile_stmt fn s2 termination)
+  | Ast.Seq (s1, s2) -> (compile_stmt fn s1) @ (compile_stmt fn s2)
 
   | If (e, s1, s2) -> let (label1, label2) = (new_label (), new_label ()) in
-                        (compile_exp fn e) @ (pop_from_stack R8) @ [Li (R9, Word32.fromInt 0); Beq (R8, R9, label1)] @ (compile_stmt fn s1 termination) @ [J label2; Label label1] @ (compile_stmt fn s2 termination) @ [Label label2]
+                        (compile_exp fn e) @ (pop_from_stack R8) @ [Li (R9, Word32.fromInt 0); Beq (R8, R9, label1)] @ (compile_stmt fn s1) @ [J label2; Label label1] @ (compile_stmt fn s2) @ [Label label2]
 
   | While (e, s) -> let (label1, label2) = (new_label (), new_label ()) in
-                      [Label label1] @ (compile_exp fn e) @ (pop_from_stack R8) @ [Li (R9, Word32.fromInt 0); Beq (R8, R9, label2)] @ (compile_stmt fn s termination) @ [J label1; Label label2]
+                      [Label label1] @ (compile_exp fn e) @ (pop_from_stack R8) @ [Li (R9, Word32.fromInt 0); Beq (R8, R9, label2)] @ (compile_stmt fn s) @ [J label1; Label label2]
 
-  | For (e1, e2, e3, s) -> (compile_exp fn e1) @ (pop_from_stack R8) @ (compile_stmt fn (While (e2, (Ast.Seq (s, (Exp e3, 0)), 0)), 0) termination)
+  | For (e1, e2, e3, s) -> (compile_exp fn e1) @ (pop_from_stack R8) @ (compile_stmt fn (While (e2, (Ast.Seq (s, (Exp e3, 0)), 0)), 0))
 
   | Return e -> (compile_exp fn e) @ (pop_from_stack R2) @ termination @ [copy_register R3 R2; Jr R31]
 
-  | Let (v, e, s) -> (load_variable fn v R8) @ (put_on_stack R8) @ (compile_exp fn e) @ (pop_from_stack R8) @ (save_variable fn v R8) @ (compile_stmt fn s ((pop_from_stack R8) @ (save_variable fn v R8) @ termination))
+  | Let (v, e, s) -> 
+    if VarMap.mem (fn ^ "$" ^ v) !var_to_offset then 
+      let old_offset = VarMap.find (fn ^ "$" ^ v) !var_to_offset in
+      let new_value = (compile_exp fn e) in
+      let new_offset = !var_minus_offset in
+      let _ = var_to_offset := VarMap.add (fn ^ "$" ^ v) new_offset !var_to_offset in
+      let stmt_inst = (compile_stmt fn s) in
+      let _ = var_to_offset := VarMap.add (fn ^ "$" ^ v) old_offset !var_to_offset in
+      new_value @ stmt_inst @ (pop_from_stack R8)
+    else 
+      let new_value = (compile_exp fn e) in
+      let new_offset = !var_minus_offset in
+      let _ = var_to_offset := VarMap.add (fn ^ "$" ^ v) new_offset !var_to_offset in
+      let stmt_inst = (compile_stmt fn s) in
+      let _ = remove_variable fn v in
+      new_value @ stmt_inst @ (pop_from_stack R8)
 
 and prologue (caller : var) (callee: var) (es: exp list) : inst list =
   let rec store_args es position : inst list =
@@ -182,9 +200,8 @@ and prologue (caller : var) (callee: var) (es: exp list) : inst list =
   let move_sp = [Add(R29, R29, Immed(Word32.fromInt(-arg_size * 4)))] in
   let move_fp = [copy_register R30 R29] in
   let store_new_args = store_args es 0 in
-  let dec_sp = [Add(R29, R29, Immed(Word32.fromInt (-(VarMap.find callee !fun_to_frame_size))))] in
 
-  save_old_args @ save_old_fp @ save_old_ra @ store_new_args @ move_sp @ move_fp @ dec_sp
+  save_old_args @ save_old_fp @ save_old_ra @ store_new_args @ move_sp @ move_fp
 
 and epilogue (caller : var) (es: exp list) : inst list =
   let arg_size = if List.length(es) <= 4 then 4 else List.length(es) in
@@ -199,10 +216,10 @@ and epilogue (caller : var) (es: exp list) : inst list =
 let compile_fun (f:Ast.funcsig) : Mips.inst list =
   let init = 
     if f.name = "main" then 
-      [copy_register R30 R29; Add(R29, R30, Immed(Word32.fromInt(-(VarMap.find "main" !fun_to_frame_size))))]
+      [copy_register R30 R29]
     else []
   in
-  [Label (f.name)] @ init @ (compile_stmt f.name f.body [])
+  [Label (f.name)] @ init @ (compile_stmt f.name f.body)
 
 let rec compile (p:Ast.program) : result =
   let fns = List.map (function Fn f-> f) p in
