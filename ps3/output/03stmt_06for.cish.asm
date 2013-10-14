@@ -24,7 +24,7 @@ main:
 	sw	$8, 0($29)
 	lw	$8, 0($29)
 	addi	$29, $29, 0x4
-L2_mangled__:
+L2:
 	lw	$8, -8($30)
 	addi	$29, $29, 0xFFFFFFFC
 	sw	$8, 0($29)
@@ -41,7 +41,7 @@ L2_mangled__:
 	lw	$8, 0($29)
 	addi	$29, $29, 0x4
 	li	$9, 0x0
-	beq	$8, $9, L1_mangled__
+	beq	$8, $9, L1
 	addi	$29, $29, 0xFFFFFFFC
 	li	$8, 0x1
 	sw	$8, 0($29)
@@ -52,7 +52,7 @@ L2_mangled__:
 	sw	$8, 0($29)
 	lw	$8, 0($29)
 	addi	$29, $29, 0x4
-L4_mangled__:
+L4:
 	lw	$8, -12($30)
 	addi	$29, $29, 0xFFFFFFFC
 	sw	$8, 0($29)
@@ -69,7 +69,7 @@ L4_mangled__:
 	lw	$8, 0($29)
 	addi	$29, $29, 0x4
 	li	$9, 0x0
-	beq	$8, $9, L3_mangled__
+	beq	$8, $9, L3
 	addi	$29, $29, 0xFFFFFFFC
 	li	$8, 0x1
 	sw	$8, 0($29)
@@ -80,7 +80,7 @@ L4_mangled__:
 	sw	$8, 0($29)
 	lw	$8, 0($29)
 	addi	$29, $29, 0x4
-L6_mangled__:
+L6:
 	lw	$8, -16($30)
 	addi	$29, $29, 0xFFFFFFFC
 	sw	$8, 0($29)
@@ -97,7 +97,7 @@ L6_mangled__:
 	lw	$8, 0($29)
 	addi	$29, $29, 0x4
 	li	$9, 0x0
-	beq	$8, $9, L5_mangled__
+	beq	$8, $9, L5
 	lw	$8, -4($30)
 	addi	$29, $29, 0xFFFFFFFC
 	sw	$8, 0($29)
@@ -138,8 +138,8 @@ L6_mangled__:
 	sw	$8, 0($29)
 	lw	$8, 0($29)
 	addi	$29, $29, 0x4
-	j L6_mangled__
-L5_mangled__:
+	j L6
+L5:
 	lw	$8, -12($30)
 	addi	$29, $29, 0xFFFFFFFC
 	sw	$8, 0($29)
@@ -160,8 +160,8 @@ L5_mangled__:
 	sw	$8, 0($29)
 	lw	$8, 0($29)
 	addi	$29, $29, 0x4
-	j L4_mangled__
-L3_mangled__:
+	j L4
+L3:
 	lw	$8, -8($30)
 	addi	$29, $29, 0xFFFFFFFC
 	sw	$8, 0($29)
@@ -182,8 +182,8 @@ L3_mangled__:
 	sw	$8, 0($29)
 	lw	$8, 0($29)
 	addi	$29, $29, 0x4
-	j L2_mangled__
-L1_mangled__:
+	j L2
+L1:
 	lw	$8, -4($30)
 	addi	$29, $29, 0xFFFFFFFC
 	sw	$8, 0($29)

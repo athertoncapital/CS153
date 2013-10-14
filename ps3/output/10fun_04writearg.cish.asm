@@ -1,6 +1,6 @@
 	.text
 	.align	2
-f_mangled__:
+fun_f:
 	ori	$8, $4, 0x0
 	addi	$29, $29, 0xFFFFFFFC
 	sw	$8, 0($29)
@@ -56,7 +56,7 @@ main:
 	sw	$8, 0($29)
 	lw	$8, 0($29)
 	addi	$29, $29, 0x4
-L2_mangled__:
+L2:
 	lw	$8, -8($30)
 	addi	$29, $29, 0xFFFFFFFC
 	sw	$8, 0($29)
@@ -73,7 +73,7 @@ L2_mangled__:
 	lw	$8, 0($29)
 	addi	$29, $29, 0x4
 	li	$9, 0x0
-	beq	$8, $9, L1_mangled__
+	beq	$8, $9, L1
 	lw	$8, -4($30)
 	addi	$29, $29, 0xFFFFFFFC
 	sw	$8, 0($29)
@@ -92,7 +92,7 @@ L2_mangled__:
 	addi	$29, $29, 0x4
 	addi	$29, $29, 0xFFFFFFF0
 	ori	$30, $29, 0x0
-	jal f_mangled__
+	jal fun_f
 	ori	$29, $30, 0x0
 	addi	$29, $29, 0x10
 	lw	$31, 0($29)
@@ -139,8 +139,8 @@ L2_mangled__:
 	sw	$8, 0($29)
 	lw	$8, 0($29)
 	addi	$29, $29, 0x4
-	j L2_mangled__
-L1_mangled__:
+	j L2
+L1:
 	lw	$8, -4($30)
 	addi	$29, $29, 0xFFFFFFFC
 	sw	$8, 0($29)

@@ -11,7 +11,7 @@ main:
 	addi	$29, $29, 0xFFFFFFFC
 	li	$8, 0x1
 	sw	$8, 0($29)
-L2_mangled__:
+L2:
 	lw	$8, -12($30)
 	addi	$29, $29, 0xFFFFFFFC
 	sw	$8, 0($29)
@@ -28,7 +28,7 @@ L2_mangled__:
 	lw	$8, 0($29)
 	addi	$29, $29, 0x4
 	li	$9, 0x0
-	beq	$8, $9, L1_mangled__
+	beq	$8, $9, L1
 	lw	$8, -8($30)
 	addi	$29, $29, 0xFFFFFFFC
 	sw	$8, 0($29)
@@ -64,8 +64,8 @@ L2_mangled__:
 	addi	$29, $29, 0x4
 	lw	$8, 0($29)
 	addi	$29, $29, 0x4
-	j L2_mangled__
-L1_mangled__:
+	j L2
+L1:
 	lw	$8, -12($30)
 	addi	$29, $29, 0xFFFFFFFC
 	sw	$8, 0($29)

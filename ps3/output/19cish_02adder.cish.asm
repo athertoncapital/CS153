@@ -1,6 +1,6 @@
 	.text
 	.align	2
-add_mangled__:
+fun_add:
 	addi	$29, $29, 0xFFFFFFFC
 	li	$8, 0x0
 	sw	$8, 0($29)
@@ -101,7 +101,7 @@ add_mangled__:
 	lw	$8, 0($29)
 	addi	$29, $29, 0x4
 	li	$9, 0x0
-	beq	$8, $9, L14_mangled__
+	beq	$8, $9, L14
 	addi	$29, $29, 0xFFFFFFFC
 	li	$8, 0x0
 	sw	$8, 0($29)
@@ -119,14 +119,14 @@ add_mangled__:
 	addi	$29, $29, 0x4
 	ori	$3, $2, 0x0
 	jr	$31
-	j L13_mangled__
-L14_mangled__:
+	j L13
+L14:
 	addi	$29, $29, 0xFFFFFFFC
 	li	$8, 0x0
 	sw	$8, 0($29)
 	lw	$8, 0($29)
 	addi	$29, $29, 0x4
-L13_mangled__:
+L13:
 	ori	$8, $4, 0x0
 	addi	$29, $29, 0xFFFFFFFC
 	sw	$8, 0($29)
@@ -143,7 +143,7 @@ L13_mangled__:
 	lw	$8, 0($29)
 	addi	$29, $29, 0x4
 	li	$9, 0x0
-	beq	$8, $9, L12_mangled__
+	beq	$8, $9, L12
 	addi	$29, $29, 0xFFFFFFFC
 	li	$8, 0x1
 	sw	$8, 0($29)
@@ -154,8 +154,8 @@ L13_mangled__:
 	sw	$8, 0($29)
 	lw	$8, 0($29)
 	addi	$29, $29, 0x4
-	j L11_mangled__
-L12_mangled__:
+	j L11
+L12:
 	addi	$29, $29, 0xFFFFFFFC
 	li	$8, 0x0
 	sw	$8, 0($29)
@@ -166,7 +166,7 @@ L12_mangled__:
 	sw	$8, 0($29)
 	lw	$8, 0($29)
 	addi	$29, $29, 0x4
-L11_mangled__:
+L11:
 	ori	$8, $4, 0x0
 	addi	$29, $29, 0xFFFFFFFC
 	sw	$8, 0($29)
@@ -213,7 +213,7 @@ L11_mangled__:
 	lw	$8, 0($29)
 	addi	$29, $29, 0x4
 	li	$9, 0x0
-	beq	$8, $9, L10_mangled__
+	beq	$8, $9, L10
 	addi	$29, $29, 0xFFFFFFFC
 	li	$8, 0x1
 	sw	$8, 0($29)
@@ -224,8 +224,8 @@ L11_mangled__:
 	sw	$8, 0($29)
 	lw	$8, 0($29)
 	addi	$29, $29, 0x4
-	j L9_mangled__
-L10_mangled__:
+	j L9
+L10:
 	addi	$29, $29, 0xFFFFFFFC
 	li	$8, 0x0
 	sw	$8, 0($29)
@@ -236,7 +236,7 @@ L10_mangled__:
 	sw	$8, 0($29)
 	lw	$8, 0($29)
 	addi	$29, $29, 0x4
-L9_mangled__:
+L9:
 	ori	$8, $5, 0x0
 	addi	$29, $29, 0xFFFFFFFC
 	sw	$8, 0($29)
@@ -309,7 +309,7 @@ L9_mangled__:
 	lw	$8, 0($29)
 	addi	$29, $29, 0x4
 	li	$9, 0x0
-	beq	$8, $9, L8_mangled__
+	beq	$8, $9, L8
 	addi	$29, $29, 0xFFFFFFFC
 	li	$8, 0x1
 	sw	$8, 0($29)
@@ -320,8 +320,8 @@ L9_mangled__:
 	sw	$8, 0($29)
 	lw	$8, 0($29)
 	addi	$29, $29, 0x4
-	j L7_mangled__
-L8_mangled__:
+	j L7
+L8:
 	addi	$29, $29, 0xFFFFFFFC
 	li	$8, 0x0
 	sw	$8, 0($29)
@@ -332,7 +332,7 @@ L8_mangled__:
 	sw	$8, 0($29)
 	lw	$8, 0($29)
 	addi	$29, $29, 0x4
-L7_mangled__:
+L7:
 	lw	$8, -12($30)
 	addi	$29, $29, 0xFFFFFFFC
 	sw	$8, 0($29)
@@ -349,7 +349,7 @@ L7_mangled__:
 	lw	$8, 0($29)
 	addi	$29, $29, 0x4
 	li	$9, 0x0
-	beq	$8, $9, L6_mangled__
+	beq	$8, $9, L6
 	addi	$29, $29, 0xFFFFFFFC
 	li	$8, 0x1
 	sw	$8, 0($29)
@@ -360,8 +360,8 @@ L7_mangled__:
 	sw	$8, 0($29)
 	lw	$8, 0($29)
 	addi	$29, $29, 0x4
-	j L5_mangled__
-L6_mangled__:
+	j L5
+L6:
 	addi	$29, $29, 0xFFFFFFFC
 	li	$8, 0x0
 	sw	$8, 0($29)
@@ -372,7 +372,7 @@ L6_mangled__:
 	sw	$8, 0($29)
 	lw	$8, 0($29)
 	addi	$29, $29, 0x4
-L5_mangled__:
+L5:
 	lw	$8, -4($30)
 	addi	$29, $29, 0xFFFFFFFC
 	sw	$8, 0($29)
@@ -525,7 +525,7 @@ L5_mangled__:
 	lw	$8, 0($29)
 	addi	$29, $29, 0x4
 	li	$9, 0x0
-	beq	$8, $9, L4_mangled__
+	beq	$8, $9, L4
 	addi	$29, $29, 0xFFFFFFFC
 	li	$8, 0x1
 	sw	$8, 0($29)
@@ -536,8 +536,8 @@ L5_mangled__:
 	sw	$8, 0($29)
 	lw	$8, 0($29)
 	addi	$29, $29, 0x4
-	j L3_mangled__
-L4_mangled__:
+	j L3
+L4:
 	addi	$29, $29, 0xFFFFFFFC
 	li	$8, 0x0
 	sw	$8, 0($29)
@@ -548,7 +548,7 @@ L4_mangled__:
 	sw	$8, 0($29)
 	lw	$8, 0($29)
 	addi	$29, $29, 0x4
-L3_mangled__:
+L3:
 	lw	$8, -4($30)
 	addi	$29, $29, 0xFFFFFFFC
 	sw	$8, 0($29)
@@ -605,7 +605,7 @@ L3_mangled__:
 	lw	$8, 0($29)
 	addi	$29, $29, 0x4
 	li	$9, 0x0
-	beq	$8, $9, L2_mangled__
+	beq	$8, $9, L2
 	addi	$29, $29, 0xFFFFFFFC
 	li	$8, 0x1
 	sw	$8, 0($29)
@@ -616,8 +616,8 @@ L3_mangled__:
 	sw	$8, 0($29)
 	lw	$8, 0($29)
 	addi	$29, $29, 0x4
-	j L1_mangled__
-L2_mangled__:
+	j L1
+L2:
 	addi	$29, $29, 0xFFFFFFFC
 	li	$8, 0x0
 	sw	$8, 0($29)
@@ -628,7 +628,7 @@ L2_mangled__:
 	sw	$8, 0($29)
 	lw	$8, 0($29)
 	addi	$29, $29, 0x4
-L1_mangled__:
+L1:
 	addi	$29, $29, 0xFFFFFFFC
 	li	$8, 0x4
 	sw	$8, 0($29)
@@ -722,7 +722,7 @@ main:
 	addi	$29, $29, 0x4
 	addi	$29, $29, 0xFFFFFFF0
 	ori	$30, $29, 0x0
-	jal add_mangled__
+	jal fun_add
 	ori	$29, $30, 0x0
 	addi	$29, $29, 0x10
 	lw	$31, 0($29)
@@ -757,7 +757,7 @@ main:
 	addi	$29, $29, 0x4
 	addi	$29, $29, 0xFFFFFFF0
 	ori	$30, $29, 0x0
-	jal add_mangled__
+	jal fun_add
 	ori	$29, $30, 0x0
 	addi	$29, $29, 0x10
 	lw	$31, 0($29)
@@ -774,7 +774,7 @@ main:
 	addi	$29, $29, 0x4
 	addi	$29, $29, 0xFFFFFFF0
 	ori	$30, $29, 0x0
-	jal add_mangled__
+	jal fun_add
 	ori	$29, $30, 0x0
 	addi	$29, $29, 0x10
 	lw	$31, 0($29)

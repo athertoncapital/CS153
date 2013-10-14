@@ -46,13 +46,13 @@ let reset() = (reset_offsets(); var_to_offset := VarMap.empty)
 (* helper function for collect_vars:
 adding in vars to VarSet, if the var is already in the set, do nothing *)
 
-let add_argument (v: var) : unit =
+let add_argument (v : var) : unit =
   var_to_offset := VarMap.add v (new_offset()) !var_to_offset
 
-let add_variable_at_offset (v : var) (offset: int): unit =
+let add_variable_at_offset (v : var) (offset : int) : unit =
   var_to_offset := VarMap.add v offset !var_to_offset
 
-let remove_variable (v: var) : unit =
+let remove_variable (v : var) : unit =
   var_to_offset := VarMap.remove v !var_to_offset
 
 let lookup_var (v : var) : int =
@@ -90,7 +90,7 @@ let save_variable (v : var) (r : reg) : inst list =
     else if offset = 12 then [copy_register R7 r]
     else [Sw (r, R30, Word32.fromInt offset)]
 
-let collect_vars (f: Ast.funcsig) : unit =
+let collect_vars (f : Ast.funcsig) : unit =
   List.iter add_argument f.args
 
 let binop_to_inst (b : binop) : inst =
@@ -130,7 +130,7 @@ let rec compile_exp ((e, _) : exp) : inst list =
     let _ = var_minus_offset := old_offset in
     call_inst @ (put_on_stack R2)
 
-and compile_stmt ((s, _):stmt) : inst list =
+and compile_stmt ((s, _) : stmt) : inst list =
   match s with
   | Exp e -> (compile_exp e) @ (pop_from_stack R8)
 
@@ -163,7 +163,7 @@ and compile_stmt ((s, _):stmt) : inst list =
       let _ = remove_variable v in
       new_value @ stmt_inst @ (pop_from_stack R8)
 
-and prologue (callee: var) (es: exp list) : inst list =
+and prologue (callee : var) (es : exp list) : inst list =
   let rec store_args es position : inst list =
     match es with
     | e::tl -> 
@@ -174,7 +174,7 @@ and prologue (callee: var) (es: exp list) : inst list =
       else (compile_exp e) @ (pop_from_stack R8) @ [Sw (R8, R30, (Word32.fromInt (position * 4)))] @ (store_args tl (position + 1))
     | _ -> [] in
 
-  let save_old_args = [Sw (R4, R30, Word32.fromInt 0)] @ [Sw (R5, R30, Word32.fromInt 4)] @ [Sw (R6, R30, Word32.fromInt 8)] @ [Sw (R7, R30, Word32.fromInt 12)] in
+  let save_old_args = [Sw (R4, R30, Word32.fromInt 0); Sw (R5, R30, Word32.fromInt 4); Sw (R6, R30, Word32.fromInt 8); Sw (R7, R30, Word32.fromInt 12)] in
   let save_old_fp = put_on_stack R30 in
   let save_old_ra = put_on_stack R31 in
   let arg_size = if List.length(es) <= 4 then 4 else List.length(es) in
@@ -184,17 +184,17 @@ and prologue (callee: var) (es: exp list) : inst list =
 
   save_old_args @ save_old_fp @ save_old_ra @ store_new_args @ move_sp @ move_fp
 
-and epilogue (es: exp list) : inst list =
+and epilogue (es : exp list) : inst list =
   let arg_size = if List.length(es) <= 4 then 4 else List.length(es) in
   let move_sp_to_fp = [copy_register R29 R30] in
   let pop_args = [Add(R29, R29, Immed(Word32.fromInt(arg_size * 4)))] in
   let restore_ra = pop_from_stack R31 in
   let restore_fp = pop_from_stack R30 in
-  let restore_args = [Lw (R4, R30, Word32.fromInt 0)] @ [Lw (R5, R30, Word32.fromInt 4)] @ [Lw (R6, R30, Word32.fromInt 8)] @ [Lw (R7, R30, Word32.fromInt 12)] in
+  let restore_args = [Lw (R4, R30, Word32.fromInt 0); Lw (R5, R30, Word32.fromInt 4); Lw (R6, R30, Word32.fromInt 8); Lw (R7, R30, Word32.fromInt 12)] in
 
   move_sp_to_fp @ pop_args @ restore_ra @ restore_fp @ restore_args
 
-let compile_fun (f:Ast.funcsig) : Mips.inst list =
+let compile_fun (f : Ast.funcsig) : Mips.inst list =
   let _ = reset() in
   let _ = collect_vars f in
   let init = 
@@ -204,12 +204,12 @@ let compile_fun (f:Ast.funcsig) : Mips.inst list =
   in
   init @ (compile_stmt f.body)
 
-let rec compile (p:Ast.program) : result =
+let rec compile (p : Ast.program) : result =
   let fns = List.map (function Fn f-> f) p in
   let insts = List.fold_left (fun c f -> c @ (compile_fun f)) [] fns in
     {code = insts; data = [] }
 
-let result2string (res:result) : string = 
+let result2string (res : result) : string = 
   let code = res.code in
   let data = res.data in
   let strs = List.map (fun x -> (Mips.inst2string x) ^ "\n") code in
