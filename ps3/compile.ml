@@ -129,7 +129,7 @@ let rec compile_exp ((e, _) : exp) : inst list =
     let call_inst = (prologue c es) @ [Jal (fun_label c)] @ (epilogue es) in
     let _ = var_minus_offset := old_offset in
     call_inst @ (put_on_stack R2)
-
+(* Compiles a statement and makes sure not to move the stack pointer. *)
 and compile_stmt ((s, _) : stmt) : inst list =
   match s with
   | Exp e -> (compile_exp e) @ (pop_from_stack R8)
