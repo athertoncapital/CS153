@@ -183,10 +183,10 @@ and prologue (caller : var) (callee: var) (es: exp list) : inst list =
     | _ -> [] in
 
   let save_old_args = [Sw (R4, R30, Word32.fromInt 0)] @ [Sw (R5, R30, Word32.fromInt 4)] @ [Sw (R6, R30, Word32.fromInt 8)] @ [Sw (R7, R30, Word32.fromInt 12)] in
-  let save_old_ra = [Sw (R31, R16, Word32.fromInt (VarMap.find caller !fun_to_local_var_size))] in
-  let save_old_fp = [Sw (R30, R16, Word32.fromInt ((VarMap.find caller !fun_to_local_var_size) - 4))] in
+  let save_old_ra = [Sw (R31, R16, Word32.fromInt (-(VarMap.find caller !fun_to_local_var_size) -4))] in
+  let save_old_fp = [Sw (R30, R16, Word32.fromInt (-(VarMap.find caller !fun_to_local_var_size) - 8))] in
   let dec_fp = [Add(R30, R30, Immed(Word32.fromInt (-(VarMap.find caller !fun_to_frame_size))))] in
-  let save_old_r16 = [Sw (R16, R29, Word32.fromInt ((VarMap.find caller !fun_to_local_var_size) - 8))] in
+  let save_old_r16 = [Sw (R16, R29, Word32.fromInt (-(VarMap.find caller !fun_to_local_var_size) - 12))] in
   let save_sp = [copy_register R16 R29] in
   let dec_sp = [Add(R29, R29, Immed(Word32.fromInt (-(VarMap.find callee !fun_to_frame_size))))] in
   let store_new_args = store_args es 0 in
@@ -195,9 +195,9 @@ and prologue (caller : var) (callee: var) (es: exp list) : inst list =
 
 and epilogue (caller : var) : inst list =
   let restore_sp = [copy_register R29 R16] in
-  let restore_ra = [Lw (R31, R29, Word32.fromInt (VarMap.find caller !fun_to_local_var_size))] in
-  let restore_fp = [Lw (R30, R29, Word32.fromInt ((VarMap.find caller !fun_to_local_var_size) - 4))] in
-  let restore_r16 = [Lw (R16, R29, Word32.fromInt ((VarMap.find caller !fun_to_local_var_size) - 8))] in
+  let restore_ra = [Lw (R31, R29, Word32.fromInt (-(VarMap.find caller !fun_to_local_var_size) - 4))] in
+  let restore_fp = [Lw (R30, R29, Word32.fromInt (-(VarMap.find caller !fun_to_local_var_size) - 8))] in
+  let restore_r16 = [Lw (R16, R29, Word32.fromInt (-(VarMap.find caller !fun_to_local_var_size) - 12))] in
   let restore_args = [Lw (R4, R30, Word32.fromInt 0)] @ [Lw (R5, R30, Word32.fromInt 4)] @ [Lw (R6, R30, Word32.fromInt 8)] @ [Lw (R7, R30, Word32.fromInt 12)] in
 
   restore_sp @ restore_ra @ restore_fp @ restore_r16 @ restore_args
@@ -205,8 +205,9 @@ and epilogue (caller : var) : inst list =
 let compile_fun (f:Ast.funcsig) : Mips.inst list =
   let init = 
     if f.name = "main" then 
-      [Label ("main")] @ [Add(R30, R0, Reg R0)] @ [Add(R16, R0, Reg R0)] @ [Add(R29, R0, Immed(Word32.fromInt(VarMap.find "main" !fun_to_frame_size)))]
-    else [] in
+      [copy_register R16 R30] @ [Add(R29, R30, Immed(Word32.fromInt(VarMap.find "main" !fun_to_frame_size)))]
+    else []
+  in
   [Label (f.name)] @ init @ (compile_stmt f.name f.body)
 
 let rec compile (p:Ast.program) : result =
