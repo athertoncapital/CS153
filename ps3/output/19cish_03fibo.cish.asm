@@ -1,6 +1,6 @@
 	.text
 	.align	2
-fibo:
+fibo_mangled__:
 	ori	$8, $4, 0x0
 	addi	$29, $29, 0xFFFFFFFC
 	sw	$8, 0($29)
@@ -17,7 +17,7 @@ fibo:
 	lw	$8, 0($29)
 	addi	$29, $29, 0x4
 	li	$9, 0x0
-	beq	$8, $9, L2
+	beq	$8, $9, L2_mangled__
 	ori	$8, $4, 0x0
 	addi	$29, $29, 0xFFFFFFFC
 	sw	$8, 0($29)
@@ -25,8 +25,8 @@ fibo:
 	addi	$29, $29, 0x4
 	ori	$3, $2, 0x0
 	jr	$31
-	j L1
-L2:
+	j L1_mangled__
+L2_mangled__:
 	sw	$4, 0($30)
 	sw	$5, 4($30)
 	sw	$6, 8($30)
@@ -52,8 +52,7 @@ L2:
 	addi	$29, $29, 0x4
 	addi	$29, $29, 0xFFFFFFF0
 	ori	$30, $29, 0x0
-	addi	$29, $29, 0x0
-	jal fibo
+	jal fibo_mangled__
 	ori	$29, $30, 0x0
 	addi	$29, $29, 0x10
 	lw	$31, 0($29)
@@ -91,8 +90,7 @@ L2:
 	addi	$29, $29, 0x4
 	addi	$29, $29, 0xFFFFFFF0
 	ori	$30, $29, 0x0
-	addi	$29, $29, 0x0
-	jal fibo
+	jal fibo_mangled__
 	ori	$29, $30, 0x0
 	addi	$29, $29, 0x10
 	lw	$31, 0($29)
@@ -116,10 +114,9 @@ L2:
 	addi	$29, $29, 0x4
 	ori	$3, $2, 0x0
 	jr	$31
-L1:
+L1_mangled__:
 main:
 	ori	$30, $29, 0x0
-	addi	$29, $30, 0x0
 	sw	$4, 0($30)
 	sw	$5, 4($30)
 	sw	$6, 8($30)
@@ -135,8 +132,7 @@ main:
 	addi	$29, $29, 0x4
 	addi	$29, $29, 0xFFFFFFF0
 	ori	$30, $29, 0x0
-	addi	$29, $29, 0x0
-	jal fibo
+	jal fibo_mangled__
 	ori	$29, $30, 0x0
 	addi	$29, $29, 0x10
 	lw	$31, 0($29)

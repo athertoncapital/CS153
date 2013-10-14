@@ -2,7 +2,13 @@ f(a) {
   return a * a;
 }
 main() {
-  let i = 123; {
-    return f(i);
+  let sum = 0; {
+    let i = 123; {
+      let i = 456; {
+        sum = sum + f(i);
+      }
+      sum = sum + f(i);
+    }
+    return sum;
   }
 }

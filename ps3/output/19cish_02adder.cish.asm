@@ -1,78 +1,30 @@
 	.text
 	.align	2
-add:
-	lw	$8, -24($30)
+add_mangled__:
 	addi	$29, $29, 0xFFFFFFFC
+	li	$8, 0x0
 	sw	$8, 0($29)
 	addi	$29, $29, 0xFFFFFFFC
 	li	$8, 0x0
 	sw	$8, 0($29)
-	lw	$8, 0($29)
-	addi	$29, $29, 0x4
-	sw	$8, -24($30)
-	lw	$8, -32($30)
 	addi	$29, $29, 0xFFFFFFFC
+	li	$8, 0x0
 	sw	$8, 0($29)
 	addi	$29, $29, 0xFFFFFFFC
 	li	$8, 0x0
 	sw	$8, 0($29)
-	lw	$8, 0($29)
-	addi	$29, $29, 0x4
-	sw	$8, -32($30)
-	lw	$8, -20($30)
 	addi	$29, $29, 0xFFFFFFFC
+	li	$8, 0x0
 	sw	$8, 0($29)
 	addi	$29, $29, 0xFFFFFFFC
 	li	$8, 0x0
 	sw	$8, 0($29)
-	lw	$8, 0($29)
-	addi	$29, $29, 0x4
-	sw	$8, -20($30)
-	lw	$8, -28($30)
 	addi	$29, $29, 0xFFFFFFFC
+	li	$8, 0x0
 	sw	$8, 0($29)
 	addi	$29, $29, 0xFFFFFFFC
 	li	$8, 0x0
 	sw	$8, 0($29)
-	lw	$8, 0($29)
-	addi	$29, $29, 0x4
-	sw	$8, -28($30)
-	lw	$8, -12($30)
-	addi	$29, $29, 0xFFFFFFFC
-	sw	$8, 0($29)
-	addi	$29, $29, 0xFFFFFFFC
-	li	$8, 0x0
-	sw	$8, 0($29)
-	lw	$8, 0($29)
-	addi	$29, $29, 0x4
-	sw	$8, -12($30)
-	lw	$8, -4($30)
-	addi	$29, $29, 0xFFFFFFFC
-	sw	$8, 0($29)
-	addi	$29, $29, 0xFFFFFFFC
-	li	$8, 0x0
-	sw	$8, 0($29)
-	lw	$8, 0($29)
-	addi	$29, $29, 0x4
-	sw	$8, -4($30)
-	lw	$8, -16($30)
-	addi	$29, $29, 0xFFFFFFFC
-	sw	$8, 0($29)
-	addi	$29, $29, 0xFFFFFFFC
-	li	$8, 0x0
-	sw	$8, 0($29)
-	lw	$8, 0($29)
-	addi	$29, $29, 0x4
-	sw	$8, -16($30)
-	lw	$8, -8($30)
-	addi	$29, $29, 0xFFFFFFFC
-	sw	$8, 0($29)
-	addi	$29, $29, 0xFFFFFFFC
-	li	$8, 0x0
-	sw	$8, 0($29)
-	lw	$8, 0($29)
-	addi	$29, $29, 0x4
-	sw	$8, -8($30)
 	ori	$8, $4, 0x0
 	addi	$29, $29, 0xFFFFFFFC
 	sw	$8, 0($29)
@@ -149,7 +101,7 @@ add:
 	lw	$8, 0($29)
 	addi	$29, $29, 0x4
 	li	$9, 0x0
-	beq	$8, $9, L14
+	beq	$8, $9, L14_mangled__
 	addi	$29, $29, 0xFFFFFFFC
 	li	$8, 0x0
 	sw	$8, 0($29)
@@ -165,40 +117,16 @@ add:
 	sw	$8, 0($29)
 	lw	$2, 0($29)
 	addi	$29, $29, 0x4
-	lw	$8, 0($29)
-	addi	$29, $29, 0x4
-	sw	$8, -8($30)
-	lw	$8, 0($29)
-	addi	$29, $29, 0x4
-	sw	$8, -16($30)
-	lw	$8, 0($29)
-	addi	$29, $29, 0x4
-	sw	$8, -4($30)
-	lw	$8, 0($29)
-	addi	$29, $29, 0x4
-	sw	$8, -12($30)
-	lw	$8, 0($29)
-	addi	$29, $29, 0x4
-	sw	$8, -28($30)
-	lw	$8, 0($29)
-	addi	$29, $29, 0x4
-	sw	$8, -20($30)
-	lw	$8, 0($29)
-	addi	$29, $29, 0x4
-	sw	$8, -32($30)
-	lw	$8, 0($29)
-	addi	$29, $29, 0x4
-	sw	$8, -24($30)
 	ori	$3, $2, 0x0
 	jr	$31
-	j L13
-L14:
+	j L13_mangled__
+L14_mangled__:
 	addi	$29, $29, 0xFFFFFFFC
 	li	$8, 0x0
 	sw	$8, 0($29)
 	lw	$8, 0($29)
 	addi	$29, $29, 0x4
-L13:
+L13_mangled__:
 	ori	$8, $4, 0x0
 	addi	$29, $29, 0xFFFFFFFC
 	sw	$8, 0($29)
@@ -215,37 +143,37 @@ L13:
 	lw	$8, 0($29)
 	addi	$29, $29, 0x4
 	li	$9, 0x0
-	beq	$8, $9, L12
+	beq	$8, $9, L12_mangled__
 	addi	$29, $29, 0xFFFFFFFC
 	li	$8, 0x1
 	sw	$8, 0($29)
 	lw	$8, 0($29)
 	addi	$29, $29, 0x4
-	sw	$8, -24($30)
+	sw	$8, -4($30)
 	addi	$29, $29, 0xFFFFFFFC
 	sw	$8, 0($29)
 	lw	$8, 0($29)
 	addi	$29, $29, 0x4
-	j L11
-L12:
+	j L11_mangled__
+L12_mangled__:
 	addi	$29, $29, 0xFFFFFFFC
 	li	$8, 0x0
 	sw	$8, 0($29)
 	lw	$8, 0($29)
 	addi	$29, $29, 0x4
-	sw	$8, -24($30)
+	sw	$8, -4($30)
 	addi	$29, $29, 0xFFFFFFFC
 	sw	$8, 0($29)
 	lw	$8, 0($29)
 	addi	$29, $29, 0x4
-L11:
+L11_mangled__:
 	ori	$8, $4, 0x0
 	addi	$29, $29, 0xFFFFFFFC
 	sw	$8, 0($29)
 	addi	$29, $29, 0xFFFFFFFC
 	li	$8, 0x2
 	sw	$8, 0($29)
-	lw	$8, -24($30)
+	lw	$8, -4($30)
 	addi	$29, $29, 0xFFFFFFFC
 	sw	$8, 0($29)
 	lw	$9, 0($29)
@@ -261,6 +189,129 @@ L11:
 	addi	$29, $29, 0x4
 	sub	$8, $8, $9
 	addi	$29, $29, 0xFFFFFFFC
+	sw	$8, 0($29)
+	lw	$8, 0($29)
+	addi	$29, $29, 0x4
+	sw	$8, -12($30)
+	addi	$29, $29, 0xFFFFFFFC
+	sw	$8, 0($29)
+	lw	$8, 0($29)
+	addi	$29, $29, 0x4
+	ori	$8, $5, 0x0
+	addi	$29, $29, 0xFFFFFFFC
+	sw	$8, 0($29)
+	addi	$29, $29, 0xFFFFFFFC
+	li	$8, 0x2
+	sw	$8, 0($29)
+	lw	$9, 0($29)
+	addi	$29, $29, 0x4
+	lw	$8, 0($29)
+	addi	$29, $29, 0x4
+	sge	$8, $8, $9
+	addi	$29, $29, 0xFFFFFFFC
+	sw	$8, 0($29)
+	lw	$8, 0($29)
+	addi	$29, $29, 0x4
+	li	$9, 0x0
+	beq	$8, $9, L10_mangled__
+	addi	$29, $29, 0xFFFFFFFC
+	li	$8, 0x1
+	sw	$8, 0($29)
+	lw	$8, 0($29)
+	addi	$29, $29, 0x4
+	sw	$8, -8($30)
+	addi	$29, $29, 0xFFFFFFFC
+	sw	$8, 0($29)
+	lw	$8, 0($29)
+	addi	$29, $29, 0x4
+	j L9_mangled__
+L10_mangled__:
+	addi	$29, $29, 0xFFFFFFFC
+	li	$8, 0x0
+	sw	$8, 0($29)
+	lw	$8, 0($29)
+	addi	$29, $29, 0x4
+	sw	$8, -8($30)
+	addi	$29, $29, 0xFFFFFFFC
+	sw	$8, 0($29)
+	lw	$8, 0($29)
+	addi	$29, $29, 0x4
+L9_mangled__:
+	ori	$8, $5, 0x0
+	addi	$29, $29, 0xFFFFFFFC
+	sw	$8, 0($29)
+	addi	$29, $29, 0xFFFFFFFC
+	li	$8, 0x2
+	sw	$8, 0($29)
+	lw	$8, -8($30)
+	addi	$29, $29, 0xFFFFFFFC
+	sw	$8, 0($29)
+	lw	$9, 0($29)
+	addi	$29, $29, 0x4
+	lw	$8, 0($29)
+	addi	$29, $29, 0x4
+	mul	$8, $8, $9
+	addi	$29, $29, 0xFFFFFFFC
+	sw	$8, 0($29)
+	lw	$9, 0($29)
+	addi	$29, $29, 0x4
+	lw	$8, 0($29)
+	addi	$29, $29, 0x4
+	sub	$8, $8, $9
+	addi	$29, $29, 0xFFFFFFFC
+	sw	$8, 0($29)
+	lw	$8, 0($29)
+	addi	$29, $29, 0x4
+	sw	$8, -16($30)
+	addi	$29, $29, 0xFFFFFFFC
+	sw	$8, 0($29)
+	lw	$8, 0($29)
+	addi	$29, $29, 0x4
+	lw	$8, -12($30)
+	addi	$29, $29, 0xFFFFFFFC
+	sw	$8, 0($29)
+	lw	$8, -16($30)
+	addi	$29, $29, 0xFFFFFFFC
+	sw	$8, 0($29)
+	lw	$8, 0($29)
+	addi	$29, $29, 0x4
+	lw	$9, 0($29)
+	addi	$29, $29, 0x4
+	or	$8, $8, $9
+	addi	$29, $29, 0xFFFFFFFC
+	sw	$8, 0($29)
+	lw	$8, -12($30)
+	addi	$29, $29, 0xFFFFFFFC
+	sw	$8, 0($29)
+	lw	$8, -16($30)
+	addi	$29, $29, 0xFFFFFFFC
+	sw	$8, 0($29)
+	lw	$8, 0($29)
+	addi	$29, $29, 0x4
+	lw	$9, 0($29)
+	addi	$29, $29, 0x4
+	and	$8, $8, $9
+	addi	$29, $29, 0xFFFFFFFC
+	sw	$8, 0($29)
+	lw	$8, 0($29)
+	addi	$29, $29, 0x4
+	li	$9, 0x0
+	seq	$8, $8, $9
+	addi	$29, $29, 0xFFFFFFFC
+	sw	$8, 0($29)
+	lw	$8, 0($29)
+	addi	$29, $29, 0x4
+	lw	$9, 0($29)
+	addi	$29, $29, 0x4
+	and	$8, $8, $9
+	addi	$29, $29, 0xFFFFFFFC
+	sw	$8, 0($29)
+	lw	$8, 0($29)
+	addi	$29, $29, 0x4
+	li	$9, 0x0
+	beq	$8, $9, L8_mangled__
+	addi	$29, $29, 0xFFFFFFFC
+	li	$8, 0x1
 	sw	$8, 0($29)
 	lw	$8, 0($29)
 	addi	$29, $29, 0x4
@@ -269,68 +320,214 @@ L11:
 	sw	$8, 0($29)
 	lw	$8, 0($29)
 	addi	$29, $29, 0x4
-	ori	$8, $5, 0x0
-	addi	$29, $29, 0xFFFFFFFC
-	sw	$8, 0($29)
-	addi	$29, $29, 0xFFFFFFFC
-	li	$8, 0x2
-	sw	$8, 0($29)
-	lw	$9, 0($29)
-	addi	$29, $29, 0x4
-	lw	$8, 0($29)
-	addi	$29, $29, 0x4
-	sge	$8, $8, $9
-	addi	$29, $29, 0xFFFFFFFC
-	sw	$8, 0($29)
-	lw	$8, 0($29)
-	addi	$29, $29, 0x4
-	li	$9, 0x0
-	beq	$8, $9, L10
-	addi	$29, $29, 0xFFFFFFFC
-	li	$8, 0x1
-	sw	$8, 0($29)
-	lw	$8, 0($29)
-	addi	$29, $29, 0x4
-	sw	$8, -32($30)
-	addi	$29, $29, 0xFFFFFFFC
-	sw	$8, 0($29)
-	lw	$8, 0($29)
-	addi	$29, $29, 0x4
-	j L9
-L10:
+	j L7_mangled__
+L8_mangled__:
 	addi	$29, $29, 0xFFFFFFFC
 	li	$8, 0x0
 	sw	$8, 0($29)
 	lw	$8, 0($29)
 	addi	$29, $29, 0x4
-	sw	$8, -32($30)
+	sw	$8, -20($30)
 	addi	$29, $29, 0xFFFFFFFC
 	sw	$8, 0($29)
 	lw	$8, 0($29)
 	addi	$29, $29, 0x4
-L9:
-	ori	$8, $5, 0x0
+L7_mangled__:
+	lw	$8, -12($30)
 	addi	$29, $29, 0xFFFFFFFC
 	sw	$8, 0($29)
-	addi	$29, $29, 0xFFFFFFFC
-	li	$8, 0x2
-	sw	$8, 0($29)
-	lw	$8, -32($30)
+	lw	$8, -16($30)
 	addi	$29, $29, 0xFFFFFFFC
 	sw	$8, 0($29)
+	lw	$8, 0($29)
+	addi	$29, $29, 0x4
 	lw	$9, 0($29)
 	addi	$29, $29, 0x4
-	lw	$8, 0($29)
-	addi	$29, $29, 0x4
-	mul	$8, $8, $9
+	and	$8, $8, $9
 	addi	$29, $29, 0xFFFFFFFC
 	sw	$8, 0($29)
-	lw	$9, 0($29)
-	addi	$29, $29, 0x4
 	lw	$8, 0($29)
 	addi	$29, $29, 0x4
-	sub	$8, $8, $9
+	li	$9, 0x0
+	beq	$8, $9, L6_mangled__
 	addi	$29, $29, 0xFFFFFFFC
+	li	$8, 0x1
+	sw	$8, 0($29)
+	lw	$8, 0($29)
+	addi	$29, $29, 0x4
+	sw	$8, -24($30)
+	addi	$29, $29, 0xFFFFFFFC
+	sw	$8, 0($29)
+	lw	$8, 0($29)
+	addi	$29, $29, 0x4
+	j L5_mangled__
+L6_mangled__:
+	addi	$29, $29, 0xFFFFFFFC
+	li	$8, 0x0
+	sw	$8, 0($29)
+	lw	$8, 0($29)
+	addi	$29, $29, 0x4
+	sw	$8, -24($30)
+	addi	$29, $29, 0xFFFFFFFC
+	sw	$8, 0($29)
+	lw	$8, 0($29)
+	addi	$29, $29, 0x4
+L5_mangled__:
+	lw	$8, -4($30)
+	addi	$29, $29, 0xFFFFFFFC
+	sw	$8, 0($29)
+	lw	$8, -8($30)
+	addi	$29, $29, 0xFFFFFFFC
+	sw	$8, 0($29)
+	lw	$8, 0($29)
+	addi	$29, $29, 0x4
+	lw	$9, 0($29)
+	addi	$29, $29, 0x4
+	and	$8, $8, $9
+	addi	$29, $29, 0xFFFFFFFC
+	sw	$8, 0($29)
+	lw	$8, -24($30)
+	addi	$29, $29, 0xFFFFFFFC
+	sw	$8, 0($29)
+	lw	$8, 0($29)
+	addi	$29, $29, 0x4
+	lw	$9, 0($29)
+	addi	$29, $29, 0x4
+	and	$8, $8, $9
+	addi	$29, $29, 0xFFFFFFFC
+	sw	$8, 0($29)
+	lw	$8, -4($30)
+	addi	$29, $29, 0xFFFFFFFC
+	sw	$8, 0($29)
+	lw	$8, -8($30)
+	addi	$29, $29, 0xFFFFFFFC
+	sw	$8, 0($29)
+	lw	$8, 0($29)
+	addi	$29, $29, 0x4
+	li	$9, 0x0
+	seq	$8, $8, $9
+	addi	$29, $29, 0xFFFFFFFC
+	sw	$8, 0($29)
+	lw	$8, 0($29)
+	addi	$29, $29, 0x4
+	lw	$9, 0($29)
+	addi	$29, $29, 0x4
+	and	$8, $8, $9
+	addi	$29, $29, 0xFFFFFFFC
+	sw	$8, 0($29)
+	lw	$8, -24($30)
+	addi	$29, $29, 0xFFFFFFFC
+	sw	$8, 0($29)
+	lw	$8, 0($29)
+	addi	$29, $29, 0x4
+	li	$9, 0x0
+	seq	$8, $8, $9
+	addi	$29, $29, 0xFFFFFFFC
+	sw	$8, 0($29)
+	lw	$8, 0($29)
+	addi	$29, $29, 0x4
+	lw	$9, 0($29)
+	addi	$29, $29, 0x4
+	and	$8, $8, $9
+	addi	$29, $29, 0xFFFFFFFC
+	sw	$8, 0($29)
+	lw	$8, 0($29)
+	addi	$29, $29, 0x4
+	lw	$9, 0($29)
+	addi	$29, $29, 0x4
+	or	$8, $8, $9
+	addi	$29, $29, 0xFFFFFFFC
+	sw	$8, 0($29)
+	lw	$8, -4($30)
+	addi	$29, $29, 0xFFFFFFFC
+	sw	$8, 0($29)
+	lw	$8, 0($29)
+	addi	$29, $29, 0x4
+	li	$9, 0x0
+	seq	$8, $8, $9
+	addi	$29, $29, 0xFFFFFFFC
+	sw	$8, 0($29)
+	lw	$8, -8($30)
+	addi	$29, $29, 0xFFFFFFFC
+	sw	$8, 0($29)
+	lw	$8, 0($29)
+	addi	$29, $29, 0x4
+	lw	$9, 0($29)
+	addi	$29, $29, 0x4
+	and	$8, $8, $9
+	addi	$29, $29, 0xFFFFFFFC
+	sw	$8, 0($29)
+	lw	$8, -24($30)
+	addi	$29, $29, 0xFFFFFFFC
+	sw	$8, 0($29)
+	lw	$8, 0($29)
+	addi	$29, $29, 0x4
+	li	$9, 0x0
+	seq	$8, $8, $9
+	addi	$29, $29, 0xFFFFFFFC
+	sw	$8, 0($29)
+	lw	$8, 0($29)
+	addi	$29, $29, 0x4
+	lw	$9, 0($29)
+	addi	$29, $29, 0x4
+	and	$8, $8, $9
+	addi	$29, $29, 0xFFFFFFFC
+	sw	$8, 0($29)
+	lw	$8, 0($29)
+	addi	$29, $29, 0x4
+	lw	$9, 0($29)
+	addi	$29, $29, 0x4
+	or	$8, $8, $9
+	addi	$29, $29, 0xFFFFFFFC
+	sw	$8, 0($29)
+	lw	$8, -4($30)
+	addi	$29, $29, 0xFFFFFFFC
+	sw	$8, 0($29)
+	lw	$8, 0($29)
+	addi	$29, $29, 0x4
+	li	$9, 0x0
+	seq	$8, $8, $9
+	addi	$29, $29, 0xFFFFFFFC
+	sw	$8, 0($29)
+	lw	$8, -8($30)
+	addi	$29, $29, 0xFFFFFFFC
+	sw	$8, 0($29)
+	lw	$8, 0($29)
+	addi	$29, $29, 0x4
+	li	$9, 0x0
+	seq	$8, $8, $9
+	addi	$29, $29, 0xFFFFFFFC
+	sw	$8, 0($29)
+	lw	$8, 0($29)
+	addi	$29, $29, 0x4
+	lw	$9, 0($29)
+	addi	$29, $29, 0x4
+	and	$8, $8, $9
+	addi	$29, $29, 0xFFFFFFFC
+	sw	$8, 0($29)
+	lw	$8, -24($30)
+	addi	$29, $29, 0xFFFFFFFC
+	sw	$8, 0($29)
+	lw	$8, 0($29)
+	addi	$29, $29, 0x4
+	lw	$9, 0($29)
+	addi	$29, $29, 0x4
+	and	$8, $8, $9
+	addi	$29, $29, 0xFFFFFFFC
+	sw	$8, 0($29)
+	lw	$8, 0($29)
+	addi	$29, $29, 0x4
+	lw	$9, 0($29)
+	addi	$29, $29, 0x4
+	or	$8, $8, $9
+	addi	$29, $29, 0xFFFFFFFC
+	sw	$8, 0($29)
+	lw	$8, 0($29)
+	addi	$29, $29, 0x4
+	li	$9, 0x0
+	beq	$8, $9, L4_mangled__
+	addi	$29, $29, 0xFFFFFFFC
+	li	$8, 0x1
 	sw	$8, 0($29)
 	lw	$8, 0($29)
 	addi	$29, $29, 0x4
@@ -339,76 +536,36 @@ L9:
 	sw	$8, 0($29)
 	lw	$8, 0($29)
 	addi	$29, $29, 0x4
-	lw	$8, -20($30)
-	addi	$29, $29, 0xFFFFFFFC
-	sw	$8, 0($29)
-	lw	$8, -28($30)
-	addi	$29, $29, 0xFFFFFFFC
-	sw	$8, 0($29)
-	lw	$8, 0($29)
-	addi	$29, $29, 0x4
-	lw	$9, 0($29)
-	addi	$29, $29, 0x4
-	or	$8, $8, $9
-	addi	$29, $29, 0xFFFFFFFC
-	sw	$8, 0($29)
-	lw	$8, -20($30)
-	addi	$29, $29, 0xFFFFFFFC
-	sw	$8, 0($29)
-	lw	$8, -28($30)
-	addi	$29, $29, 0xFFFFFFFC
-	sw	$8, 0($29)
-	lw	$8, 0($29)
-	addi	$29, $29, 0x4
-	lw	$9, 0($29)
-	addi	$29, $29, 0x4
-	and	$8, $8, $9
-	addi	$29, $29, 0xFFFFFFFC
-	sw	$8, 0($29)
-	lw	$8, 0($29)
-	addi	$29, $29, 0x4
-	li	$9, 0x0
-	seq	$8, $8, $9
-	addi	$29, $29, 0xFFFFFFFC
-	sw	$8, 0($29)
-	lw	$8, 0($29)
-	addi	$29, $29, 0x4
-	lw	$9, 0($29)
-	addi	$29, $29, 0x4
-	and	$8, $8, $9
-	addi	$29, $29, 0xFFFFFFFC
-	sw	$8, 0($29)
-	lw	$8, 0($29)
-	addi	$29, $29, 0x4
-	li	$9, 0x0
-	beq	$8, $9, L8
-	addi	$29, $29, 0xFFFFFFFC
-	li	$8, 0x1
-	sw	$8, 0($29)
-	lw	$8, 0($29)
-	addi	$29, $29, 0x4
-	sw	$8, -12($30)
-	addi	$29, $29, 0xFFFFFFFC
-	sw	$8, 0($29)
-	lw	$8, 0($29)
-	addi	$29, $29, 0x4
-	j L7
-L8:
+	j L3_mangled__
+L4_mangled__:
 	addi	$29, $29, 0xFFFFFFFC
 	li	$8, 0x0
 	sw	$8, 0($29)
 	lw	$8, 0($29)
 	addi	$29, $29, 0x4
-	sw	$8, -12($30)
+	sw	$8, -28($30)
 	addi	$29, $29, 0xFFFFFFFC
 	sw	$8, 0($29)
 	lw	$8, 0($29)
 	addi	$29, $29, 0x4
-L7:
-	lw	$8, -20($30)
+L3_mangled__:
+	lw	$8, -4($30)
 	addi	$29, $29, 0xFFFFFFFC
 	sw	$8, 0($29)
-	lw	$8, -28($30)
+	lw	$8, -8($30)
+	addi	$29, $29, 0xFFFFFFFC
+	sw	$8, 0($29)
+	lw	$8, 0($29)
+	addi	$29, $29, 0x4
+	lw	$9, 0($29)
+	addi	$29, $29, 0x4
+	and	$8, $8, $9
+	addi	$29, $29, 0xFFFFFFFC
+	sw	$8, 0($29)
+	lw	$8, -4($30)
+	addi	$29, $29, 0xFFFFFFFC
+	sw	$8, 0($29)
+	lw	$8, -24($30)
 	addi	$29, $29, 0xFFFFFFFC
 	sw	$8, 0($29)
 	lw	$8, 0($29)
@@ -420,291 +577,62 @@ L7:
 	sw	$8, 0($29)
 	lw	$8, 0($29)
 	addi	$29, $29, 0x4
+	lw	$9, 0($29)
+	addi	$29, $29, 0x4
+	or	$8, $8, $9
+	addi	$29, $29, 0xFFFFFFFC
+	sw	$8, 0($29)
+	lw	$8, -8($30)
+	addi	$29, $29, 0xFFFFFFFC
+	sw	$8, 0($29)
+	lw	$8, -24($30)
+	addi	$29, $29, 0xFFFFFFFC
+	sw	$8, 0($29)
+	lw	$8, 0($29)
+	addi	$29, $29, 0x4
+	lw	$9, 0($29)
+	addi	$29, $29, 0x4
+	and	$8, $8, $9
+	addi	$29, $29, 0xFFFFFFFC
+	sw	$8, 0($29)
+	lw	$8, 0($29)
+	addi	$29, $29, 0x4
+	lw	$9, 0($29)
+	addi	$29, $29, 0x4
+	or	$8, $8, $9
+	addi	$29, $29, 0xFFFFFFFC
+	sw	$8, 0($29)
+	lw	$8, 0($29)
+	addi	$29, $29, 0x4
 	li	$9, 0x0
-	beq	$8, $9, L6
+	beq	$8, $9, L2_mangled__
 	addi	$29, $29, 0xFFFFFFFC
 	li	$8, 0x1
 	sw	$8, 0($29)
 	lw	$8, 0($29)
 	addi	$29, $29, 0x4
-	sw	$8, -4($30)
+	sw	$8, -32($30)
 	addi	$29, $29, 0xFFFFFFFC
 	sw	$8, 0($29)
 	lw	$8, 0($29)
 	addi	$29, $29, 0x4
-	j L5
-L6:
+	j L1_mangled__
+L2_mangled__:
 	addi	$29, $29, 0xFFFFFFFC
 	li	$8, 0x0
 	sw	$8, 0($29)
 	lw	$8, 0($29)
 	addi	$29, $29, 0x4
-	sw	$8, -4($30)
+	sw	$8, -32($30)
 	addi	$29, $29, 0xFFFFFFFC
 	sw	$8, 0($29)
 	lw	$8, 0($29)
 	addi	$29, $29, 0x4
-L5:
-	lw	$8, -24($30)
-	addi	$29, $29, 0xFFFFFFFC
-	sw	$8, 0($29)
-	lw	$8, -32($30)
-	addi	$29, $29, 0xFFFFFFFC
-	sw	$8, 0($29)
-	lw	$8, 0($29)
-	addi	$29, $29, 0x4
-	lw	$9, 0($29)
-	addi	$29, $29, 0x4
-	and	$8, $8, $9
-	addi	$29, $29, 0xFFFFFFFC
-	sw	$8, 0($29)
-	lw	$8, -4($30)
-	addi	$29, $29, 0xFFFFFFFC
-	sw	$8, 0($29)
-	lw	$8, 0($29)
-	addi	$29, $29, 0x4
-	lw	$9, 0($29)
-	addi	$29, $29, 0x4
-	and	$8, $8, $9
-	addi	$29, $29, 0xFFFFFFFC
-	sw	$8, 0($29)
-	lw	$8, -24($30)
-	addi	$29, $29, 0xFFFFFFFC
-	sw	$8, 0($29)
-	lw	$8, -32($30)
-	addi	$29, $29, 0xFFFFFFFC
-	sw	$8, 0($29)
-	lw	$8, 0($29)
-	addi	$29, $29, 0x4
-	li	$9, 0x0
-	seq	$8, $8, $9
-	addi	$29, $29, 0xFFFFFFFC
-	sw	$8, 0($29)
-	lw	$8, 0($29)
-	addi	$29, $29, 0x4
-	lw	$9, 0($29)
-	addi	$29, $29, 0x4
-	and	$8, $8, $9
-	addi	$29, $29, 0xFFFFFFFC
-	sw	$8, 0($29)
-	lw	$8, -4($30)
-	addi	$29, $29, 0xFFFFFFFC
-	sw	$8, 0($29)
-	lw	$8, 0($29)
-	addi	$29, $29, 0x4
-	li	$9, 0x0
-	seq	$8, $8, $9
-	addi	$29, $29, 0xFFFFFFFC
-	sw	$8, 0($29)
-	lw	$8, 0($29)
-	addi	$29, $29, 0x4
-	lw	$9, 0($29)
-	addi	$29, $29, 0x4
-	and	$8, $8, $9
-	addi	$29, $29, 0xFFFFFFFC
-	sw	$8, 0($29)
-	lw	$8, 0($29)
-	addi	$29, $29, 0x4
-	lw	$9, 0($29)
-	addi	$29, $29, 0x4
-	or	$8, $8, $9
-	addi	$29, $29, 0xFFFFFFFC
-	sw	$8, 0($29)
-	lw	$8, -24($30)
-	addi	$29, $29, 0xFFFFFFFC
-	sw	$8, 0($29)
-	lw	$8, 0($29)
-	addi	$29, $29, 0x4
-	li	$9, 0x0
-	seq	$8, $8, $9
-	addi	$29, $29, 0xFFFFFFFC
-	sw	$8, 0($29)
-	lw	$8, -32($30)
-	addi	$29, $29, 0xFFFFFFFC
-	sw	$8, 0($29)
-	lw	$8, 0($29)
-	addi	$29, $29, 0x4
-	lw	$9, 0($29)
-	addi	$29, $29, 0x4
-	and	$8, $8, $9
-	addi	$29, $29, 0xFFFFFFFC
-	sw	$8, 0($29)
-	lw	$8, -4($30)
-	addi	$29, $29, 0xFFFFFFFC
-	sw	$8, 0($29)
-	lw	$8, 0($29)
-	addi	$29, $29, 0x4
-	li	$9, 0x0
-	seq	$8, $8, $9
-	addi	$29, $29, 0xFFFFFFFC
-	sw	$8, 0($29)
-	lw	$8, 0($29)
-	addi	$29, $29, 0x4
-	lw	$9, 0($29)
-	addi	$29, $29, 0x4
-	and	$8, $8, $9
-	addi	$29, $29, 0xFFFFFFFC
-	sw	$8, 0($29)
-	lw	$8, 0($29)
-	addi	$29, $29, 0x4
-	lw	$9, 0($29)
-	addi	$29, $29, 0x4
-	or	$8, $8, $9
-	addi	$29, $29, 0xFFFFFFFC
-	sw	$8, 0($29)
-	lw	$8, -24($30)
-	addi	$29, $29, 0xFFFFFFFC
-	sw	$8, 0($29)
-	lw	$8, 0($29)
-	addi	$29, $29, 0x4
-	li	$9, 0x0
-	seq	$8, $8, $9
-	addi	$29, $29, 0xFFFFFFFC
-	sw	$8, 0($29)
-	lw	$8, -32($30)
-	addi	$29, $29, 0xFFFFFFFC
-	sw	$8, 0($29)
-	lw	$8, 0($29)
-	addi	$29, $29, 0x4
-	li	$9, 0x0
-	seq	$8, $8, $9
-	addi	$29, $29, 0xFFFFFFFC
-	sw	$8, 0($29)
-	lw	$8, 0($29)
-	addi	$29, $29, 0x4
-	lw	$9, 0($29)
-	addi	$29, $29, 0x4
-	and	$8, $8, $9
-	addi	$29, $29, 0xFFFFFFFC
-	sw	$8, 0($29)
-	lw	$8, -4($30)
-	addi	$29, $29, 0xFFFFFFFC
-	sw	$8, 0($29)
-	lw	$8, 0($29)
-	addi	$29, $29, 0x4
-	lw	$9, 0($29)
-	addi	$29, $29, 0x4
-	and	$8, $8, $9
-	addi	$29, $29, 0xFFFFFFFC
-	sw	$8, 0($29)
-	lw	$8, 0($29)
-	addi	$29, $29, 0x4
-	lw	$9, 0($29)
-	addi	$29, $29, 0x4
-	or	$8, $8, $9
-	addi	$29, $29, 0xFFFFFFFC
-	sw	$8, 0($29)
-	lw	$8, 0($29)
-	addi	$29, $29, 0x4
-	li	$9, 0x0
-	beq	$8, $9, L4
-	addi	$29, $29, 0xFFFFFFFC
-	li	$8, 0x1
-	sw	$8, 0($29)
-	lw	$8, 0($29)
-	addi	$29, $29, 0x4
-	sw	$8, -16($30)
-	addi	$29, $29, 0xFFFFFFFC
-	sw	$8, 0($29)
-	lw	$8, 0($29)
-	addi	$29, $29, 0x4
-	j L3
-L4:
-	addi	$29, $29, 0xFFFFFFFC
-	li	$8, 0x0
-	sw	$8, 0($29)
-	lw	$8, 0($29)
-	addi	$29, $29, 0x4
-	sw	$8, -16($30)
-	addi	$29, $29, 0xFFFFFFFC
-	sw	$8, 0($29)
-	lw	$8, 0($29)
-	addi	$29, $29, 0x4
-L3:
-	lw	$8, -24($30)
-	addi	$29, $29, 0xFFFFFFFC
-	sw	$8, 0($29)
-	lw	$8, -32($30)
-	addi	$29, $29, 0xFFFFFFFC
-	sw	$8, 0($29)
-	lw	$8, 0($29)
-	addi	$29, $29, 0x4
-	lw	$9, 0($29)
-	addi	$29, $29, 0x4
-	and	$8, $8, $9
-	addi	$29, $29, 0xFFFFFFFC
-	sw	$8, 0($29)
-	lw	$8, -24($30)
-	addi	$29, $29, 0xFFFFFFFC
-	sw	$8, 0($29)
-	lw	$8, -4($30)
-	addi	$29, $29, 0xFFFFFFFC
-	sw	$8, 0($29)
-	lw	$8, 0($29)
-	addi	$29, $29, 0x4
-	lw	$9, 0($29)
-	addi	$29, $29, 0x4
-	and	$8, $8, $9
-	addi	$29, $29, 0xFFFFFFFC
-	sw	$8, 0($29)
-	lw	$8, 0($29)
-	addi	$29, $29, 0x4
-	lw	$9, 0($29)
-	addi	$29, $29, 0x4
-	or	$8, $8, $9
-	addi	$29, $29, 0xFFFFFFFC
-	sw	$8, 0($29)
-	lw	$8, -32($30)
-	addi	$29, $29, 0xFFFFFFFC
-	sw	$8, 0($29)
-	lw	$8, -4($30)
-	addi	$29, $29, 0xFFFFFFFC
-	sw	$8, 0($29)
-	lw	$8, 0($29)
-	addi	$29, $29, 0x4
-	lw	$9, 0($29)
-	addi	$29, $29, 0x4
-	and	$8, $8, $9
-	addi	$29, $29, 0xFFFFFFFC
-	sw	$8, 0($29)
-	lw	$8, 0($29)
-	addi	$29, $29, 0x4
-	lw	$9, 0($29)
-	addi	$29, $29, 0x4
-	or	$8, $8, $9
-	addi	$29, $29, 0xFFFFFFFC
-	sw	$8, 0($29)
-	lw	$8, 0($29)
-	addi	$29, $29, 0x4
-	li	$9, 0x0
-	beq	$8, $9, L2
-	addi	$29, $29, 0xFFFFFFFC
-	li	$8, 0x1
-	sw	$8, 0($29)
-	lw	$8, 0($29)
-	addi	$29, $29, 0x4
-	sw	$8, -8($30)
-	addi	$29, $29, 0xFFFFFFFC
-	sw	$8, 0($29)
-	lw	$8, 0($29)
-	addi	$29, $29, 0x4
-	j L1
-L2:
-	addi	$29, $29, 0xFFFFFFFC
-	li	$8, 0x0
-	sw	$8, 0($29)
-	lw	$8, 0($29)
-	addi	$29, $29, 0x4
-	sw	$8, -8($30)
-	addi	$29, $29, 0xFFFFFFFC
-	sw	$8, 0($29)
-	lw	$8, 0($29)
-	addi	$29, $29, 0x4
-L1:
+L1_mangled__:
 	addi	$29, $29, 0xFFFFFFFC
 	li	$8, 0x4
 	sw	$8, 0($29)
-	lw	$8, -8($30)
+	lw	$8, -32($30)
 	addi	$29, $29, 0xFFFFFFFC
 	sw	$8, 0($29)
 	lw	$9, 0($29)
@@ -717,7 +645,7 @@ L1:
 	addi	$29, $29, 0xFFFFFFFC
 	li	$8, 0x2
 	sw	$8, 0($29)
-	lw	$8, -16($30)
+	lw	$8, -28($30)
 	addi	$29, $29, 0xFFFFFFFC
 	sw	$8, 0($29)
 	lw	$9, 0($29)
@@ -734,7 +662,7 @@ L1:
 	add	$8, $8, $9
 	addi	$29, $29, 0xFFFFFFFC
 	sw	$8, 0($29)
-	lw	$8, -12($30)
+	lw	$8, -20($30)
 	addi	$29, $29, 0xFFFFFFFC
 	sw	$8, 0($29)
 	lw	$9, 0($29)
@@ -746,35 +674,26 @@ L1:
 	sw	$8, 0($29)
 	lw	$2, 0($29)
 	addi	$29, $29, 0x4
-	lw	$8, 0($29)
-	addi	$29, $29, 0x4
-	sw	$8, -8($30)
-	lw	$8, 0($29)
-	addi	$29, $29, 0x4
-	sw	$8, -16($30)
-	lw	$8, 0($29)
-	addi	$29, $29, 0x4
-	sw	$8, -4($30)
-	lw	$8, 0($29)
-	addi	$29, $29, 0x4
-	sw	$8, -12($30)
-	lw	$8, 0($29)
-	addi	$29, $29, 0x4
-	sw	$8, -28($30)
-	lw	$8, 0($29)
-	addi	$29, $29, 0x4
-	sw	$8, -20($30)
-	lw	$8, 0($29)
-	addi	$29, $29, 0x4
-	sw	$8, -32($30)
-	lw	$8, 0($29)
-	addi	$29, $29, 0x4
-	sw	$8, -24($30)
 	ori	$3, $2, 0x0
 	jr	$31
+	lw	$8, 0($29)
+	addi	$29, $29, 0x4
+	lw	$8, 0($29)
+	addi	$29, $29, 0x4
+	lw	$8, 0($29)
+	addi	$29, $29, 0x4
+	lw	$8, 0($29)
+	addi	$29, $29, 0x4
+	lw	$8, 0($29)
+	addi	$29, $29, 0x4
+	lw	$8, 0($29)
+	addi	$29, $29, 0x4
+	lw	$8, 0($29)
+	addi	$29, $29, 0x4
+	lw	$8, 0($29)
+	addi	$29, $29, 0x4
 main:
 	ori	$30, $29, 0x0
-	addi	$29, $30, 0x0
 	sw	$4, 0($30)
 	sw	$5, 4($30)
 	sw	$6, 8($30)
@@ -803,8 +722,7 @@ main:
 	addi	$29, $29, 0x4
 	addi	$29, $29, 0xFFFFFFF0
 	ori	$30, $29, 0x0
-	addi	$29, $29, 0xFFFFFFE0
-	jal add
+	jal add_mangled__
 	ori	$29, $30, 0x0
 	addi	$29, $29, 0x10
 	lw	$31, 0($29)
@@ -839,8 +757,7 @@ main:
 	addi	$29, $29, 0x4
 	addi	$29, $29, 0xFFFFFFF0
 	ori	$30, $29, 0x0
-	addi	$29, $29, 0xFFFFFFE0
-	jal add
+	jal add_mangled__
 	ori	$29, $30, 0x0
 	addi	$29, $29, 0x10
 	lw	$31, 0($29)
@@ -857,8 +774,7 @@ main:
 	addi	$29, $29, 0x4
 	addi	$29, $29, 0xFFFFFFF0
 	ori	$30, $29, 0x0
-	addi	$29, $29, 0xFFFFFFE0
-	jal add
+	jal add_mangled__
 	ori	$29, $30, 0x0
 	addi	$29, $29, 0x10
 	lw	$31, 0($29)

@@ -1,6 +1,6 @@
 	.text
 	.align	2
-fact:
+fact_mangled__:
 	ori	$8, $4, 0x0
 	addi	$29, $29, 0xFFFFFFFC
 	sw	$8, 0($29)
@@ -17,7 +17,7 @@ fact:
 	lw	$8, 0($29)
 	addi	$29, $29, 0x4
 	li	$9, 0x0
-	beq	$8, $9, L2
+	beq	$8, $9, L2_mangled__
 	addi	$29, $29, 0xFFFFFFFC
 	li	$8, 0x1
 	sw	$8, 0($29)
@@ -25,8 +25,8 @@ fact:
 	addi	$29, $29, 0x4
 	ori	$3, $2, 0x0
 	jr	$31
-	j L1
-L2:
+	j L1_mangled__
+L2_mangled__:
 	ori	$8, $4, 0x0
 	addi	$29, $29, 0xFFFFFFFC
 	sw	$8, 0($29)
@@ -55,8 +55,7 @@ L2:
 	addi	$29, $29, 0x4
 	addi	$29, $29, 0xFFFFFFF0
 	ori	$30, $29, 0x0
-	addi	$29, $29, 0x0
-	jal fact
+	jal fact_mangled__
 	ori	$29, $30, 0x0
 	addi	$29, $29, 0x10
 	lw	$31, 0($29)
@@ -80,8 +79,8 @@ L2:
 	addi	$29, $29, 0x4
 	ori	$3, $2, 0x0
 	jr	$31
-L1:
-g:
+L1_mangled__:
+g_mangled__:
 	sw	$4, 0($30)
 	sw	$5, 4($30)
 	sw	$6, 8($30)
@@ -97,8 +96,7 @@ g:
 	addi	$29, $29, 0x4
 	addi	$29, $29, 0xFFFFFFF0
 	ori	$30, $29, 0x0
-	addi	$29, $29, 0x0
-	jal fact
+	jal fact_mangled__
 	ori	$29, $30, 0x0
 	addi	$29, $29, 0x10
 	lw	$31, 0($29)
@@ -126,8 +124,7 @@ g:
 	addi	$29, $29, 0x4
 	addi	$29, $29, 0xFFFFFFF0
 	ori	$30, $29, 0x0
-	addi	$29, $29, 0x0
-	jal fact
+	jal fact_mangled__
 	ori	$29, $30, 0x0
 	addi	$29, $29, 0x10
 	lw	$31, 0($29)
@@ -153,18 +150,8 @@ g:
 	jr	$31
 main:
 	ori	$30, $29, 0x0
-	addi	$29, $30, 0xFFFFFFF8
-	lw	$8, -4($30)
-	addi	$29, $29, 0xFFFFFFFC
-	sw	$8, 0($29)
 	addi	$29, $29, 0xFFFFFFFC
 	li	$8, 0x3
-	sw	$8, 0($29)
-	lw	$8, 0($29)
-	addi	$29, $29, 0x4
-	sw	$8, -4($30)
-	lw	$8, -8($30)
-	addi	$29, $29, 0xFFFFFFFC
 	sw	$8, 0($29)
 	lw	$8, -4($30)
 	addi	$29, $29, 0xFFFFFFFC
@@ -179,9 +166,6 @@ main:
 	add	$8, $8, $9
 	addi	$29, $29, 0xFFFFFFFC
 	sw	$8, 0($29)
-	lw	$8, 0($29)
-	addi	$29, $29, 0x4
-	sw	$8, -8($30)
 	sw	$4, 0($30)
 	sw	$5, 4($30)
 	sw	$6, 8($30)
@@ -202,8 +186,7 @@ main:
 	addi	$29, $29, 0x4
 	addi	$29, $29, 0xFFFFFFF0
 	ori	$30, $29, 0x0
-	addi	$29, $29, 0x0
-	jal g
+	jal g_mangled__
 	ori	$29, $30, 0x0
 	addi	$29, $29, 0x10
 	lw	$31, 0($29)
@@ -218,14 +201,12 @@ main:
 	sw	$2, 0($29)
 	lw	$2, 0($29)
 	addi	$29, $29, 0x4
-	lw	$8, 0($29)
-	addi	$29, $29, 0x4
-	sw	$8, -8($30)
-	lw	$8, 0($29)
-	addi	$29, $29, 0x4
-	sw	$8, -4($30)
 	ori	$3, $2, 0x0
 	jr	$31
+	lw	$8, 0($29)
+	addi	$29, $29, 0x4
+	lw	$8, 0($29)
+	addi	$29, $29, 0x4
 
 
 	.data

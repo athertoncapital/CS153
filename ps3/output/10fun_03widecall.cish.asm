@@ -1,6 +1,6 @@
 	.text
 	.align	2
-f:
+f_mangled__:
 	ori	$8, $4, 0x0
 	addi	$29, $29, 0xFFFFFFFC
 	sw	$8, 0($29)
@@ -100,7 +100,6 @@ f:
 	jr	$31
 main:
 	ori	$30, $29, 0x0
-	addi	$29, $30, 0x0
 	sw	$4, 0($30)
 	sw	$5, 4($30)
 	sw	$6, 8($30)
@@ -137,8 +136,7 @@ main:
 	sw	$8, 16($30)
 	addi	$29, $29, 0xFFFFFFEC
 	ori	$30, $29, 0x0
-	addi	$29, $29, 0x0
-	jal f
+	jal f_mangled__
 	ori	$29, $30, 0x0
 	addi	$29, $29, 0x14
 	lw	$31, 0($29)
@@ -187,8 +185,7 @@ main:
 	sw	$8, 16($30)
 	addi	$29, $29, 0xFFFFFFEC
 	ori	$30, $29, 0x0
-	addi	$29, $29, 0x0
-	jal f
+	jal f_mangled__
 	ori	$29, $30, 0x0
 	addi	$29, $29, 0x14
 	lw	$31, 0($29)

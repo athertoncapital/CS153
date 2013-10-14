@@ -2,25 +2,12 @@
 	.align	2
 main:
 	ori	$30, $29, 0x0
-	addi	$29, $30, 0xFFFFFFF8
-	lw	$8, -4($30)
-	addi	$29, $29, 0xFFFFFFFC
-	sw	$8, 0($29)
 	addi	$29, $29, 0xFFFFFFFC
 	li	$8, 0x1
-	sw	$8, 0($29)
-	lw	$8, 0($29)
-	addi	$29, $29, 0x4
-	sw	$8, -4($30)
-	lw	$8, -8($30)
-	addi	$29, $29, 0xFFFFFFFC
 	sw	$8, 0($29)
 	addi	$29, $29, 0xFFFFFFFC
 	li	$8, 0x2
 	sw	$8, 0($29)
-	lw	$8, 0($29)
-	addi	$29, $29, 0x4
-	sw	$8, -8($30)
 	lw	$8, -4($30)
 	addi	$29, $29, 0xFFFFFFFC
 	sw	$8, 0($29)
@@ -37,36 +24,28 @@ main:
 	lw	$8, 0($29)
 	addi	$29, $29, 0x4
 	li	$9, 0x0
-	beq	$8, $9, L2
+	beq	$8, $9, L2_mangled__
 	addi	$29, $29, 0xFFFFFFFC
 	li	$8, 0x5
 	sw	$8, 0($29)
 	lw	$2, 0($29)
 	addi	$29, $29, 0x4
-	lw	$8, 0($29)
-	addi	$29, $29, 0x4
-	sw	$8, -8($30)
-	lw	$8, 0($29)
-	addi	$29, $29, 0x4
-	sw	$8, -4($30)
 	ori	$3, $2, 0x0
 	jr	$31
-	j L1
-L2:
+	j L1_mangled__
+L2_mangled__:
 	addi	$29, $29, 0xFFFFFFFC
 	li	$8, 0xA
 	sw	$8, 0($29)
 	lw	$2, 0($29)
 	addi	$29, $29, 0x4
-	lw	$8, 0($29)
-	addi	$29, $29, 0x4
-	sw	$8, -8($30)
-	lw	$8, 0($29)
-	addi	$29, $29, 0x4
-	sw	$8, -4($30)
 	ori	$3, $2, 0x0
 	jr	$31
-L1:
+L1_mangled__:
+	lw	$8, 0($29)
+	addi	$29, $29, 0x4
+	lw	$8, 0($29)
+	addi	$29, $29, 0x4
 
 
 	.data

@@ -2,36 +2,17 @@
 	.align	2
 main:
 	ori	$30, $29, 0x0
-	addi	$29, $30, 0xFFFFFFF0
-	lw	$8, -4($30)
-	addi	$29, $29, 0xFFFFFFFC
-	sw	$8, 0($29)
 	addi	$29, $29, 0xFFFFFFFC
 	li	$8, 0x3E8
-	sw	$8, 0($29)
-	lw	$8, 0($29)
-	addi	$29, $29, 0x4
-	sw	$8, -4($30)
-	lw	$8, -12($30)
-	addi	$29, $29, 0xFFFFFFFC
 	sw	$8, 0($29)
 	addi	$29, $29, 0xFFFFFFFC
 	li	$8, 0x0
 	sw	$8, 0($29)
-	lw	$8, 0($29)
-	addi	$29, $29, 0x4
-	sw	$8, -12($30)
-	lw	$8, -16($30)
-	addi	$29, $29, 0xFFFFFFFC
-	sw	$8, 0($29)
 	addi	$29, $29, 0xFFFFFFFC
 	li	$8, 0x1
 	sw	$8, 0($29)
-	lw	$8, 0($29)
-	addi	$29, $29, 0x4
-	sw	$8, -16($30)
-L2:
-	lw	$8, -16($30)
+L2_mangled__:
+	lw	$8, -12($30)
 	addi	$29, $29, 0xFFFFFFFC
 	sw	$8, 0($29)
 	lw	$8, -4($30)
@@ -47,14 +28,11 @@ L2:
 	lw	$8, 0($29)
 	addi	$29, $29, 0x4
 	li	$9, 0x0
-	beq	$8, $9, L1
+	beq	$8, $9, L1_mangled__
 	lw	$8, -8($30)
 	addi	$29, $29, 0xFFFFFFFC
 	sw	$8, 0($29)
 	lw	$8, -12($30)
-	addi	$29, $29, 0xFFFFFFFC
-	sw	$8, 0($29)
-	lw	$8, -16($30)
 	addi	$29, $29, 0xFFFFFFFC
 	sw	$8, 0($29)
 	lw	$9, 0($29)
@@ -64,9 +42,16 @@ L2:
 	add	$8, $8, $9
 	addi	$29, $29, 0xFFFFFFFC
 	sw	$8, 0($29)
+	lw	$8, -12($30)
+	addi	$29, $29, 0xFFFFFFFC
+	sw	$8, 0($29)
 	lw	$8, 0($29)
 	addi	$29, $29, 0x4
 	sw	$8, -8($30)
+	addi	$29, $29, 0xFFFFFFFC
+	sw	$8, 0($29)
+	lw	$8, 0($29)
+	addi	$29, $29, 0x4
 	lw	$8, -16($30)
 	addi	$29, $29, 0xFFFFFFFC
 	sw	$8, 0($29)
@@ -77,34 +62,23 @@ L2:
 	sw	$8, 0($29)
 	lw	$8, 0($29)
 	addi	$29, $29, 0x4
-	lw	$8, -8($30)
-	addi	$29, $29, 0xFFFFFFFC
-	sw	$8, 0($29)
 	lw	$8, 0($29)
 	addi	$29, $29, 0x4
-	sw	$8, -16($30)
-	addi	$29, $29, 0xFFFFFFFC
-	sw	$8, 0($29)
-	lw	$8, 0($29)
-	addi	$29, $29, 0x4
-	j L2
-L1:
-	lw	$8, -16($30)
+	j L2_mangled__
+L1_mangled__:
+	lw	$8, -12($30)
 	addi	$29, $29, 0xFFFFFFFC
 	sw	$8, 0($29)
 	lw	$2, 0($29)
 	addi	$29, $29, 0x4
-	lw	$8, 0($29)
-	addi	$29, $29, 0x4
-	sw	$8, -16($30)
-	lw	$8, 0($29)
-	addi	$29, $29, 0x4
-	sw	$8, -12($30)
-	lw	$8, 0($29)
-	addi	$29, $29, 0x4
-	sw	$8, -4($30)
 	ori	$3, $2, 0x0
 	jr	$31
+	lw	$8, 0($29)
+	addi	$29, $29, 0x4
+	lw	$8, 0($29)
+	addi	$29, $29, 0x4
+	lw	$8, 0($29)
+	addi	$29, $29, 0x4
 
 
 	.data
