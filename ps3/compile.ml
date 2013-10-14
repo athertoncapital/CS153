@@ -104,7 +104,6 @@ let rec arg_vars (fn: var) (args: var list) : unit =
 let fun_vars (f: Ast.funcsig) : unit =
   reset();
 	arg_vars f.name f.args;
-  reset_offsets();
   body_vars f.body;
   VarSet.iter (add_variable f.name) !variables;
   fun_to_frame_size := VarMap.add f.name (- !var_minus_offset) !fun_to_frame_size
