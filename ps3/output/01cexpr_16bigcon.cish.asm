@@ -1,8 +1,9 @@
 	.text
 	.align	2
 main:
+	addi	$30, $29, 0x0
 	addi	$16, $30, 0x0
-	addi	$29, $30, 0x1C
+	addi	$29, $30, 0xFFFFFFE4
 	addi	$29, $29, 0xFFFFFFFC
 	li	$8, 0x0
 	sw	$8, 0($29)

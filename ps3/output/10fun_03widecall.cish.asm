@@ -99,8 +99,9 @@ f:
 	addi	$3, $2, 0x0
 	jr	$31
 main:
+	addi	$30, $29, 0x0
 	addi	$16, $30, 0x0
-	addi	$29, $30, 0x20
+	addi	$29, $30, 0xFFFFFFE0
 	sw	$4, 0($30)
 	sw	$5, 4($30)
 	sw	$6, 8($30)

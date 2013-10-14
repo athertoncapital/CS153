@@ -205,7 +205,7 @@ and epilogue (caller : var) : inst list =
 let compile_fun (f:Ast.funcsig) : Mips.inst list =
   let init = 
     if f.name = "main" then 
-      [copy_register R16 R30] @ [Add(R29, R30, Immed(Word32.fromInt(-(VarMap.find "main" !fun_to_frame_size))))]
+      [copy_register R30 R29; copy_register R16 R30; Add(R29, R30, Immed(Word32.fromInt(-(VarMap.find "main" !fun_to_frame_size))))]
     else []
   in
   [Label (f.name)] @ init @ (compile_stmt f.name f.body)

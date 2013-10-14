@@ -13,8 +13,9 @@ add:
 	addi	$29, $29, 0x4
 	lw	$8, -4($16)
 main:
+	addi	$30, $29, 0x0
 	addi	$16, $30, 0x0
-	addi	$29, $30, 0x1C
+	addi	$29, $30, 0xFFFFFFE4
 	sw	$4, 0($30)
 	sw	$5, 4($30)
 	sw	$6, 8($30)

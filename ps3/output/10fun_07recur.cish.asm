@@ -89,8 +89,9 @@ L%2:
 	jr	$31
 L%1:
 main:
+	addi	$30, $29, 0x0
 	addi	$16, $30, 0x0
-	addi	$29, $30, 0x1C
+	addi	$29, $30, 0xFFFFFFE4
 	sw	$4, 0($30)
 	sw	$5, 4($30)
 	sw	$6, 8($30)
