@@ -54,6 +54,9 @@ let add_argument (fn: var) (v: var) : unit =
 let add_variable (fn: var) (v : var) : unit =
   var_to_offset := VarMap.add (fn ^ "$" ^ v) (new_minus_offset()) !var_to_offset
 
+let remove_variable (fn: var) (v: var) : unit =
+  var_to_offset := VarMap.remove (fn ^ "$" ^ v) !var_to_offset
+
 let lookup_var (fn: var) (v : var) : int =
   VarMap.find (fn ^ "$" ^ v) !var_to_offset
 
@@ -143,23 +146,23 @@ let rec compile_exp (fn: var) ((e, _) : exp) : inst list =
 
   | Call (c, es) -> (prologue fn c es) @ [Jal c] @ (epilogue fn es) @ (put_on_stack R2)
 
-and compile_stmt (fn: var) ((s, _):stmt) : inst list =
+and compile_stmt (fn: var) ((s, _):stmt) (termination: inst list) : inst list =
   match s with
   | Exp e -> (compile_exp fn e) @ (pop_from_stack R8)
 
-  | Ast.Seq (s1, s2) -> (compile_stmt fn s1) @ (compile_stmt fn s2)
+  | Ast.Seq (s1, s2) -> (compile_stmt fn s1 termination) @ (compile_stmt fn s2 termination)
 
   | If (e, s1, s2) -> let (label1, label2) = (new_label (), new_label ()) in
-                        (compile_exp fn e) @ (pop_from_stack R8) @ [Li (R9, Word32.fromInt 0); Beq (R8, R9, label1)] @ (compile_stmt fn s1) @ [J label2; Label label1] @ (compile_stmt fn s2) @ [Label label2]
+                        (compile_exp fn e) @ (pop_from_stack R8) @ [Li (R9, Word32.fromInt 0); Beq (R8, R9, label1)] @ (compile_stmt fn s1 termination) @ [J label2; Label label1] @ (compile_stmt fn s2 termination) @ [Label label2]
 
   | While (e, s) -> let (label1, label2) = (new_label (), new_label ()) in
-                      [Label label1] @ (compile_exp fn e) @ (pop_from_stack R8) @ [Li (R9, Word32.fromInt 0); Beq (R8, R9, label2)] @ (compile_stmt fn s) @ [J label1; Label label2]
+                      [Label label1] @ (compile_exp fn e) @ (pop_from_stack R8) @ [Li (R9, Word32.fromInt 0); Beq (R8, R9, label2)] @ (compile_stmt fn s termination) @ [J label1; Label label2]
 
-  | For (e1, e2, e3, s) -> (compile_exp fn e1) @ (pop_from_stack R8) @ (compile_stmt fn (While (e2, (Ast.Seq (s, (Exp e3, 0)), 0)), 0))
+  | For (e1, e2, e3, s) -> (compile_exp fn e1) @ (pop_from_stack R8) @ (compile_stmt fn (While (e2, (Ast.Seq (s, (Exp e3, 0)), 0)), 0) termination)
 
   | Return e -> (compile_exp fn e) @ (pop_from_stack R2) @ [copy_register R3 R2; Jr R31]
 
-  | Let (v, e, s) -> (load_variable fn v R8) @ (put_on_stack R8) @ (compile_exp fn e) @ (pop_from_stack R8) @ (save_variable fn v R8) @ (compile_stmt fn s) @ (pop_from_stack R8) @ (save_variable fn v R8)
+  | Let (v, e, s) -> (load_variable fn v R8) @ (put_on_stack R8) @ (compile_exp fn e) @ (pop_from_stack R8) @ (save_variable fn v R8) @ (compile_stmt fn s ((pop_from_stack R8) @ (save_variable fn v R8) @ termination))
 
 and prologue (caller : var) (callee: var) (es: exp list) : inst list =
   let rec store_args es position : inst list =
@@ -199,7 +202,7 @@ let compile_fun (f:Ast.funcsig) : Mips.inst list =
       [copy_register R30 R29; Add(R29, R30, Immed(Word32.fromInt(-(VarMap.find "main" !fun_to_frame_size))))]
     else []
   in
-  [Label (f.name)] @ init @ (compile_stmt f.name f.body)
+  [Label (f.name)] @ init @ (compile_stmt f.name f.body [])
 
 let rec compile (p:Ast.program) : result =
   let fns = List.map (function Fn f-> f) p in
