@@ -194,7 +194,7 @@ and epilogue (caller : var) (es: exp list) : inst list =
   let restore_fp = pop_from_stack R30 in
   let restore_args = [Lw (R4, R30, Word32.fromInt 0)] @ [Lw (R5, R30, Word32.fromInt 4)] @ [Lw (R6, R30, Word32.fromInt 8)] @ [Lw (R7, R30, Word32.fromInt 12)] in
 
-  move_sp_to_fp @ pop_args @ restore_ra @ restore_fp  @ restore_args
+  move_sp_to_fp @ pop_args @ restore_ra @ restore_fp @ restore_args
 
 let compile_fun (f:Ast.funcsig) : Mips.inst list =
   let init = 

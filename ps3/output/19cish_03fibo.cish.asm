@@ -35,7 +35,7 @@ L2:
 	sw	$30, 0($29)
 	addi	$29, $29, 0xFFFFFFFC
 	sw	$31, 0($29)
-	addi	$29, $29, 0xFFFFFFFC
+	addi	$29, $29, 0xFFFFFFF0
 	addi	$30, $29, 0x0
 	addi	$8, $4, 0x0
 	addi	$29, $29, 0xFFFFFFFC
@@ -55,7 +55,7 @@ L2:
 	addi	$29, $29, 0x0
 	jal fibo
 	addi	$29, $30, 0x0
-	addi	$29, $29, 0x4
+	addi	$29, $29, 0x10
 	lw	$31, 0($29)
 	addi	$29, $29, 0x4
 	lw	$30, 0($29)
@@ -74,7 +74,7 @@ L2:
 	sw	$30, 0($29)
 	addi	$29, $29, 0xFFFFFFFC
 	sw	$31, 0($29)
-	addi	$29, $29, 0xFFFFFFFC
+	addi	$29, $29, 0xFFFFFFF0
 	addi	$30, $29, 0x0
 	addi	$8, $4, 0x0
 	addi	$29, $29, 0xFFFFFFFC
@@ -94,7 +94,7 @@ L2:
 	addi	$29, $29, 0x0
 	jal fibo
 	addi	$29, $30, 0x0
-	addi	$29, $29, 0x4
+	addi	$29, $29, 0x10
 	lw	$31, 0($29)
 	addi	$29, $29, 0x4
 	lw	$30, 0($29)
@@ -128,7 +128,7 @@ main:
 	sw	$30, 0($29)
 	addi	$29, $29, 0xFFFFFFFC
 	sw	$31, 0($29)
-	addi	$29, $29, 0xFFFFFFFC
+	addi	$29, $29, 0xFFFFFFF0
 	addi	$30, $29, 0x0
 	addi	$29, $29, 0xFFFFFFFC
 	li	$8, 0xB
@@ -138,7 +138,7 @@ main:
 	addi	$29, $29, 0x0
 	jal fibo
 	addi	$29, $30, 0x0
-	addi	$29, $29, 0x4
+	addi	$29, $29, 0x10
 	lw	$31, 0($29)
 	addi	$29, $29, 0x4
 	lw	$30, 0($29)

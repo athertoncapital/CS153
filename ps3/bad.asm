@@ -1,8 +1,18 @@
 	.text
 	.align	2
 f:
+	addi	$8, $4, 0x0
 	addi	$29, $29, 0xFFFFFFFC
-	li	$8, 0x1
+	sw	$8, 0($29)
+	addi	$8, $4, 0x0
+	addi	$29, $29, 0xFFFFFFFC
+	sw	$8, 0($29)
+	lw	$9, 0($29)
+	addi	$29, $29, 0x4
+	lw	$8, 0($29)
+	addi	$29, $29, 0x4
+	mul	$8, $8, $9
+	addi	$29, $29, 0xFFFFFFFC
 	sw	$8, 0($29)
 	lw	$2, 0($29)
 	addi	$29, $29, 0x4
@@ -10,62 +20,16 @@ f:
 	jr	$31
 main:
 	addi	$30, $29, 0x0
-	addi	$29, $30, 0x0
-	sw	$4, 0($30)
-	sw	$5, 4($30)
-	sw	$6, 8($30)
-	sw	$7, 12($30)
-	addi	$29, $29, 0xFFFFFFFC
-	sw	$30, 0($29)
-	addi	$29, $29, 0xFFFFFFFC
-	sw	$31, 0($29)
-	addi	$29, $29, 0xFFFFFFF0
-	addi	$30, $29, 0x0
-	addi	$29, $29, 0x0
-	jal f
-	addi	$29, $30, 0x0
-	addi	$29, $29, 0x10
-	lw	$31, 0($29)
-	addi	$29, $29, 0x4
-	lw	$30, 0($29)
-	addi	$29, $29, 0x4
-	lw	$4, 0($30)
-	lw	$5, 4($30)
-	lw	$6, 8($30)
-	lw	$7, 12($30)
-	addi	$29, $29, 0xFFFFFFFC
-	sw	$2, 0($29)
-	sw	$4, 0($30)
-	sw	$5, 4($30)
-	sw	$6, 8($30)
-	sw	$7, 12($30)
-	addi	$29, $29, 0xFFFFFFFC
-	sw	$30, 0($29)
-	addi	$29, $29, 0xFFFFFFFC
-	sw	$31, 0($29)
-	addi	$29, $29, 0xFFFFFFF0
-	addi	$30, $29, 0x0
-	addi	$29, $29, 0x0
-	jal f
-	addi	$29, $30, 0x0
-	addi	$29, $29, 0x10
-	lw	$31, 0($29)
-	addi	$29, $29, 0x4
-	lw	$30, 0($29)
-	addi	$29, $29, 0x4
-	lw	$4, 0($30)
-	lw	$5, 4($30)
-	lw	$6, 8($30)
-	lw	$7, 12($30)
-	addi	$29, $29, 0xFFFFFFFC
-	sw	$2, 0($29)
-	lw	$9, 0($29)
-	addi	$29, $29, 0x4
-	lw	$8, 0($29)
-	addi	$29, $29, 0x4
-	add	$8, $8, $9
+	addi	$29, $30, 0xFFFFFFFC
+	lw	$8, -4($30)
 	addi	$29, $29, 0xFFFFFFFC
 	sw	$8, 0($29)
+	addi	$29, $29, 0xFFFFFFFC
+	li	$8, 0xA
+	sw	$8, 0($29)
+	lw	$8, 0($29)
+	addi	$29, $29, 0x4
+	sw	$8, -4($30)
 	sw	$4, 0($30)
 	sw	$5, 4($30)
 	sw	$6, 8($30)
@@ -76,6 +40,11 @@ main:
 	sw	$31, 0($29)
 	addi	$29, $29, 0xFFFFFFF0
 	addi	$30, $29, 0x0
+	lw	$8, -4($30)
+	addi	$29, $29, 0xFFFFFFFC
+	sw	$8, 0($29)
+	lw	$4, 0($29)
+	addi	$29, $29, 0x4
 	addi	$29, $29, 0x0
 	jal f
 	addi	$29, $30, 0x0
@@ -90,17 +59,13 @@ main:
 	lw	$7, 12($30)
 	addi	$29, $29, 0xFFFFFFFC
 	sw	$2, 0($29)
-	lw	$9, 0($29)
-	addi	$29, $29, 0x4
-	lw	$8, 0($29)
-	addi	$29, $29, 0x4
-	add	$8, $8, $9
-	addi	$29, $29, 0xFFFFFFFC
-	sw	$8, 0($29)
 	lw	$2, 0($29)
 	addi	$29, $29, 0x4
 	addi	$3, $2, 0x0
 	jr	$31
+	lw	$8, 0($29)
+	addi	$29, $29, 0x4
+	sw	$8, -4($30)
 
 
 	.data

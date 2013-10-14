@@ -759,7 +759,7 @@ main:
 	sw	$30, 0($29)
 	addi	$29, $29, 0xFFFFFFFC
 	sw	$31, 0($29)
-	addi	$29, $29, 0xFFFFFFF8
+	addi	$29, $29, 0xFFFFFFF0
 	addi	$30, $29, 0x0
 	sw	$4, 0($30)
 	sw	$5, 4($30)
@@ -769,7 +769,7 @@ main:
 	sw	$30, 0($29)
 	addi	$29, $29, 0xFFFFFFFC
 	sw	$31, 0($29)
-	addi	$29, $29, 0xFFFFFFF8
+	addi	$29, $29, 0xFFFFFFF0
 	addi	$30, $29, 0x0
 	addi	$29, $29, 0xFFFFFFFC
 	li	$8, 0x1
@@ -784,7 +784,7 @@ main:
 	addi	$29, $29, 0xFFFFFFE0
 	jal add
 	addi	$29, $30, 0x0
-	addi	$29, $29, 0x8
+	addi	$29, $29, 0x10
 	lw	$31, 0($29)
 	addi	$29, $29, 0x4
 	lw	$30, 0($29)
@@ -805,7 +805,7 @@ main:
 	sw	$30, 0($29)
 	addi	$29, $29, 0xFFFFFFFC
 	sw	$31, 0($29)
-	addi	$29, $29, 0xFFFFFFF8
+	addi	$29, $29, 0xFFFFFFF0
 	addi	$30, $29, 0x0
 	addi	$29, $29, 0xFFFFFFFC
 	li	$8, 0x1
@@ -820,7 +820,7 @@ main:
 	addi	$29, $29, 0xFFFFFFE0
 	jal add
 	addi	$29, $30, 0x0
-	addi	$29, $29, 0x8
+	addi	$29, $29, 0x10
 	lw	$31, 0($29)
 	addi	$29, $29, 0x4
 	lw	$30, 0($29)
@@ -836,7 +836,7 @@ main:
 	addi	$29, $29, 0xFFFFFFE0
 	jal add
 	addi	$29, $30, 0x0
-	addi	$29, $29, 0x8
+	addi	$29, $29, 0x10
 	lw	$31, 0($29)
 	addi	$29, $29, 0x4
 	lw	$30, 0($29)

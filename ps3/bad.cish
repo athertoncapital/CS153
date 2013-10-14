@@ -1,0 +1,8 @@
+f(a) {
+  return a * a;
+}
+main() {
+  let i = 10; {
+    return f(i);
+  }
+}
