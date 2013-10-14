@@ -27,7 +27,6 @@ let arguments : VarSet.t ref = ref (VarSet.empty)
 let variables : VarSet.t ref = ref (VarSet.empty)
 let var_to_offset : int VarMap.t ref = ref VarMap.empty
 let fun_to_frame_size : int VarMap.t ref = ref VarMap.empty
-let fun_to_local_var_size : int VarMap.t ref = ref VarMap.empty
 
 let var_offset = ref 0
 let var_minus_offset = ref 0
@@ -110,16 +109,10 @@ let fun_vars (f: Ast.funcsig) : unit =
   reset_offsets();
   body_vars f.body;
   VarSet.iter (add_variable f.name) !variables;
-  fun_to_local_var_size := VarMap.add f.name (- !var_offset) !fun_to_local_var_size
+  fun_to_frame_size := VarMap.add f.name (- !var_offset) !fun_to_frame_size
 
 let collect_vars (fns: Ast.funcsig list) : unit =
 	List.iter fun_vars fns
-
-let determine_frame_sizes (fns: Ast.funcsig list) : unit =
-  let max_arg_len = List.fold_left (fun max f -> if (max >= List.length f.args) then max else (List.length f.args)) 4 fns in
-  let find_frame_size (f: Ast.funcsig) : int =
-    (VarMap.find f.name !fun_to_local_var_size) + max_arg_len * 4 + 12 in
-  fun_to_frame_size := List.fold_left (fun m f -> VarMap.add f.name (find_frame_size f) m) !fun_to_frame_size fns
 
 let binop_to_inst (b : binop) : inst =
   match b with
@@ -151,7 +144,7 @@ let rec compile_exp (fn: var) ((e, _) : exp) : inst list =
 
   | Assign (v, e) -> (compile_exp fn e) @ (pop_from_stack R8) @ (save_variable fn v R8) @ (put_on_stack R8)
 
-  | Call (c, es) -> (prologue fn c es) @ [Jal c] @ (epilogue fn) @ (put_on_stack R2)
+  | Call (c, es) -> (prologue fn c es) @ [Jal c] @ (epilogue fn es) @ (put_on_stack R2)
 
 and compile_stmt (fn: var) ((s, _):stmt) : inst list =
   match s with
@@ -183,29 +176,30 @@ and prologue (caller : var) (callee: var) (es: exp list) : inst list =
     | _ -> [] in
 
   let save_old_args = [Sw (R4, R30, Word32.fromInt 0)] @ [Sw (R5, R30, Word32.fromInt 4)] @ [Sw (R6, R30, Word32.fromInt 8)] @ [Sw (R7, R30, Word32.fromInt 12)] in
-  let save_old_ra = [Sw (R31, R16, Word32.fromInt (-(VarMap.find caller !fun_to_local_var_size) -4))] in
-  let save_old_fp = [Sw (R30, R16, Word32.fromInt (-(VarMap.find caller !fun_to_local_var_size) - 8))] in
-  let dec_fp = [Add(R30, R16, Immed(Word32.fromInt (-(VarMap.find caller !fun_to_frame_size))))] in
-  let save_old_r16 = [Sw (R16, R29, Word32.fromInt (-(VarMap.find caller !fun_to_local_var_size) - 12))] in
-  let save_sp = [copy_register R16 R29] in
-  let dec_sp = [Add(R29, R29, Immed(Word32.fromInt (-(VarMap.find callee !fun_to_frame_size))))] in
+  let save_old_fp = put_on_stack R30 in
+  let save_old_ra = put_on_stack R31 in
+  let arg_size = List.length(es) in
+  let move_sp = [Add(R29, R29, Immed(Word32.fromInt(-arg_size * 4)))] in
+  let move_fp = [copy_register R30 R29] in
   let store_new_args = store_args es 0 in
+  let dec_sp = [Add(R29, R29, Immed(Word32.fromInt (-(VarMap.find callee !fun_to_frame_size))))] in
 
-  save_old_args @ save_old_ra @ save_old_fp @ dec_fp @ save_old_r16 @ save_sp @ dec_sp @ store_new_args
+  save_old_args @ save_old_fp @ save_old_ra @ move_sp @ move_fp @ store_new_args @ dec_sp
 
-and epilogue (caller : var) : inst list =
-  let restore_sp = [copy_register R29 R16] in
-  let restore_r16 = [Lw (R16, R29, Word32.fromInt (-(VarMap.find caller !fun_to_local_var_size) - 12))] in
-  let restore_ra = [Lw (R31, R16, Word32.fromInt (-(VarMap.find caller !fun_to_local_var_size) - 4))] in
-  let restore_fp = [Lw (R30, R16, Word32.fromInt (-(VarMap.find caller !fun_to_local_var_size) - 8))] in
+and epilogue (caller : var) (es: exp list) : inst list =
+  let arg_size = List.length(es) in
+  let move_sp_to_fp = [copy_register R29 R30] in
+  let pop_args = [Add(R29, R29, Immed(Word32.fromInt(arg_size * 4)))] in
+  let restore_ra = pop_from_stack R31 in
+  let restore_fp = pop_from_stack R30 in
   let restore_args = [Lw (R4, R30, Word32.fromInt 0)] @ [Lw (R5, R30, Word32.fromInt 4)] @ [Lw (R6, R30, Word32.fromInt 8)] @ [Lw (R7, R30, Word32.fromInt 12)] in
 
-  restore_sp @ restore_r16 @ restore_ra @ restore_fp  @ restore_args
+  move_sp_to_fp @ pop_args @ restore_ra @ restore_fp  @ restore_args
 
 let compile_fun (f:Ast.funcsig) : Mips.inst list =
   let init = 
     if f.name = "main" then 
-      [copy_register R30 R29; copy_register R16 R30; Add(R29, R30, Immed(Word32.fromInt(-(VarMap.find "main" !fun_to_frame_size))))]
+      [copy_register R30 R29; Add(R29, R30, Immed(Word32.fromInt(-(VarMap.find "main" !fun_to_frame_size))))]
     else []
   in
   [Label (f.name)] @ init @ (compile_stmt f.name f.body)
@@ -213,7 +207,6 @@ let compile_fun (f:Ast.funcsig) : Mips.inst list =
 let rec compile (p:Ast.program) : result =
   let fns = List.map (function Fn f-> f) p in
   let _ = collect_vars fns in
-  let _ = determine_frame_sizes fns in
   let insts = List.fold_left (fun c f -> c @ (compile_fun f)) [] fns in
     {code = insts; data = [] }
 
