@@ -101,7 +101,7 @@ let rec body_vars ((p, _) : stmt) : unit =
 
 let rec arg_vars (fn: var) (args: var list) : unit =
 	match args with
-	| v::tl -> add_arg v; add_variable fn v; arg_vars fn tl
+	| v::tl -> add_arg v; add_argument fn v; arg_vars fn tl
 	| _ -> ()
 
 let fun_vars (f: Ast.funcsig) : unit =
