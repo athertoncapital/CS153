@@ -11,7 +11,10 @@ type result = { code : Mips.inst list;
 (* generate fresh labels *)
 let label_counter = ref 0
 let new_int() = (label_counter := (!label_counter) + 1; !label_counter)
-let new_label() = "L" ^ (string_of_int (new_int())) ^ "_mangled__"
+let new_label() = "L" ^ (string_of_int (new_int()))
+
+let fun_label (f : var) : var =
+  "fun_" ^ f
 
 module VarSet = Set.Make(struct
                            type t = var
@@ -123,7 +126,7 @@ let rec compile_exp ((e, _) : exp) : inst list =
   | Call (c, es) ->
     let old_offset = !var_minus_offset in
     let _ = var_minus_offset := 0 in
-    let call_inst = (prologue c es) @ [Jal (c ^ "_mangled__")] @ (epilogue es) in
+    let call_inst = (prologue c es) @ [Jal (fun_label c)] @ (epilogue es) in
     let _ = var_minus_offset := old_offset in
     call_inst @ (put_on_stack R2)
 
@@ -197,7 +200,7 @@ let compile_fun (f:Ast.funcsig) : Mips.inst list =
   let init = 
     if f.name = "main" then 
       [Label f.name; copy_register R30 R29]
-    else [Label (f.name ^ "_mangled__")]
+    else [Label (fun_label f.name)]
   in
   init @ (compile_stmt f.body)
 
