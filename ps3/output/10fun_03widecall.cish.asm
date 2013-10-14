@@ -1,23 +1,10 @@
 	.text
 	.align	2
 f:
-	lw	$8, -4($16)
+	addi	$8, $4, 0x0
 	addi	$29, $29, 0xFFFFFFFC
 	sw	$8, 0($29)
-	lw	$8, -4($16)
-	addi	$29, $29, 0xFFFFFFFC
-	sw	$8, 0($29)
-	lw	$9, 0($29)
-	addi	$29, $29, 0x4
-	lw	$8, 0($29)
-	addi	$29, $29, 0x4
-	mul	$8, $8, $9
-	addi	$29, $29, 0xFFFFFFFC
-	sw	$8, 0($29)
-	lw	$8, -8($16)
-	addi	$29, $29, 0xFFFFFFFC
-	sw	$8, 0($29)
-	lw	$8, -8($16)
+	addi	$8, $4, 0x0
 	addi	$29, $29, 0xFFFFFFFC
 	sw	$8, 0($29)
 	lw	$9, 0($29)
@@ -27,17 +14,10 @@ f:
 	mul	$8, $8, $9
 	addi	$29, $29, 0xFFFFFFFC
 	sw	$8, 0($29)
-	lw	$9, 0($29)
-	addi	$29, $29, 0x4
-	lw	$8, 0($29)
-	addi	$29, $29, 0x4
-	add	$8, $8, $9
+	addi	$8, $5, 0x0
 	addi	$29, $29, 0xFFFFFFFC
 	sw	$8, 0($29)
-	lw	$8, -12($16)
-	addi	$29, $29, 0xFFFFFFFC
-	sw	$8, 0($29)
-	lw	$8, -12($16)
+	addi	$8, $5, 0x0
 	addi	$29, $29, 0xFFFFFFFC
 	sw	$8, 0($29)
 	lw	$9, 0($29)
@@ -54,10 +34,10 @@ f:
 	add	$8, $8, $9
 	addi	$29, $29, 0xFFFFFFFC
 	sw	$8, 0($29)
-	lw	$8, -16($16)
+	addi	$8, $6, 0x0
 	addi	$29, $29, 0xFFFFFFFC
 	sw	$8, 0($29)
-	lw	$8, -16($16)
+	addi	$8, $6, 0x0
 	addi	$29, $29, 0xFFFFFFFC
 	sw	$8, 0($29)
 	lw	$9, 0($29)
@@ -74,10 +54,30 @@ f:
 	add	$8, $8, $9
 	addi	$29, $29, 0xFFFFFFFC
 	sw	$8, 0($29)
-	lw	$8, -20($16)
+	addi	$8, $7, 0x0
 	addi	$29, $29, 0xFFFFFFFC
 	sw	$8, 0($29)
-	lw	$8, -20($16)
+	addi	$8, $7, 0x0
+	addi	$29, $29, 0xFFFFFFFC
+	sw	$8, 0($29)
+	lw	$9, 0($29)
+	addi	$29, $29, 0x4
+	lw	$8, 0($29)
+	addi	$29, $29, 0x4
+	mul	$8, $8, $9
+	addi	$29, $29, 0xFFFFFFFC
+	sw	$8, 0($29)
+	lw	$9, 0($29)
+	addi	$29, $29, 0x4
+	lw	$8, 0($29)
+	addi	$29, $29, 0x4
+	add	$8, $8, $9
+	addi	$29, $29, 0xFFFFFFFC
+	sw	$8, 0($29)
+	lw	$8, 16($30)
+	addi	$29, $29, 0xFFFFFFFC
+	sw	$8, 0($29)
+	lw	$8, 16($30)
 	addi	$29, $29, 0xFFFFFFFC
 	sw	$8, 0($29)
 	lw	$9, 0($29)

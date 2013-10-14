@@ -1,7 +1,7 @@
 	.text
 	.align	2
 f:
-	lw	$8, -4($16)
+	addi	$8, $4, 0x0
 	addi	$29, $29, 0xFFFFFFFC
 	sw	$8, 0($29)
 	addi	$29, $29, 0xFFFFFFFC
@@ -17,11 +17,11 @@ f:
 	lw	$8, 0($29)
 	addi	$29, $29, 0x4
 	li	$9, 0x0
-	beq	$8, $9, L%2
-	lw	$8, -4($16)
+	beq	$8, $9, L2
+	addi	$8, $4, 0x0
 	addi	$29, $29, 0xFFFFFFFC
 	sw	$8, 0($29)
-	lw	$8, -4($16)
+	addi	$8, $4, 0x0
 	addi	$29, $29, 0xFFFFFFFC
 	sw	$8, 0($29)
 	lw	$9, 0($29)
@@ -41,7 +41,7 @@ f:
 	sw	$16, -12($29)
 	addi	$16, $29, 0x0
 	addi	$29, $29, 0xFFFFFFE4
-	lw	$8, -4($16)
+	addi	$8, $4, 0x0
 	addi	$29, $29, 0xFFFFFFFC
 	sw	$8, 0($29)
 	addi	$29, $29, 0xFFFFFFFC
@@ -78,8 +78,8 @@ f:
 	addi	$29, $29, 0x4
 	addi	$3, $2, 0x0
 	jr	$31
-	j L%1
-L%2:
+	j L1
+L2:
 	addi	$29, $29, 0xFFFFFFFC
 	li	$8, 0x0
 	sw	$8, 0($29)
@@ -87,7 +87,7 @@ L%2:
 	addi	$29, $29, 0x4
 	addi	$3, $2, 0x0
 	jr	$31
-L%1:
+L1:
 main:
 	addi	$30, $29, 0x0
 	addi	$16, $30, 0x0

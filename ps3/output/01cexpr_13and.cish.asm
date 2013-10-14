@@ -10,20 +10,20 @@ main:
 	lw	$8, 0($29)
 	addi	$29, $29, 0x4
 	li	$9, 0x0
-	beq	$8, $9, L%2
+	beq	$8, $9, L2
 	addi	$29, $29, 0xFFFFFFFC
 	li	$8, 0x0
 	sw	$8, 0($29)
 	lw	$8, 0($29)
 	addi	$29, $29, 0x4
-	j L%1
-L%2:
+	j L1
+L2:
 	addi	$29, $29, 0xFFFFFFFC
 	li	$8, 0x0
 	sw	$8, 0($29)
 	lw	$8, 0($29)
 	addi	$29, $29, 0x4
-L%1:
+L1:
 	lw	$2, 0($29)
 	addi	$29, $29, 0x4
 	addi	$3, $2, 0x0

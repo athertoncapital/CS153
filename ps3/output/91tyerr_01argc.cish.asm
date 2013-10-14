@@ -1,7 +1,7 @@
 	.text
 	.align	2
 f:
-	lw	$8, -4($16)
+	addi	$8, $4, 0x0
 	addi	$29, $29, 0xFFFFFFFC
 	sw	$8, 0($29)
 	lw	$2, 0($29)

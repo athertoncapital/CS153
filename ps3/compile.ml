@@ -11,7 +11,7 @@ type result = { code : Mips.inst list;
 (* generate fresh labels *)
 let label_counter = ref 0
 let new_int() = (label_counter := (!label_counter) + 1; !label_counter)
-let new_label() = "L%" ^ (string_of_int (new_int()))
+let new_label() = "L" ^ (string_of_int (new_int()))
 
 module VarSet = Set.Make(struct
                            type t = var
@@ -30,15 +30,15 @@ let fun_to_frame_size : int VarMap.t ref = ref VarMap.empty
 let fun_to_local_var_size : int VarMap.t ref = ref VarMap.empty
 
 let var_offset = ref 0
+let var_minus_offset = ref 0
 
-let reset_offset (c: int) : unit =
-	var_offset := c
+let reset_offsets() = (var_offset := 0; var_minus_offset := 0)
 
-let new_minus_offset() = (var_offset := !var_offset - 4; !var_offset)
+let new_minus_offset() = (var_minus_offset := !var_minus_offset - 4; !var_minus_offset)
 
 let new_offset() = (let offset = !var_offset in var_offset := offset + 4; offset)
 
-let reset() = (reset_offset(0); arguments := VarSet.empty; variables := VarSet.empty)
+let reset() = (reset_offsets(); arguments := VarSet.empty; variables := VarSet.empty)
 
 (* helper function for collect_vars:
 adding in vars to VarSet, if the var is already in the set, do nothing *)
@@ -53,7 +53,7 @@ let add_argument (fn: var) (v: var) : unit =
   var_to_offset := VarMap.add (fn ^ "$" ^ v) (new_offset()) !var_to_offset
 
 let add_variable (fn: var) (v : var) : unit =
-  var_to_offset := VarMap.add (fn ^ "$" ^ v) (new_minus_offset ()) !var_to_offset
+  var_to_offset := VarMap.add (fn ^ "$" ^ v) (new_minus_offset()) !var_to_offset
 
 let lookup_var (fn: var) (v : var) : int =
   VarMap.find (fn ^ "$" ^ v) !var_to_offset
@@ -87,7 +87,7 @@ let save_variable (fn: var) (v : var) (r : reg) : inst list =
     else if offset = 8 then [copy_register R6 r]
     else if offset = 12 then [copy_register R7 r]
     else if offset > 0 then [Sw (r, R30, Word32.fromInt offset)]
-    else [Lw (r, R16, Word32.fromInt offset)]
+    else [Sw (r, R16, Word32.fromInt offset)]
 
 (* find all of the variables in a program and add them to the set variables *)
 let rec body_vars ((p, _) : stmt) : unit = 
@@ -107,7 +107,7 @@ let rec arg_vars (fn: var) (args: var list) : unit =
 let fun_vars (f: Ast.funcsig) : unit =
   reset();
 	arg_vars f.name f.args;
-  reset_offset(0);
+  reset_offsets();
   body_vars f.body;
   VarSet.iter (add_variable f.name) !variables;
   fun_to_local_var_size := VarMap.add f.name (- !var_offset) !fun_to_local_var_size
