@@ -96,7 +96,7 @@ let rec body_vars ((p, _) : stmt) : unit =
   | If(e,x,y) -> body_vars x; body_vars y
   | While(e, x) -> body_vars x
   | For(e1,e2,e3,x) -> body_vars x
-  | Let(v, e, x) -> add_var v;
+  | Let(v, e, x) -> add_var v; body_vars x;
   | _ -> ()
 
 let rec arg_vars (fn: var) (args: var list) : unit =
@@ -153,7 +153,7 @@ let rec compile_exp (fn: var) ((e, _) : exp) : inst list =
 
   | Call (c, es) -> (prologue fn c es) @ [Jal c] @ (epilogue fn) @ (put_on_stack R2)
 
-and compile_stmt (fn: var) ((s, _):stmt) : inst list = 
+and compile_stmt (fn: var) ((s, _):stmt) : inst list =
   match s with
   | Exp e -> (compile_exp fn e) @ (pop_from_stack R8)
 
@@ -165,11 +165,11 @@ and compile_stmt (fn: var) ((s, _):stmt) : inst list =
   | While (e, s) -> let (label1, label2) = (new_label (), new_label ()) in
                       [Label label1] @ (compile_exp fn e) @ (pop_from_stack R8) @ [Li (R9, Word32.fromInt 0); Beq (R8, R9, label2)] @ (compile_stmt fn s) @ [J label1; Label label2]
 
-  | For (e1, e2, e3, s) -> (compile_exp fn e1) @ (compile_stmt fn (While (e2, (Ast.Seq (s, (Exp e3, 0)), 0)), 0))
+  | For (e1, e2, e3, s) -> (compile_exp fn e1) @ (pop_from_stack R8) @ (compile_stmt fn (While (e2, (Ast.Seq (s, (Exp e3, 0)), 0)), 0))
 
   | Return e -> (compile_exp fn e) @ (pop_from_stack R2) @ [copy_register R3 R2; Jr R31]
 
-  | Let (v, e, s) -> (load_variable fn v R8) @ (put_on_stack R8) @ (compile_exp fn e) @ (pop_from_stack R8) @ (pop_from_stack R8) @ (save_variable fn v R8)
+  | Let (v, e, s) -> (load_variable fn v R8) @ (put_on_stack R8) @ (compile_exp fn e) @ (pop_from_stack R8) @ (save_variable fn v R8) @ (compile_stmt fn s) @ (pop_from_stack R8) @ (save_variable fn v R8)
 
 and prologue (caller : var) (callee: var) (es: exp list) : inst list =
   let rec store_args es position : inst list =
