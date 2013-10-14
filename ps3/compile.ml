@@ -167,7 +167,7 @@ and compile_stmt (fn: var) ((s, _):stmt) : inst list =
 
   | For (e1, e2, e3, s) -> (compile_exp fn e1) @ (compile_stmt fn (While (e2, (Ast.Seq (s, (Exp e3, 0)), 0)), 0))
 
-  | Return e -> (compile_exp fn e) @ (pop_from_stack R2) @ [copy_register R3 R2] @ [Jr R31]
+  | Return e -> (compile_exp fn e) @ (pop_from_stack R2) @ [copy_register R3 R2; Jr R31]
 
   | Let (v, e, s) -> (load_variable fn v R8) @ (put_on_stack R8) @ (compile_exp fn e) @ (pop_from_stack R8) @ (pop_from_stack R8) @ (save_variable fn v R8)
 
