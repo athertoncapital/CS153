@@ -97,7 +97,7 @@ L2:
 	sw	$7, 12($30)
 	sw	$31, -4($16)
 	sw	$30, -8($16)
-	addi	$30, $30, 0xFFFFFFE4
+	addi	$30, $16, 0xFFFFFFE4
 	sw	$16, -12($29)
 	addi	$16, $29, 0x0
 	addi	$29, $29, 0xFFFFFFE4

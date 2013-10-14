@@ -93,9 +93,9 @@ let save_variable (fn: var) (v : var) (r : reg) : inst list =
 let rec body_vars ((p, _) : stmt) : unit = 
   match p with
   | Ast.Seq(x, y) -> body_vars x; body_vars y
-  | If(e,x,y) -> body_vars x; body_vars y
+  | If(e, x, y) -> body_vars x; body_vars y
   | While(e, x) -> body_vars x
-  | For(e1,e2,e3,x) -> body_vars x
+  | For(e1, e2, e3, x) -> body_vars x
   | Let(v, e, x) -> add_var v; body_vars x;
   | _ -> ()
 
@@ -145,9 +145,9 @@ let rec compile_exp (fn: var) ((e, _) : exp) : inst list =
 
   | Not e -> (compile_exp fn e) @ (pop_from_stack R8) @ [Li (R9, Word32.fromInt 0); Mips.Seq (R8, R8, R9)] @ (put_on_stack R8)
 
-  | Ast.And (e1, e2) -> compile_stmt fn (If (e1, (Exp e2, 0), (Exp (Int 0, 0), 0)), 0)
+  | Ast.And (e1, e2) -> (compile_exp fn e1) @ (compile_exp fn e2) @ (pop_from_stack R8) @ (pop_from_stack R9) @ [Mips.And (R8, R8, Reg R9)] @ (put_on_stack R8)
 
-  | Ast.Or (e1, e2) -> compile_stmt fn (If (e1, (Exp (Int 1, 0), 0), (Exp e2, 0)), 0)
+  | Ast.Or (e1, e2) -> (compile_exp fn e1) @ (compile_exp fn e2) @ (pop_from_stack R8) @ (pop_from_stack R9) @ [Mips.Or (R8, R8, Reg R9)] @ (put_on_stack R8)
 
   | Assign (v, e) -> (compile_exp fn e) @ (pop_from_stack R8) @ (save_variable fn v R8) @ (put_on_stack R8)
 
