@@ -171,7 +171,7 @@ and prologue (callee : var) (es : exp list) : inst list =
       else if position = 1 then (compile_exp e) @ (pop_from_stack R5) @ (store_args tl 2)
       else if position = 2 then (compile_exp e) @ (pop_from_stack R6) @ (store_args tl 3)
       else if position = 3 then (compile_exp e) @ (pop_from_stack R7) @ (store_args tl 4)
-      else (compile_exp e) @ (pop_from_stack R8) @ [Sw (R8, R30, (Word32.fromInt (position * 4)))] @ (store_args tl (position + 1))
+      else (compile_exp e) @ (pop_from_stack R8) @ [Sw (R8, R29, (Word32.fromInt (position * 4)))] @ (store_args tl (position + 1))
     | _ -> [] in
 
   let save_old_args = [Sw (R4, R30, Word32.fromInt 0); Sw (R5, R30, Word32.fromInt 4); Sw (R6, R30, Word32.fromInt 8); Sw (R7, R30, Word32.fromInt 12)] in
@@ -182,7 +182,7 @@ and prologue (callee : var) (es : exp list) : inst list =
   let move_fp = [copy_register R30 R29] in
   let store_new_args = store_args es 0 in
 
-  save_old_args @ save_old_fp @ save_old_ra @ store_new_args @ move_sp @ move_fp
+  save_old_args @ save_old_fp @ save_old_ra @ move_sp @ store_new_args @ move_fp
 
 and epilogue (es : exp list) : inst list =
   let arg_size = if List.length(es) <= 4 then 4 else List.length(es) in

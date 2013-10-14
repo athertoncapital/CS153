@@ -702,6 +702,7 @@ main:
 	sw	$30, 0($29)
 	addi	$29, $29, 0xFFFFFFFC
 	sw	$31, 0($29)
+	addi	$29, $29, 0xFFFFFFF0
 	sw	$4, 0($30)
 	sw	$5, 4($30)
 	sw	$6, 8($30)
@@ -710,6 +711,7 @@ main:
 	sw	$30, 0($29)
 	addi	$29, $29, 0xFFFFFFFC
 	sw	$31, 0($29)
+	addi	$29, $29, 0xFFFFFFF0
 	addi	$29, $29, 0xFFFFFFFC
 	li	$8, 0x1
 	sw	$8, 0($29)
@@ -720,7 +722,6 @@ main:
 	sw	$8, 0($29)
 	lw	$5, 0($29)
 	addi	$29, $29, 0x4
-	addi	$29, $29, 0xFFFFFFF0
 	ori	$30, $29, 0x0
 	jal fun_add
 	ori	$29, $30, 0x0
@@ -745,6 +746,7 @@ main:
 	sw	$30, 0($29)
 	addi	$29, $29, 0xFFFFFFFC
 	sw	$31, 0($29)
+	addi	$29, $29, 0xFFFFFFF0
 	addi	$29, $29, 0xFFFFFFFC
 	li	$8, 0x1
 	sw	$8, 0($29)
@@ -755,7 +757,6 @@ main:
 	sw	$8, 0($29)
 	lw	$5, 0($29)
 	addi	$29, $29, 0x4
-	addi	$29, $29, 0xFFFFFFF0
 	ori	$30, $29, 0x0
 	jal fun_add
 	ori	$29, $30, 0x0
@@ -772,7 +773,6 @@ main:
 	sw	$2, 0($29)
 	lw	$5, 0($29)
 	addi	$29, $29, 0x4
-	addi	$29, $29, 0xFFFFFFF0
 	ori	$30, $29, 0x0
 	jal fun_add
 	ori	$29, $30, 0x0
