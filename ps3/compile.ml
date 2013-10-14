@@ -33,8 +33,6 @@ let var_minus_offset = ref 0
 
 let reset_offsets() = (var_offset := 0; var_minus_offset := 0)
 
-let new_minus_offset() = (var_minus_offset := !var_minus_offset - 4; !var_minus_offset)
-
 let dec_minus_offset() = (var_minus_offset := !var_minus_offset - 4)
 
 let inc_minus_offset() = (var_minus_offset := !var_minus_offset + 4)
