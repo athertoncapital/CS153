@@ -147,7 +147,12 @@ let rec compile_exp (fn: var) ((e, _) : exp) : inst list =
 
   | Assign (v, e) -> (compile_exp fn e) @ (pop_from_stack R8) @ (save_variable fn v R8) @ (put_on_stack R8)
 
-  | Call (c, es) -> (prologue fn c es) @ [Jal c] @ (epilogue fn es) @ (put_on_stack R2)
+  | Call (c, es) ->
+    let old_offset = !var_minus_offset in
+    let _ = var_minus_offset := 0 in
+    let call_inst = (prologue fn c es) @ [Jal c] @ (epilogue fn es) in
+    let _ = var_minus_offset := old_offset in
+    call_inst @ (put_on_stack R2)
 
 and compile_stmt (fn: var) ((s, _):stmt) : inst list =
   match s with
@@ -163,7 +168,7 @@ and compile_stmt (fn: var) ((s, _):stmt) : inst list =
 
   | For (e1, e2, e3, s) -> (compile_exp fn e1) @ (pop_from_stack R8) @ (compile_stmt fn (While (e2, (Ast.Seq (s, (Exp e3, 0)), 0)), 0))
 
-  | Return e -> (compile_exp fn e) @ (pop_from_stack R2) @ termination @ [copy_register R3 R2; Jr R31]
+  | Return e -> (compile_exp fn e) @ (pop_from_stack R2) @ [copy_register R3 R2; Jr R31]
 
   | Let (v, e, s) -> 
     if VarMap.mem (fn ^ "$" ^ v) !var_to_offset then 
