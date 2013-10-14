@@ -2,9 +2,8 @@
 	.align	2
 main:
 	addi	$30, $29, 0x0
-	addi	$16, $30, 0x0
-	addi	$29, $30, 0xFFFFFFE4
-	lw	$8, -4($16)
+	addi	$29, $30, 0xFFFFFFFC
+	lw	$8, -4($30)
 	addi	$29, $29, 0xFFFFFFFC
 	sw	$8, 0($29)
 	addi	$29, $29, 0xFFFFFFFC
@@ -12,11 +11,11 @@ main:
 	sw	$8, 0($29)
 	lw	$8, 0($29)
 	addi	$29, $29, 0x4
-	sw	$8, -4($16)
+	sw	$8, -4($30)
 	addi	$29, $29, 0xFFFFFFFC
 	li	$8, 0x0
 	sw	$8, 0($29)
-	lw	$8, -4($16)
+	lw	$8, -4($30)
 	addi	$29, $29, 0xFFFFFFFC
 	sw	$8, 0($29)
 	lw	$9, 0($29)
@@ -32,7 +31,7 @@ main:
 	jr	$31
 	lw	$8, 0($29)
 	addi	$29, $29, 0x4
-	sw	$8, -4($16)
+	sw	$8, -4($30)
 
 
 	.data

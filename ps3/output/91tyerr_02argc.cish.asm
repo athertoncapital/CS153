@@ -10,18 +10,17 @@ f:
 	jr	$31
 main:
 	addi	$30, $29, 0x0
-	addi	$16, $30, 0x0
-	addi	$29, $30, 0xFFFFFFE4
+	addi	$29, $30, 0x0
 	sw	$4, 0($30)
 	sw	$5, 4($30)
 	sw	$6, 8($30)
 	sw	$7, 12($30)
-	sw	$31, -4($16)
-	sw	$30, -8($16)
-	addi	$30, $16, 0xFFFFFFE4
-	sw	$16, -12($29)
-	addi	$16, $29, 0x0
-	addi	$29, $29, 0xFFFFFFE4
+	addi	$29, $29, 0xFFFFFFFC
+	sw	$30, 0($29)
+	addi	$29, $29, 0xFFFFFFFC
+	sw	$31, 0($29)
+	addi	$29, $29, 0xFFFFFFF8
+	addi	$30, $29, 0x0
 	addi	$29, $29, 0xFFFFFFFC
 	li	$8, 0x3
 	sw	$8, 0($29)
@@ -32,11 +31,14 @@ main:
 	sw	$8, 0($29)
 	lw	$5, 0($29)
 	addi	$29, $29, 0x4
+	addi	$29, $29, 0x0
 	jal f
-	addi	$29, $16, 0x0
-	lw	$16, -12($29)
-	lw	$31, -4($16)
-	lw	$30, -8($16)
+	addi	$29, $30, 0x0
+	addi	$29, $29, 0x8
+	lw	$31, 0($29)
+	addi	$29, $29, 0x4
+	lw	$30, 0($29)
+	addi	$29, $29, 0x4
 	lw	$4, 0($30)
 	lw	$5, 4($30)
 	lw	$6, 8($30)

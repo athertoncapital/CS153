@@ -76,8 +76,7 @@ let load_variable (fn : var) (v : var) (r : reg) : inst list =
     else if offset = 4 then [copy_register r R5]
     else if offset = 8 then [copy_register r R6]
     else if offset = 12 then [copy_register r R7]
-    else if offset > 0 then [Lw (r, R30, Word32.fromInt offset)]
-    else [Lw (r, R16, Word32.fromInt offset)]
+    else [Lw (r, R30, Word32.fromInt offset)]
 
 let save_variable (fn: var) (v : var) (r : reg) : inst list =
   let offset = lookup_var fn v in 
@@ -85,8 +84,7 @@ let save_variable (fn: var) (v : var) (r : reg) : inst list =
     else if offset = 4 then [copy_register R5 r]
     else if offset = 8 then [copy_register R6 r]
     else if offset = 12 then [copy_register R7 r]
-    else if offset > 0 then [Sw (r, R30, Word32.fromInt offset)]
-    else [Sw (r, R16, Word32.fromInt offset)]
+    else [Sw (r, R30, Word32.fromInt offset)]
 
 (* find all of the variables in a program and add them to the set variables *)
 let rec body_vars ((p, _) : stmt) : unit = 
@@ -109,7 +107,7 @@ let fun_vars (f: Ast.funcsig) : unit =
   reset_offsets();
   body_vars f.body;
   VarSet.iter (add_variable f.name) !variables;
-  fun_to_frame_size := VarMap.add f.name (- !var_offset) !fun_to_frame_size
+  fun_to_frame_size := VarMap.add f.name (- !var_minus_offset) !fun_to_frame_size
 
 let collect_vars (fns: Ast.funcsig list) : unit =
 	List.iter fun_vars fns
