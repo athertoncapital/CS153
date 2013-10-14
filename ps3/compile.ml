@@ -195,12 +195,12 @@ and prologue (caller : var) (callee: var) (es: exp list) : inst list =
 
 and epilogue (caller : var) : inst list =
   let restore_sp = [copy_register R29 R16] in
-  let restore_ra = [Lw (R31, R29, Word32.fromInt (-(VarMap.find caller !fun_to_local_var_size) - 4))] in
-  let restore_fp = [Lw (R30, R29, Word32.fromInt (-(VarMap.find caller !fun_to_local_var_size) - 8))] in
   let restore_r16 = [Lw (R16, R29, Word32.fromInt (-(VarMap.find caller !fun_to_local_var_size) - 12))] in
+  let restore_ra = [Lw (R31, R16, Word32.fromInt (-(VarMap.find caller !fun_to_local_var_size) - 4))] in
+  let restore_fp = [Lw (R30, R16, Word32.fromInt (-(VarMap.find caller !fun_to_local_var_size) - 8))] in
   let restore_args = [Lw (R4, R30, Word32.fromInt 0)] @ [Lw (R5, R30, Word32.fromInt 4)] @ [Lw (R6, R30, Word32.fromInt 8)] @ [Lw (R7, R30, Word32.fromInt 12)] in
 
-  restore_sp @ restore_ra @ restore_fp @ restore_r16 @ restore_args
+  restore_sp @ restore_r16 @ restore_ra @ restore_fp  @ restore_args
 
 let compile_fun (f:Ast.funcsig) : Mips.inst list =
   let init = 
