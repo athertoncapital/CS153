@@ -130,7 +130,7 @@ and compile_primapp (op: Scish_ast.primop) (es: Scish_ast.exp list) (en: environ
                             let store_result2 = exp_of ((Store((Binop(var_of "result", Plus, int_of 4), 0), var_of temp2)), 0) in
                             initialize_vars (seq_of_stmts [code1; store_temp1; code2; store_temp2; alloc_res; store_result1; store_result2;]) [temp1; temp2]
             | _ -> raise IncorrectNumArgs)
-  | op -> (match es with
+  | _ -> (match es with
             | e1::e2::[] -> let code1 = compile_env_exp e1 en in
                             let temp = new_temp() in
                             let store_temp = exp_of (Assign(temp, var_of "result"), 0) in
