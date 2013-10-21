@@ -43,7 +43,7 @@ let binop_of_prim p =
 let seq_of_stmts ls : Cish_ast.stmt =
   match ls with
   | hd::[] -> hd
-  | hd::tl -> List.fold_right (fun acc stmt -> (Seq (acc, stmt), 0)) tl hd
+  | hd::tl -> List.fold_left (fun acc stmt -> (Seq (acc, stmt), 0)) hd tl
   | _ -> raise Hell
 
 let seq_of_exprs ls : Cish_ast.stmt =
@@ -62,8 +62,6 @@ let lookup (en: environment) (v: var) =
   let rec indexOf i acc =
     if i <= 0 then
       (Assign("result", (Load(acc), 0)), 0)
-    else if i = 1 then
-      (Assign("result", (Load(Binop(acc, Plus, int_of 4), 0), 0)), 0)
     else
       indexOf (i - 1) (Load(Binop(acc, Plus, int_of 4), 0), 0)
   in indexOf i (var_of "dynenv")
@@ -72,7 +70,8 @@ let m = { name = "a"; args = []; body = (skip, 0); pos = 0}
 
 let rec compile_env_fun (e:Scish_ast.exp) (f: var) (en: environment) : unit =
   let code = compile_env_exp e en in
-  let wrapped_code = (Seq(initialize_vars code ["return"], (Return(var_of "return"), 0)), 0) in
+  let init = (if f = "main" then ["dynenv"; "result"] else ["result"]) in
+  let wrapped_code = initialize_vars (Seq(code, (Return(var_of "result"), 0)), 0) init in
   let args = (if f = "main" then [] else ["dynenv"]) in
   let m = { name = f; args = args; body = wrapped_code; pos = 0 } in
   funs := (Fn(m))::!funs
@@ -88,7 +87,7 @@ and compile_env_exp (e:Scish_ast.exp) (en:environment) : Cish_ast.stmt =
                       let closure = Assign("result", ((Malloc ((Int 8),0)), 0)) in
                       let load_fun = Store(((Var "result"), 0), ((Var lambda), 0)) in
                       let load_env = Store((Binop(((Var "result"), 0), Plus, ((Int 4),0)), 0), ((Var "dynenv"), 0)) in
-                      seq_of_exprs [(closure, 0); (load_fun, 0); (load_env, 0)]
+                      seq_of_exprs [(int_of 0); (closure, 0); (load_fun, 0); (load_env, 0); (int_of 1);]
   | Scish_ast.App (e1, e2) -> 
                       let temp1 = new_temp() in
                       let temp2 = new_temp() in
@@ -96,14 +95,14 @@ and compile_env_exp (e:Scish_ast.exp) (en:environment) : Cish_ast.stmt =
                       let env = new_temp() in
                       let e1 = compile_env_exp e1 en in
                       let assign_t1 = Assign(temp1, (Load((Var "result"), 0), 0)) in
-                      let assign_t2 = Assign(temp1, ((Load((Binop(((Var "result"), 0), Plus, ((Int 4),0)), 0))), 0)) in
+                      let assign_t2 = Assign(temp2, ((Load((Binop(((Var "result"), 0), Plus, ((Int 4),0)), 0))), 0)) in
                       let e2 = compile_env_exp e2 en in
                       let assign_t3 = Assign(temp3, ((Var "result"), 0)) in
                       let alloc_env = Assign(env, ((Malloc ((Int  8),0)), 0)) in
                       let store_t3 = Store(((Var env), 0), ((Var temp3), 0)) in
                       let store_t2 = Store((Binop(((Var env), 0), Plus, ((Int 4),0)), 0), ((Var temp2), 0)) in
                       let store_result = Assign("result", (Call(((Var temp1), 0), [((Var env), 0)]), 0)) in
-                      initialize_vars (seq_of_stmts [e1; exp_of (assign_t1, 0); exp_of (assign_t2, 0); e2; exp_of (assign_t3, 0); exp_of (alloc_env, 0); exp_of (store_t3, 0); exp_of (store_t2, 0); exp_of (store_result, 0)]) [temp1; temp2; temp3; env]
+                      initialize_vars (seq_of_stmts [exp_of (int_of 2); e1; exp_of (assign_t1, 0); exp_of (assign_t2, 0); e2; exp_of (assign_t3, 0); exp_of (alloc_env, 0); exp_of (store_t3, 0); exp_of (store_t2, 0); exp_of (store_result, 0); exp_of (int_of 3)]) [temp1; temp2; temp3; env]
   | Scish_ast.If(e1, e2, e3) -> let calc_e1 = compile_env_exp e1 en in
                       let calc_e2 = compile_env_exp e2 en in
                       let calc_e3 = compile_env_exp e3 en in
