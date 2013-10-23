@@ -1,0 +1,1 @@
+(((((lambda (x) (lambda (y) (lambda (z) (lambda (t) (x ((y z) t)))))) (lambda (x) (/ (fst x) (snd x)))) (lambda (z) (lambda (t) (cons z t)))) 6) 3)
