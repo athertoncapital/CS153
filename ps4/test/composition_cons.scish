@@ -1,0 +1,1 @@
+(((lambda (x) (lambda (z) ((if 1 (fst x) (snd x)) ((if 0 (fst x) (snd x)) z)))) (cons (lambda (x) (* x x)) (lambda (z) (+ z z)))) 3)

@@ -1,0 +1,1 @@
+(*(((lambda(x) (lambda(y) (* x y))) 2) (* 8 3)) (((lambda(x) (lambda(y) (* x y))) 1) (* 2 3)))

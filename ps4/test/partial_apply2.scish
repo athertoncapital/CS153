@@ -1,0 +1,1 @@
+((((lambda (x) (lambda (y) (lambda (z) (x (y z))))) (lambda (x) (* x x))) (lambda (z) ((lambda (x) (+ z x)) (* 3 z)))) 3)
