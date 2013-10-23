@@ -84,7 +84,7 @@ and compile_env_exp (e: Scish_ast.exp) (en: environment) : Cish_ast.stmt =
                       let closure = Assign ("result", ((Malloc (Int 8, 0)), 0)) in
                       let load_fun = Store (var_of "result", (Var lambda, 0)) in
                       let load_env = Store ((Binop (var_of "result", Plus, int_of 4), 0), var_of "dynenv") in
-                      seq_of_exprs [int_of 0; (closure, 0); (load_fun, 0); (load_env, 0); int_of 1]
+                      seq_of_exprs [(closure, 0); (load_fun, 0); (load_env, 0)]
   | Scish_ast.App (e1, e2) ->
                       let temp1 = new_temp() in
                       let temp2 = new_temp() in
@@ -98,7 +98,7 @@ and compile_env_exp (e: Scish_ast.exp) (en: environment) : Cish_ast.stmt =
                       let store_t3 = Store (var_of "result", var_of temp3) in
                       let store_t2 = Store ((Binop (var_of "result", Plus, (Int 4, 0)), 0), var_of temp2) in
                       let store_result = Assign ("result", (Call (var_of temp1, [var_of "result"]), 0)) in
-                      initialize_vars (seq_of_stmts [exp_of (int_of 2); e1; exp_of (assign_t1, 0); exp_of (assign_t2, 0); e2; exp_of (assign_t3, 0); exp_of (alloc_env, 0); exp_of (store_t3, 0); exp_of (store_t2, 0); exp_of (store_result, 0); exp_of (int_of 3)]) [temp1; temp2; temp3]
+                      initialize_vars (seq_of_stmts [e1; exp_of (assign_t1, 0); exp_of (assign_t2, 0); e2; exp_of (assign_t3, 0); exp_of (alloc_env, 0); exp_of (store_t3, 0); exp_of (store_t2, 0); exp_of (store_result, 0)]) [temp1; temp2; temp3]
   | Scish_ast.If (e1, e2, e3) ->
                       let calc_e1 = compile_env_exp e1 en in
                       let calc_e2 = compile_env_exp e2 en in
