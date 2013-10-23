@@ -1,0 +1,1 @@
+(((lambda(x) (lambda (y) (+ x (+ y (((((lambda (x) (lambda (y) (lambda (x) (lambda (y) (+ x y))))) 1) 10) 100) 1000))))) 5) 50)
