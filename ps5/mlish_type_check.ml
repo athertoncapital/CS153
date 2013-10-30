@@ -3,4 +3,56 @@ open Mlish_ast
 exception TypeError
 let type_error(s:string) = (print_string s; raise TypeError)
 
-let type_check_exp (e:Mlish_ast.exp) : tipe = raise TypeError
+type environment = (var * tipe_scheme) list
+
+let guess() = Guess_t(ref None)
+
+let rec lookup ls key =
+  match ls with
+  | (k, v)::tl -> if k = key then v else lookup tl key
+  | _ -> raise TypeError
+
+let rec substitute (tvars: (tvar * tipe) list) (t:tipe) : tipe =
+  match t with
+  | Tvar_t tv -> lookup tvars tv
+  | Fn_t (t1, t2) -> Fn_t ((substitute tvars t1), (substitute tvars t2))
+  | Pair_t (t1, t2) -> Pair_t ((substitute tvars t1), (substitute tvars t2))
+  | List_t t1 -> List_t(substitute tvars t1)
+  | Guess_t g -> (match !g with
+                  | Some t1 -> (g := Some(substitute tvars t1); t)
+                  | None -> t)
+  | _ -> t
+
+let instantiate (ts: tipe_scheme) : tipe =
+  let Forall(vs, t) = ts in
+    let vs_and_ts = List.map (fun a -> (a, guess())) vs in
+    substitute vs_and_ts t
+
+let rec tc (env: environment) ((e, _): exp) : tipe =
+  match e with
+  | Var x -> instantiate (lookup env x)
+  | PrimApp (p, es) -> check_prims env p es
+  | _ -> raise TypeError
+
+and check_prims (env: environment) (p: prim) (es: exp list) : tipe =
+  match (p, es) with
+  | (Int _, []) -> Int_t
+  | (Bool _, []) -> Bool_t
+  | (Unit, []) -> Unit_t
+  | ((Plus|Minus|Times|Div), [e1; e2]) -> check_binop env e1 e2 Int_t Int_t Int_t
+  | ((Eq | Lt), [e1; e2]) -> check_binop env e1 e2 Int_t Int_t Bool_t
+  | (Pair, [e1;e2]) -> Pair_t(tc env e1, tc env e2)
+  | _ -> raise TypeError
+
+and check_binop env e1 e2 expected_t1 expected_t2 tout =
+  let (t1, t2) = ((tc env e1), (tc env e2)) in
+    if (unify t1 expected_t1) && (unify t2 expected_t2) then tout else raise TypeError
+
+and unify (t1: tipe) (t2: tipe) : bool =
+  raise TypeError
+
+and generalize (env: environment) (t: tipe) : tipe_scheme =
+  raise TypeError
+
+let type_check_exp (e:Mlish_ast.exp) : tipe = 
+  tc [] e
