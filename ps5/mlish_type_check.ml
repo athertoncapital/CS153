@@ -81,7 +81,7 @@ and check_binop env e1 e2 expected_t1 expected_t2 tout =
     if (unify t1 expected_t1) && (unify t2 expected_t2) then tout else raise TypeError
 
 and unify (t1: tipe) (t2: tipe) : bool =
-  if t1 = t2 then true else
+  if t1 == t2 then true else
   match t1, t2 with
   | Guess_t r, _ -> (match !r with 
                         | Some t1' -> unify t1' t2
