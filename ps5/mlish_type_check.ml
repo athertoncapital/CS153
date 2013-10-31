@@ -48,13 +48,13 @@ let rec tc (env: environment) ((e, _): exp) : tipe =
       tc (extend env v s) e2
 
 and check_prims (env: environment) (p: prim) (es: exp list) : tipe =
-  match (p, es) with
-  | (Int _, []) -> Int_t
-  | (Bool _, []) -> Bool_t
-  | (Unit, []) -> Unit_t
-  | ((Plus|Minus|Times|Div), [e1; e2]) -> check_binop env e1 e2 Int_t Int_t Int_t
-  | ((Eq | Lt), [e1; e2]) -> check_binop env e1 e2 Int_t Int_t Bool_t
-  | (Pair, [e1;e2]) -> Pair_t(tc env e1, tc env e2)
+  match p, es with
+  | Int _, [] -> Int_t
+  | Bool _, [] -> Bool_t
+  | Unit, [] -> Unit_t
+  | (Plus|Minus|Times|Div), [e1; e2] -> check_binop env e1 e2 Int_t Int_t Int_t
+  | (Eq | Lt), [e1; e2] -> check_binop env e1 e2 Int_t Int_t Bool_t
+  | Pair, [e1;e2] -> Pair_t(tc env e1, tc env e2)
   | _ -> raise TypeError
 
 and check_binop env e1 e2 expected_t1 expected_t2 tout =
@@ -62,12 +62,12 @@ and check_binop env e1 e2 expected_t1 expected_t2 tout =
     if (unify t1 expected_t1) && (unify t2 expected_t2) then tout else raise TypeError
 
 and unify (t1: tipe) (t2: tipe) : bool =
-  if (t1 = t2) then true else
+  if t1 = t2 then true else
   match t1, t2 with
-  | (Guess_t r), _ -> (match !r with 
+  | Guess_t r, _ -> (match !r with 
                         | Some t1' -> unify t1' t2
                         | None -> if occurs r t2 then raise TypeError else (r := Some t2; true))
-  | _, (Guess_t _) -> unify t2 t1
+  | _, Guess_t _ -> unify t2 t1
   | Fn_t (a, b) , Fn_t (c, d) -> (unify a c) && (unify b d)
   | Pair_t (a, b), Pair_t (c, d) -> (unify a c) && (unify b d)
   | List_t a, List_t b -> unify a b
