@@ -49,7 +49,28 @@ and check_binop env e1 e2 expected_t1 expected_t2 tout =
     if (unify t1 expected_t1) && (unify t2 expected_t2) then tout else raise TypeError
 
 and unify (t1: tipe) (t2: tipe) : bool =
-  raise TypeError
+  if (t1 = t2) then true else
+  match t1, t2 with
+  | (Guess_t r), _ -> (match !r with 
+                        | Some t1' -> unify t1' t2
+                        | None -> if occurs r t2 then raise TypeError else (r := Some t2; true))
+  | _, (Guess_t _) -> unify t2 t1
+  | Fn_t (a, b) , Fn_t (c, d) -> (unify a c) && (unify b d)
+  | Pair_t (a, b), Pair_t (c, d) -> (unify a c) && (unify b d)
+  | List_t a, List_t b -> unify a b
+  | _ -> false
+
+and occurs (opt:tipe option ref) (t:tipe) : bool =
+  match t with
+  | Fn_t (t1, t2) -> occurs opt t1 || occurs opt t2
+  | Pair_t (t1, t2) -> occurs opt t1 || occurs opt t2
+  | List_t t1 -> occurs opt t1
+  | Guess_t opt2 -> 
+      if (opt = opt2) then true
+      else (match !opt2 with
+            | Some t1 -> occurs opt t1
+            | None -> false)
+  | _ -> false
 
 and generalize (env: environment) (t: tipe) : tipe_scheme =
   raise TypeError
