@@ -55,6 +55,25 @@ and check_prims (env: environment) (p: prim) (es: exp list) : tipe =
   | (Plus|Minus|Times|Div), [e1; e2] -> check_binop env e1 e2 Int_t Int_t Int_t
   | (Eq | Lt), [e1; e2] -> check_binop env e1 e2 Int_t Int_t Bool_t
   | Pair, [e1;e2] -> Pair_t(tc env e1, tc env e2)
+  | Fst, [e] -> 
+      let (t, g1, g2) = (tc env e, guess(), guess())
+      in if unify t (Pair_t(g1, g2)) then g1 else raise TypeError
+  | Snd, [e] ->
+      let (t, g1, g2) = (tc env e, guess(), guess())
+      in if unify t (Pair_t(g1, g2)) then g2 else raise TypeError
+  | Nil, [] -> List_t (guess())
+  | Cons, [e1;e2] ->
+      let (t1, t2) = (tc env e1, tc env e2)
+      in if unify t2 (List_t t1) then List_t(t1) else raise TypeError
+  | IsNil, [e] -> 
+      let (t, l) = (tc env e, List_t(guess()))
+      in if unify t l then Bool_t else raise TypeError
+  | Hd, [e] ->
+      let (t, g) = (tc env e, guess())
+      in if unify t (List_t g) then g else raise TypeError
+  | Tl, [e] ->
+      let (t, g) = (tc env e, guess())
+      in if unify t (List_t g) then List_t(g) else raise TypeError
   | _ -> raise TypeError
 
 and check_binop env e1 e2 expected_t1 expected_t2 tout =
