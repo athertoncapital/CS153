@@ -12,6 +12,9 @@ let rec lookup ls key =
   | (k, v)::tl -> if k = key then v else lookup tl key
   | _ -> raise TypeError
 
+let extend (env: environment) (v: var) (ts: tipe_scheme) =
+  (v, ts)::env
+
 let rec substitute (tvars: (tvar * tipe) list) (t:tipe) : tipe =
   match t with
   | Tvar_t tv -> lookup tvars tv
@@ -32,7 +35,17 @@ let rec tc (env: environment) ((e, _): exp) : tipe =
   match e with
   | Var x -> instantiate (lookup env x)
   | PrimApp (p, es) -> check_prims env p es
-  | _ -> raise TypeError
+  | Fn (v, e) -> 
+      let g = guess() in Fn_t(g, tc (extend env v (Forall([], g))) e)
+  | App (e1, e2) -> 
+      let (t1, t2, t) = (tc env e1, tc env e2, guess())
+      in if unify t1 (Fn_t(t2, t)) then t else raise TypeError
+  | If (e1, e2, e3) -> 
+      let (t1, t2, t3) = (tc env e1, tc env e2, tc env e3)
+      in if (unify t1 Bool_t) && (unify t2 t3) then t2 else raise TypeError
+  | Let (v, e1, e2) -> 
+      let s = generalize env (tc env e1) in
+      tc (extend env v s) e2
 
 and check_prims (env: environment) (p: prim) (es: exp list) : tipe =
   match (p, es) with
