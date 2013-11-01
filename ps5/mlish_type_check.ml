@@ -45,7 +45,7 @@ let rec guesses_of_tipe (t: tipe) : GuessSet.t =
   | List_t t1 -> guesses_of_tipe t1
   | Guess_t r -> (match !r with
                   | None -> GuessSet.singleton t
-                  | Some _ -> GuessSet.empty)
+                  | Some _ -> raise FatalError)
   | _ -> GuessSet.empty
 
 let rec substitute (tvars: (tvar * tipe) list) (t: tipe) : tipe =
@@ -79,6 +79,16 @@ let rec occurs (opt: tipe option ref) (t: tipe) : bool =
             | None -> false)
   | _ -> false
 
+let rec strip_guess_some (t: tipe) : tipe =
+  match t with
+  | Fn_t (t1, t2) -> Fn_t (strip_guess_some t1, strip_guess_some t2)
+  | Pair_t (t1, t2) -> Pair_t (strip_guess_some t1, strip_guess_some t2)
+  | List_t t1 -> List_t (strip_guess_some t1)
+  | Guess_t r -> (match !r with
+                  | Some s -> strip_guess_some s
+                  | None -> t) 
+  | _ -> t  
+
 let instantiate (ts: tipe_scheme) : tipe =
   let Forall(vs, t) = ts in
     let vs_and_ts = List.map (fun a -> (a, guess())) vs in
@@ -97,6 +107,7 @@ let rec unify (t1: tipe) (t2: tipe) : bool =
   | _ -> false
 
 let generalize (env: environment) (t: tipe) : tipe_scheme =
+  let t = strip_guess_some t in
   let t_gs = guesses_of_tipe t in
   let env_list_gs = List.map (function (x, Forall (vs, t)) -> guesses_of_tipe t) env in
   let env_gs = List.fold_left GuessSet.union GuessSet.empty env_list_gs in
