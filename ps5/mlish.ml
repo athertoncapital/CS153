@@ -1,5 +1,18 @@
 open Mlish_ast
 
+let rec print_type (t : tipe) : unit =
+    match t with
+    | Tvar_t t1 -> Printf.printf "%s\n" t1
+    | Int_t -> Printf.printf "Int\n"
+    | Bool_t -> Printf.printf "Bool\n"
+    | Unit_t -> Printf.printf "Unit\n"
+    | Fn_t (t1, t2) -> Printf.printf "Function from ("; print_type t1; Printf.printf ") to ("; print_type t2; Printf.printf ")\n"
+    | Pair_t (t1, t2) -> Printf.printf "Pair of ("; print_type t1; Printf.printf ") and ("; print_type t2; Printf.printf ")\n"
+    | List_t t1 -> Printf.printf "List of ("; print_type t1; Printf.printf ")\n"
+    | Guess_t t1 -> match !t1 with
+                    | Some t -> Printf.printf "Guess of ("; print_type t; Printf.printf ")\n"
+                    | None -> Printf.printf "None\n"
+
 (* This magic is used to glue the generated lexer and parser together.
  * Expect one command-line argument, a file to parse.
  * You do not need to understand this interaction with the system. *)
@@ -20,9 +33,12 @@ let run_prog prog = Scish_eval.run prog
 
 let _ = 
   let prog = parse_file() in
+  print_type (Mlish_type_check.type_check_exp prog)
+  (*
   let prog' = compile_prog prog in
   let ans = run_prog prog' in
   print_string ("answer = "^(Scish_eval.val2string ans)^"\n")
+  *)
 
 (*
 let dump p = print_string (Cish_ast.prog2string p)

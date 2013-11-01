@@ -92,7 +92,7 @@ let rec unify (t1: tipe) (t2: tipe) : bool =
   | Fn_t (a, b) , Fn_t (c, d) -> (unify a c) && (unify b d)
   | Pair_t (a, b), Pair_t (c, d) -> (unify a c) && (unify b d)
   | List_t a, List_t b -> unify a b
-  | _ -> raise FatalError
+  | _ -> false
 
 let generalize (env: environment) (t: tipe) : tipe_scheme =
   let t_gs = guesses_of_tipe t in
