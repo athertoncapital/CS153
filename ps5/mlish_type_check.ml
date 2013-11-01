@@ -155,9 +155,9 @@ let rec tc (env: environment) ((e, _): exp) : tipe =
       let (t1, t2, t3) = (tc env e1, tc env e2, tc env e3)
       in if (unify t1 Bool_t) && (unify t2 t3) then t2 else type_error "tc on If failed\n"
   | Let (v, e1, e2) ->
-      let _ = print_string "generalize: " in
+      (* let _ = print_string "generalize: " in *)
       let s = generalize env (tc env e1) in
-      let _ = print_string "\n" in
+      (* let _ = print_string "\n" in*)
       tc (extend env v s) e2 
   (*  ) in
   (* let Forall (vs, gout) = generalize env out in *)
