@@ -28,12 +28,12 @@ let fresh_var() = let x = !var_counter in
 let rec lookup ls key =
   match ls with
   | (k, v)::tl -> if k = key then v else lookup tl key
-  | _ -> type_error "lookup failed\n"
+  | _ -> raise FatalError
 
 let rec lookup_guess ls key =
   match ls with
   | (k, v)::tl -> if type_equals k key then v else lookup_guess tl key
-  | _ -> type_error "lookup_guess failed\n"
+  | _ -> raise NotFound
 
 let extend (env: environment) (v: var) (ts: tipe_scheme) =
   (v, ts)::env
