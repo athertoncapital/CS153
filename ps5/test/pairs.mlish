@@ -1,0 +1,6 @@
+let f x y = (x, y) in
+let g x = snd x in
+let h y = fst y in
+let a = g ((fun x -> x + 1), (fun x -> x - 1)) in
+let b = h (2, 1) in
+a b

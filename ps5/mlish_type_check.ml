@@ -11,10 +11,16 @@ let type_equals t1 t2 =
   | Guess_t r1, Guess_t r2 -> r1 == r2
   | _, _ -> t1 = t2
 
-module GuessSet = Set.Make(struct
-                           type t = tipe
-                           let compare x y = if type_equals x y then 0 else compare x y
-                         end)
+let rec contains l1 e =
+  match l1 with
+  | hd::tl -> if type_equals hd e then true else contains tl e
+  | _ -> false
+
+let union l1 l2 =
+  List.fold_left (fun acc e -> if contains acc e then acc else e::acc) l1 l2
+
+let minus l1 l2 =
+  List.fold_left (fun acc e -> if contains l2 e then acc else e::acc) [] l1
 
 type environment = (var * tipe_scheme) list
 
@@ -38,13 +44,13 @@ let rec lookup_guess (ls: (tipe * tvar) list) (key: tipe) : tvar =
 let extend (env: environment) (v: var) (ts: tipe_scheme) : environment =
   (v, ts)::env
 
-let rec guesses_of_tipe (t: tipe) : GuessSet.t =
+let rec guesses_of_tipe (t: tipe) : tipe list =
   match t with
-  | Fn_t (t1, t2) -> GuessSet.union (guesses_of_tipe t1) (guesses_of_tipe t2)
-  | Pair_t (t1, t2) -> GuessSet.union (guesses_of_tipe t1) (guesses_of_tipe t2)
+  | Fn_t (t1, t2) -> union (guesses_of_tipe t1) (guesses_of_tipe t2)
+  | Pair_t (t1, t2) -> union (guesses_of_tipe t1) (guesses_of_tipe t2)
   | List_t t1 -> guesses_of_tipe t1
-  | Guess_t _ -> GuessSet.singleton t
-  | _ -> GuessSet.empty
+  | Guess_t _ -> [t]
+  | _ -> []
 
 let rec substitute (tvars: (tvar * tipe) list) (t: tipe) : tipe =
   match t with
@@ -108,8 +114,8 @@ let generalize (env: environment) (t: tipe) : tipe_scheme =
   let t = strip_guess_some t in
   let t_gs = guesses_of_tipe t in
   let env_list_gs = List.map (function (x, Forall (vs, t)) -> guesses_of_tipe t) env in
-  let env_gs = List.fold_left GuessSet.union GuessSet.empty env_list_gs in
-  let diff = GuessSet.elements (GuessSet.diff t_gs env_gs) in
+  let env_gs = List.fold_left union [] env_list_gs in
+  let diff = minus t_gs env_gs in
   let gs_vs = List.map (fun g -> (g, fresh_var())) diff in
   let ts = substitute_guesses gs_vs t in
   Forall (List.map snd gs_vs, ts)
