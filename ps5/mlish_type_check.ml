@@ -2,12 +2,18 @@ open Mlish_ast
 
 exception TypeError
 exception NotFound
+exception FatalError
 
 let type_error(s:string) = (print_string s; raise TypeError)
 
+let type_equals t1 t2 =
+  match t1, t2 with
+  | Guess_t r1, Guess_t r2 -> r1 == r2
+  | _, _ -> t1 = t2
+
 module GuessSet = Set.Make(struct
                            type t = tipe
-                           let compare x y = if (x == y) then 0 else if (x = y) then 1 else compare x y
+                           let compare x y = if type_equals x y then 0 else compare x y
                          end)
 
 type environment = (var * tipe_scheme) list
@@ -26,7 +32,7 @@ let rec lookup ls key =
 
 let rec lookup_guess ls key =
   match ls with
-  | (k, v)::tl -> if k == key then v else lookup_guess tl key
+  | (k, v)::tl -> if type_equals k key then v else lookup_guess tl key
   | _ -> raise NotFound
 
 let extend (env: environment) (v: var) (ts: tipe_scheme) =
@@ -77,7 +83,7 @@ let instantiate (ts: tipe_scheme) : tipe =
     substitute vs_and_ts t
 
 let rec unify (t1: tipe) (t2: tipe) : bool =
-  if t1 == t2 then true else
+  if type_equals t1 t2 then true else
   match t1, t2 with
   | Guess_t r, _ -> (match !r with 
                         | Some t1' -> unify t1' t2
@@ -86,7 +92,7 @@ let rec unify (t1: tipe) (t2: tipe) : bool =
   | Fn_t (a, b) , Fn_t (c, d) -> (unify a c) && (unify b d)
   | Pair_t (a, b), Pair_t (c, d) -> (unify a c) && (unify b d)
   | List_t a, List_t b -> unify a b
-  | _ -> (t1 = t2)
+  | _ -> raise FatalError
 
 let generalize (env: environment) (t: tipe) : tipe_scheme =
   let t_gs = guesses_of_tipe t in
