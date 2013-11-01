@@ -146,7 +146,7 @@ and check_prims (env: environment) (p: prim) (es: exp list) : tipe =
   | Tl, [e] ->
       let (t, g) = (tc env e, guess())
       in if unify t (List_t g) then List_t(g) else type_error "check_prims on Tl failed\n"
-  | _ -> raise TypeError
+  | _ -> type_error "check_prims missed match\n"
 
 and check_binop env e1 e2 expected_t1 expected_t2 tout =
   let (t1, t2) = ((tc env e1), (tc env e2)) in
