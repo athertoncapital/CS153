@@ -1,0 +1,4 @@
+let p x y = (x, y) in
+let c z = ((fst z) (fst (snd z))) (snd (snd z)) in
+let t = ((fst (c (p p) (p, p))) [4]) in
+fst t

@@ -1,0 +1,13 @@
+let pop l = (hd l, tl l) in
+let push x l = x::l in
+let is_empty l = isnil l in
+let empty = [] in
+
+let dict = empty in
+let add k v dict = (push (k, v)) dict in
+let lookup k dict =
+  if is_empty dict then false else 
+    let elt = fst(pop dict) in
+      if (fst elt) = k then (snd elt) else false
+in
+(lookup 1) ((add 1) 100) dict

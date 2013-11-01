@@ -99,6 +99,8 @@ let instantiate (ts: tipe_scheme) : tipe =
     substitute vs_and_ts t
 
 let rec unify (t1: tipe) (t2: tipe) : bool =
+  let _ = print_string "unifying: ";  print_type t1; print_string ", "; print_type t2; print_string "\n" in
+  let out = (
   if type_equals t1 t2 then true else
   match t1, t2 with
   | Guess_t r, _ -> (match !r with 
@@ -108,9 +110,12 @@ let rec unify (t1: tipe) (t2: tipe) : bool =
   | Fn_t (a, b) , Fn_t (c, d) -> (unify a c) && (unify b d)
   | Pair_t (a, b), Pair_t (c, d) -> (unify a c) && (unify b d)
   | List_t a, List_t b -> unify a b
-  | _ -> false
+  | _ -> false) in
+  let _ = print_string "done unifying: "; print_type t1; print_string ", "; print_type t2; Printf.printf " %b" out; print_string "\n" in
+  out
 
 let generalize (env: environment) (t: tipe) : tipe_scheme =
+  let _ = print_string "generalize: ";  print_type t; print_string ": " in
   let t = strip_guess_some t in
   let t_gs = guesses_of_tipe t in
   let env_list_gs = List.map (function (x, Forall (vs, t)) -> guesses_of_tipe t) env in
@@ -118,9 +123,14 @@ let generalize (env: environment) (t: tipe) : tipe_scheme =
   let diff = minus t_gs env_gs in
   let gs_vs = List.map (fun g -> (g, fresh_var())) diff in
   let ts = substitute_guesses gs_vs t in
+  let _ = print_type ts; print_string "\n" in
   Forall (List.map snd gs_vs, ts)
 
 let rec tc (env: environment) ((e, _): exp) : tipe =
+  let _ = print_string "tc: ";  print_exp (e, 0); print_string "\n" in
+  let _ = (print_string "env: "; List.iter (function (a, Forall(b, t)) -> print_string (a^": "); print_type t; print_string ", ") env )in
+  let _ = print_string "\n" in
+  let out = (
   match e with
   | Var x -> instantiate (lookup env x)
   | PrimApp (p, es) -> check_prims env p es
@@ -134,7 +144,10 @@ let rec tc (env: environment) ((e, _): exp) : tipe =
       in if (unify t1 Bool_t) && (unify t2 t3) then t2 else type_error "tc on If failed\n"
   | Let (v, e1, e2) ->
       let s = generalize env (tc env e1) in
-      tc (extend env v s) e2
+      tc (extend env v s) e2 ) in
+  let Forall (vs, gout) = generalize env out in 
+  let _ = print_string "tc complete: ";  print_exp (e, 0); print_string ": "; print_type out; print_string "\n" in
+  out
 
 and check_prims (env: environment) (p: prim) (es: exp list) : tipe =
   match p, es with
@@ -162,7 +175,7 @@ and check_prims (env: environment) (p: prim) (es: exp list) : tipe =
       in if unify t (List_t g) then g else type_error "check_prims on Hd failed\n"
   | Tl, [e] ->
       let (t, g) = (tc env e, guess())
-      in if unify t (List_t g) then List_t g else type_error "check_prims on Tl failed\n"
+      in if unify t (List_t g) then (List_t g) else type_error "check_prims on Tl failed\n"
   | _ -> type_error "check_prims missed match\n"
 
 and check_binop env e1 e2 expected_t1 expected_t2 tout =

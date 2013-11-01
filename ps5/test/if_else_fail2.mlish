@@ -1,0 +1,3 @@
+let x = (1, 2) in
+
+if (fst x) = 1 then (snd x) else false

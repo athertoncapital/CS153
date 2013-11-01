@@ -1,0 +1,3 @@
+let pop x = (hd x, tl x) in
+let x = [(1, 2)] in
+if true then (snd fst pop x) else false

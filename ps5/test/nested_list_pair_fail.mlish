@@ -1,0 +1,2 @@
+let pop x = (tl x, tl x) in
+pop [1]

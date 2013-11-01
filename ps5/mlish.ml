@@ -33,7 +33,7 @@ let run_prog prog = Scish_eval.run prog
 
 let _ = 
   let prog = parse_file() in
-  let _ = print_type (Mlish_type_check.type_check_exp prog); Printf.printf "\n" in
+  (* let _ = print_type (Mlish_type_check.type_check_exp prog); Printf.printf "\n" in *)
   let prog' = compile_prog prog in
   let ans = run_prog prog' in
   print_string ("answer = "^(Scish_eval.val2string ans)^"\n")

@@ -1,0 +1,4 @@
+let f x = fst x in
+let s x = snd x in
+let p x y = (x, y) in
+f s (p ((p 2) 3)) ((p 4) 5)

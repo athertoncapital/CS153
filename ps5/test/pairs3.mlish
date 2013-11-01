@@ -1,0 +1,3 @@
+let p x y = (x, y) in
+let c z = ((fst z) (fst (snd z))) (snd (snd z)) in
+fst (c (p p) (2, 3))
