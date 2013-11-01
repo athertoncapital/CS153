@@ -23,19 +23,19 @@ let guess() = Guess_t(ref None)
 let var_counter = ref 0
 
 let fresh_var() = let x = !var_counter in
-  var_counter:= x + 1; "t" ^ string_of_int(x)
+  var_counter := x + 1; "t" ^ string_of_int(x)
 
 let rec lookup ls key =
   match ls with
   | (k, v)::tl -> if k = key then v else lookup tl key
   | _ -> raise FatalError
 
-let rec lookup_guess ls key =
+let rec lookup_guess (ls: (tipe * tvar) list) (key: tipe) : tvar =
   match ls with
   | (k, v)::tl -> if type_equals k key then v else lookup_guess tl key
   | _ -> raise NotFound
 
-let extend (env: environment) (v: var) (ts: tipe_scheme) =
+let extend (env: environment) (v: var) (ts: tipe_scheme) : environment =
   (v, ts)::env
 
 let rec guesses_of_tipe (t: tipe) : GuessSet.t =
@@ -46,32 +46,32 @@ let rec guesses_of_tipe (t: tipe) : GuessSet.t =
   | Guess_t _ -> GuessSet.singleton t
   | _ -> GuessSet.empty
 
-let rec substitute (tvars: (tvar * tipe) list) (t:tipe) : tipe =
+let rec substitute (tvars: (tvar * tipe) list) (t: tipe) : tipe =
   match t with
   | Tvar_t tv -> lookup tvars tv
-  | Fn_t (t1, t2) -> Fn_t ((substitute tvars t1), (substitute tvars t2))
-  | Pair_t (t1, t2) -> Pair_t ((substitute tvars t1), (substitute tvars t2))
+  | Fn_t (t1, t2) -> Fn_t (substitute tvars t1, substitute tvars t2)
+  | Pair_t (t1, t2) -> Pair_t (substitute tvars t1, substitute tvars t2)
   | List_t t1 -> List_t(substitute tvars t1)
   | Guess_t g -> (match !g with
                   | Some t1 -> (g := Some(substitute tvars t1); t)
                   | None -> t)
   | _ -> t
 
-let rec substitute_guesses (gs: (tipe * tvar) list) (t:tipe) =
+let rec substitute_guesses (gs: (tipe * tvar) list) (t: tipe) =
   match t with
-  | Fn_t (t1, t2) -> Fn_t ((substitute_guesses gs t1), (substitute_guesses gs t2))
-  | Pair_t (t1, t2) -> Pair_t ((substitute_guesses gs t1), (substitute_guesses gs t2))
+  | Fn_t (t1, t2) -> Fn_t (substitute_guesses gs t1, substitute_guesses gs t2)
+  | Pair_t (t1, t2) -> Pair_t (substitute_guesses gs t1, substitute_guesses gs t2)
   | List_t t1 -> List_t (substitute_guesses gs t1)
-  | Guess_t _ -> (try Tvar_t(lookup gs t) with NotFound -> t)
+  | Guess_t _ -> try Tvar_t (lookup_guess gs t) with NotFound -> t
   | _ -> t
 
-let rec occurs (opt:tipe option ref) (t:tipe) : bool =
+let rec occurs (opt: tipe option ref) (t: tipe) : bool =
   match t with
   | Fn_t (t1, t2) -> occurs opt t1 || occurs opt t2
   | Pair_t (t1, t2) -> occurs opt t1 || occurs opt t2
   | List_t t1 -> occurs opt t1
   | Guess_t opt2 -> 
-      if (opt == opt2) then true
+      if opt == opt2 then true
       else (match !opt2 with
             | Some t1 -> occurs opt t1
             | None -> false)
