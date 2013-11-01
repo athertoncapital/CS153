@@ -1,0 +1,5 @@
+let f x = x::[] in
+let g f x = f f f x in
+let h = (g f) [] in
+let i x = if isnil x then 0 else 1 in
+(i h) + (i hd h) + (i tl h) + (i hd hd h) + (i hd hd hd h)

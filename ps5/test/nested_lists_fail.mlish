@@ -1,0 +1,4 @@
+let f x = x::[] in
+let g f x = f f f x in
+let h = (g f) [] in
+isnil h
