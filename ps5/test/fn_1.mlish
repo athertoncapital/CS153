@@ -1,0 +1,4 @@
+let g f x ls =
+  if (isnil ls) then x else (f x (hd ls)) in
+
+g (fun x y -> x + y) 0 [1;2;3]
