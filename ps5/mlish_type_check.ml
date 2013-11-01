@@ -43,9 +43,7 @@ let rec guesses_of_tipe (t: tipe) : GuessSet.t =
   | Fn_t (t1, t2) -> GuessSet.union (guesses_of_tipe t1) (guesses_of_tipe t2)
   | Pair_t (t1, t2) -> GuessSet.union (guesses_of_tipe t1) (guesses_of_tipe t2)
   | List_t t1 -> guesses_of_tipe t1
-  | Guess_t r -> (match !r with
-                  | None -> GuessSet.singleton t
-                  | Some _ -> GuessSet.singleton t)
+  | Guess_t _ -> GuessSet.singleton t
   | _ -> GuessSet.empty
 
 let rec substitute (tvars: (tvar * tipe) list) (t: tipe) : tipe =
