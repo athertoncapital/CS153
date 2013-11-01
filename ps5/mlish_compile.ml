@@ -38,5 +38,6 @@ and compile_prim_exp (p: ML.prim) (es: ML.exp list) : S.exp =
   | ML.Cons -> PrimApp(Cons, [Int 0; PrimApp(Cons, es)])
   | ML.Hd -> PrimApp(Fst, [PrimApp(Snd, es)])
   | ML.Tl -> PrimApp(Snd, [PrimApp(Snd, es)])
+  | ML.Unit -> Int 0
   | _ -> PrimApp(primop_of p, es)
 
