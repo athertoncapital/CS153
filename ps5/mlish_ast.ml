@@ -59,6 +59,7 @@ let rec print_exp (e, _) : unit =
   match e with
   | Var v -> print_string v
   | PrimApp (Int i, _) -> Printf.printf "%d" i
+  | PrimApp (Bool b, _) -> Printf.printf "%b" b
   | PrimApp (Hd, [e]) -> Printf.printf "(hd "; print_exp e; Printf.printf ")"
   | PrimApp (Tl, [e]) -> Printf.printf "(tl "; print_exp e; Printf.printf ")"
   | PrimApp (Cons, [e1; e2]) -> print_string "("; print_exp e1; print_string "::"; print_exp e2; print_string ")"
@@ -69,4 +70,6 @@ let rec print_exp (e, _) : unit =
   | PrimApp( Pair, [e1; e2]) -> print_string ("("); print_exp e1; print_string ", "; print_exp e2; print_string ")"
   | PrimApp (Fst, [e]) -> Printf.printf "(fst "; print_exp e; Printf.printf ")"
   | PrimApp (Snd, [e]) -> Printf.printf "(snd "; print_exp e; Printf.printf ")"
+  | PrimApp (Eq, [e1;e2]) -> print_string "("; print_exp e1; print_string "="; print_exp e2; print_string ")"
+  | If (e1, e2, e3) -> print_string "if "; print_exp e1; print_string " then "; print_exp e2; print_string " else "; print_exp e3
   | _ -> print_string "unimp"

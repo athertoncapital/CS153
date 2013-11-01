@@ -1,0 +1,4 @@
+let f dict =
+  let elt = hd dict in
+    if (fst elt) = 1 then (snd elt) else false in
+f [(1,2)]

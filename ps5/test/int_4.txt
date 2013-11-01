@@ -1,1 +1,1 @@
-let f x = 3 in f ()
+let f x = 3 in f () + f []

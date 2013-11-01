@@ -1,2 +1,3 @@
-let pop x = (tl x, tl x) in
-pop [1]
+let pop x = (hd x, tl x) in
+let x = [1] in
+(fst pop x) 1
