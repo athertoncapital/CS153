@@ -1,12 +1,12 @@
 module ML = Mlish_ast
-module S = Scish_ast
+module SC = Scish_ast
 
 exception ImplementMe
 exception FatalError
 
-open S
+open SC
 
-let primop_of (p : ML.prim) : primop =
+let primop_of (p: ML.prim) : primop =
   match p with
   | ML.Plus -> Plus
   | ML.Minus -> Minus
@@ -19,7 +19,7 @@ let primop_of (p : ML.prim) : primop =
   | ML.Snd -> Snd
   | _ -> raise FatalError
 
-let rec compile_exp ((e,_):ML.exp) : S.exp = 
+let rec compile_exp ((e, _): ML.exp) : SC.exp = 
   match e with
   | ML.Var v -> Var v
   | ML.PrimApp (p, es) -> compile_prim_exp p es
@@ -28,7 +28,7 @@ let rec compile_exp ((e,_):ML.exp) : S.exp =
   | ML.If (e1, e2, e3) -> If (compile_exp e1, compile_exp e2, compile_exp e3)
   | ML.Let (v, e1, e2) -> sLet v (compile_exp e1) (compile_exp e2)
 
-and compile_prim_exp (p: ML.prim) (es: ML.exp list) : S.exp =
+and compile_prim_exp (p: ML.prim) (es: ML.exp list) : SC.exp =
   let es = List.map compile_exp es in
   match p with
   | ML.Int i -> Int i
