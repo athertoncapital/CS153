@@ -62,7 +62,7 @@ let rec substitute_guesses (gs: (tipe * tvar) list) (t: tipe) =
   | Fn_t (t1, t2) -> Fn_t (substitute_guesses gs t1, substitute_guesses gs t2)
   | Pair_t (t1, t2) -> Pair_t (substitute_guesses gs t1, substitute_guesses gs t2)
   | List_t t1 -> List_t (substitute_guesses gs t1)
-  | Guess_t _ -> try Tvar_t (lookup_guess gs t) with NotFound -> t
+  | Guess_t _ -> (try Tvar_t (lookup_guess gs t) with NotFound -> t)
   | _ -> t
 
 let rec occurs (opt: tipe option ref) (t: tipe) : bool =
