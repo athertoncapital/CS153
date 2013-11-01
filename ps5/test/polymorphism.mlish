@@ -1,0 +1,5 @@
+let f x = x in
+let g x y = (x, y) in
+let h a b = (fun x -> (g x) b) a in
+let i x = fst x in
+(f i) ((f h) ((f f) (f 1))) (f 2)

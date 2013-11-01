@@ -28,7 +28,7 @@ let fresh_var() = let x = !var_counter in
 let rec lookup ls key =
   match ls with
   | (k, v)::tl -> if k = key then v else lookup tl key
-  | _ -> raise FatalError
+  | _ -> raise NotFound
 
 let rec lookup_guess (ls: (tipe * tvar) list) (key: tipe) : tvar =
   match ls with
@@ -45,7 +45,7 @@ let rec guesses_of_tipe (t: tipe) : GuessSet.t =
   | List_t t1 -> guesses_of_tipe t1
   | Guess_t r -> (match !r with
                   | None -> GuessSet.singleton t
-                  | Some _ -> raise FatalError)
+                  | Some _ -> GuessSet.singleton t)
   | _ -> GuessSet.empty
 
 let rec substitute (tvars: (tvar * tipe) list) (t: tipe) : tipe =
