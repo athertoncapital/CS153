@@ -134,7 +134,7 @@ and check_prims (env: environment) (p: prim) (es: exp list) : tipe =
       let (t, g1, g2) = (tc env e, guess(), guess())
       in if unify t (Pair_t (g1, g2)) then g2 else type_error "check_prims on Snd failed\n"
   | Nil, [] -> List_t (guess())
-  | Cons, [e1;e2] ->
+  | Cons, [e1; e2] ->
       let (t1, t2) = (tc env e1, tc env e2)
       in if unify t2 (List_t t1) then List_t t1 else type_error "check_prims on Cons failed\n"
   | IsNil, [e] -> 
