@@ -43,7 +43,9 @@ let rec guesses_of_tipe (t: tipe) : GuessSet.t =
   | Fn_t (t1, t2) -> GuessSet.union (guesses_of_tipe t1) (guesses_of_tipe t2)
   | Pair_t (t1, t2) -> GuessSet.union (guesses_of_tipe t1) (guesses_of_tipe t2)
   | List_t t1 -> guesses_of_tipe t1
-  | Guess_t _ -> GuessSet.singleton t
+  | Guess_t r -> (match !r with
+                  | None -> GuessSet.singleton t
+                  | Some _ -> GuessSet.empty)
   | _ -> GuessSet.empty
 
 let rec substitute (tvars: (tvar * tipe) list) (t: tipe) : tipe =
@@ -115,7 +117,7 @@ let rec tc (env: environment) ((e, _): exp) : tipe =
   | If (e1, e2, e3) -> 
       let (t1, t2, t3) = (tc env e1, tc env e2, tc env e3)
       in if (unify t1 Bool_t) && (unify t2 t3) then t2 else type_error "tc on If failed\n"
-  | Let (v, e1, e2) -> 
+  | Let (v, e1, e2) ->
       let s = generalize env (tc env e1) in
       tc (extend env v s) e2
 
