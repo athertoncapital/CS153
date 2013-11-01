@@ -2,16 +2,16 @@ open Mlish_ast
 
 let rec print_type (t : tipe) : unit =
     match t with
-    | Tvar_t t1 -> Printf.printf "%s\n" t1
-    | Int_t -> Printf.printf "Int\n"
-    | Bool_t -> Printf.printf "Bool\n"
-    | Unit_t -> Printf.printf "Unit\n"
-    | Fn_t (t1, t2) -> Printf.printf "Function from ("; print_type t1; Printf.printf ") to ("; print_type t2; Printf.printf ")\n"
-    | Pair_t (t1, t2) -> Printf.printf "Pair of ("; print_type t1; Printf.printf ") and ("; print_type t2; Printf.printf ")\n"
-    | List_t t1 -> Printf.printf "List of ("; print_type t1; Printf.printf ")\n"
+    | Tvar_t t1 -> Printf.printf "%s" t1
+    | Int_t -> Printf.printf "Int"
+    | Bool_t -> Printf.printf "Bool"
+    | Unit_t -> Printf.printf "Unit"
+    | Fn_t (t1, t2) -> Printf.printf "Function from ("; print_type t1; Printf.printf ") to ("; print_type t2; Printf.printf ")"
+    | Pair_t (t1, t2) -> Printf.printf "Pair of ("; print_type t1; Printf.printf ") and ("; print_type t2; Printf.printf ")"
+    | List_t t1 -> Printf.printf "List of ("; print_type t1; Printf.printf ")"
     | Guess_t t1 -> match !t1 with
-                    | Some t -> Printf.printf "Guess of ("; print_type t; Printf.printf ")\n"
-                    | None -> Printf.printf "None\n"
+                    | Some t -> Printf.printf "Guess of ("; print_type t; Printf.printf ")"
+                    | None -> Printf.printf "None"
 
 (* This magic is used to glue the generated lexer and parser together.
  * Expect one command-line argument, a file to parse.
@@ -33,7 +33,7 @@ let run_prog prog = Scish_eval.run prog
 
 let _ = 
   let prog = parse_file() in
-  print_type (Mlish_type_check.type_check_exp prog)
+  print_type (Mlish_type_check.type_check_exp prog); Printf.printf "\n"
   (*
   let prog' = compile_prog prog in
   let ans = run_prog prog' in

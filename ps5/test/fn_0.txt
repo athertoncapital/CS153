@@ -1,0 +1,2 @@
+let f = fun x -> 2 * x in
+fun x -> (f (f x)) + f 2

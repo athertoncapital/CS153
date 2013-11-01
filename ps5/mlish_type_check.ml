@@ -28,12 +28,12 @@ let fresh_var() = let x = !var_counter in
 let rec lookup ls key =
   match ls with
   | (k, v)::tl -> if k = key then v else lookup tl key
-  | _ -> raise TypeError
+  | _ -> type_error "lookup failed\n"
 
 let rec lookup_guess ls key =
   match ls with
   | (k, v)::tl -> if type_equals k key then v else lookup_guess tl key
-  | _ -> raise NotFound
+  | _ -> type_error "lookup_guess failed\n"
 
 let extend (env: environment) (v: var) (ts: tipe_scheme) =
   (v, ts)::env
@@ -71,7 +71,7 @@ let rec occurs (opt:tipe option ref) (t:tipe) : bool =
   | Pair_t (t1, t2) -> occurs opt t1 || occurs opt t2
   | List_t t1 -> occurs opt t1
   | Guess_t opt2 -> 
-      if (opt = opt2) then true
+      if (opt == opt2) then true
       else (match !opt2 with
             | Some t1 -> occurs opt t1
             | None -> false)
@@ -87,7 +87,7 @@ let rec unify (t1: tipe) (t2: tipe) : bool =
   match t1, t2 with
   | Guess_t r, _ -> (match !r with 
                         | Some t1' -> unify t1' t2
-                        | None -> if occurs r t2 then raise TypeError else (r := Some t2; true))
+                        | None -> if occurs r t2 then type_error "unify on guess failed\n" else (r := Some t2; true))
   | _, Guess_t _ -> unify t2 t1
   | Fn_t (a, b) , Fn_t (c, d) -> (unify a c) && (unify b d)
   | Pair_t (a, b), Pair_t (c, d) -> (unify a c) && (unify b d)
@@ -111,10 +111,10 @@ let rec tc (env: environment) ((e, _): exp) : tipe =
       let g = guess() in Fn_t(g, tc (extend env v (Forall([], g))) e)
   | App (e1, e2) -> 
       let (t1, t2, t) = (tc env e1, tc env e2, guess())
-      in if unify t1 (Fn_t(t2, t)) then t else raise TypeError
+      in if unify t1 (Fn_t(t2, t)) then t else type_error "tc on App failed\n"
   | If (e1, e2, e3) -> 
       let (t1, t2, t3) = (tc env e1, tc env e2, tc env e3)
-      in if (unify t1 Bool_t) && (unify t2 t3) then t2 else raise TypeError
+      in if (unify t1 Bool_t) && (unify t2 t3) then t2 else type_error "tc on If failed\n"
   | Let (v, e1, e2) -> 
       let s = generalize env (tc env e1) in
       tc (extend env v s) e2
@@ -129,28 +129,28 @@ and check_prims (env: environment) (p: prim) (es: exp list) : tipe =
   | Pair, [e1;e2] -> Pair_t(tc env e1, tc env e2)
   | Fst, [e] -> 
       let (t, g1, g2) = (tc env e, guess(), guess())
-      in if unify t (Pair_t(g1, g2)) then g1 else raise TypeError
+      in if unify t (Pair_t(g1, g2)) then g1 else type_error "check_prims on Fst failed\n"
   | Snd, [e] ->
       let (t, g1, g2) = (tc env e, guess(), guess())
-      in if unify t (Pair_t(g1, g2)) then g2 else raise TypeError
+      in if unify t (Pair_t(g1, g2)) then g2 else type_error "check_prims on Snd failed\n"
   | Nil, [] -> List_t (guess())
   | Cons, [e1;e2] ->
       let (t1, t2) = (tc env e1, tc env e2)
-      in if unify t2 (List_t t1) then List_t(t1) else raise TypeError
+      in if unify t2 (List_t t1) then List_t(t1) else type_error "check_prims on Cons failed\n"
   | IsNil, [e] -> 
       let (t, l) = (tc env e, List_t(guess()))
-      in if unify t l then Bool_t else raise TypeError
+      in if unify t l then Bool_t else type_error "check_prims on IsNil failed\n"
   | Hd, [e] ->
       let (t, g) = (tc env e, guess())
-      in if unify t (List_t g) then g else raise TypeError
+      in if unify t (List_t g) then g else type_error "check_prims on Hd failed\n"
   | Tl, [e] ->
       let (t, g) = (tc env e, guess())
-      in if unify t (List_t g) then List_t(g) else raise TypeError
+      in if unify t (List_t g) then List_t(g) else type_error "check_prims on Tl failed\n"
   | _ -> raise TypeError
 
 and check_binop env e1 e2 expected_t1 expected_t2 tout =
   let (t1, t2) = ((tc env e1), (tc env e2)) in
-    if (unify t1 expected_t1) && (unify t2 expected_t2) then tout else raise TypeError
+    if (unify t1 expected_t1) && (unify t2 expected_t2) then tout else type_error "check_binop failed\n"
 
 let type_check_exp (e:Mlish_ast.exp) : tipe = 
   tc [] e
