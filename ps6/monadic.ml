@@ -230,8 +230,30 @@ let count_table (e:exp) =
       | Int _ -> () in
     occ_e e; table
 
+let count_occurs_in_operand (v: var) (op: operand) =
+  match op with
+  | Var x -> if v = x then 1 else 0
+  | _ -> 0
+
+let rec count_occurs_in_value (v: var) (valu: value) : int =
+  match valu with
+  | Op op -> count_occurs_in_operand v op
+  | PrimApp (_, ops) -> List.fold_left (fun a b -> a + count_occurs_in_operand v b) 0 ops
+  | Lambda (x, e) -> (if v = x then 1 else 0) + (count_occurs v e)
+and count_occurs (v: var) (e: exp) : int =
+  match e with
+  | Return w -> count_occurs_in_operand v w
+  | LetVal (x, valu, e) -> (if v = x then 1 else 0) + (count_occurs_in_value v valu) + (count_occurs v e)
+  | LetCall (x, op1, op2, e) -> (if v = x then 1 else 0) + (count_occurs_in_operand v op1) + (count_occurs_in_operand v op2) + (count_occurs v e)
+  | LetIf (x, op, e1, e2, e) -> (if v = x then 1 else 0) + (count_occurs_in_operand v op) + (count_occurs v e1) + (count_occurs v e2) + (count_occurs v e)
+
 (* dead code elimination *)
-let dce (e:exp) : exp = raise TODO 
+let rec dce (e: exp) : exp =
+  match e with
+  | Return w -> e
+  | LetVal (x, v, e) -> if count_occurs x e = 0 then dce e else LetVal(x, v, dce e)
+  | LetCall (x, f, w, e) -> LetCall(x, f, w, dce e)
+  | LetIf (x, w, e1, e2, e) -> LetIf(x, w, dce e1, dce e2, dce e)
 
 (* (1) inline functions 
  * (2) reduce LetIf expressions when the value being tested is a constant.
