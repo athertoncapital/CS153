@@ -172,13 +172,46 @@ and cprop_oper (env : var -> operand option) (w:operand) =
 let cprop e = cprop_exp empty_env e
 
 (* common sub-value elimination -- as in the slides *)
-let cse (e : exp) : exp = raise TODO 
+let rec cse_val (env: value -> var option) (v: value) =
+  match v with
+  | Lambda (x, e) -> Lambda (x, cse_exp env e)
+  | _ -> v
+and cse_exp (env: value -> var option) (e: exp) : exp =
+  match e with
+  | Return w -> e
+  | LetVal (x, v, e) -> (match env v with
+    | None -> LetVal (x, cse_val env v, cse_exp (extend env v x) e)
+    | Some y -> LetVal (x, Op (Var y), cse_exp env e))
+  | LetCall (x, f, w, e) -> LetCall (x, f, w, cse_exp env e)
+  | LetIf (x, w, e1, e2, e) -> LetIf (x, w, cse_exp env e1, cse_exp env e2, cse_exp env e)
+
+let cse (e: exp) : exp =
+  cse_exp empty_env e
+
+let rec flatten (x: var) (e1: exp) (e2: exp) : exp =
+  match e1 with
+  | Return w -> LetVal (x, Op w, e2)
+  | LetVal (y, v, e1) -> LetVal (y, v, flatten x e1 e2)
+  | LetCall (y, f, ws, e1) -> LetCall (y, f, ws, flatten x e1 e2)
+  | LetIf (y, w, et, ef, ec) -> LetIf (y, w, et, ef, flatten x ec e2)
 
 (* constant folding
  * Apply primitive operations which can be evaluated. e.g. fst (1,2) = 1
  *)
-let cfold (e : exp) : exp = raise TODO
-
+let rec cfold_value (valu: value) : value =
+  match valu with
+  | Lambda (x, e) -> Lambda (x, cfold e)
+  | PrimApp (S.Plus, [Int i; Int j]) -> Op (Int (i + j))
+  (* TODO *)
+  | _ -> valu
+and cfold (e: exp) : exp =
+  match e with
+  | Return w -> e
+  | LetVal (x, v, e) -> LetVal (x, cfold_value v, cfold e)
+  | LetCall (x, f, w, e) -> LetCall (x, f, w, cfold e) (* TODO ? *)
+  | LetIf (x, Int 0, e1, e2, e) -> cfold (flatten x e2 e)
+  | LetIf (x, Int _, e1, e2, e) -> cfold (flatten x e1 e)
+  | LetIf (x, w, e1, e2, e) -> LetIf (x, w, cfold e1, cfold e2, cfold e)
 
 (* To support a somewhat more efficient form of dead-code elimination and
  * inlining, we first construct a table saying how many times each variable 
@@ -251,9 +284,9 @@ and count_occurs (v: var) (e: exp) : int =
 let rec dce (e: exp) : exp =
   match e with
   | Return w -> e
-  | LetVal (x, v, e) -> if count_occurs x e = 0 then dce e else LetVal(x, v, dce e)
-  | LetCall (x, f, w, e) -> LetCall(x, f, w, dce e)
-  | LetIf (x, w, e1, e2, e) -> LetIf(x, w, dce e1, dce e2, dce e)
+  | LetVal (x, v, e) -> if count_occurs x e = 0 then dce e else LetVal (x, v, dce e)
+  | LetCall (x, f, w, e) -> LetCall (x, f, w, dce e)
+  | LetIf (x, w, e1, e2, e) -> LetIf (x, w, dce e1, dce e2, dce e)
 
 (* (1) inline functions 
  * (2) reduce LetIf expressions when the value being tested is a constant.
@@ -322,7 +355,9 @@ let redtest (e:exp) : exp = raise EXTRA_CREDIT
 (* optimize the code by repeatedly performing optimization passes until
  * there is no change. *)
 let optimize inline_threshold e = 
-    let opt = fun x -> dce (cprop (redtest (cse (cfold ((inline inline_threshold) x))))) in
+    (* let opt = fun x -> dce (cprop (redtest (cse (cfold ((inline inline_threshold) x))))) in
+  *)
+    let opt = fun x -> dce (cse (cfold x)) in
     let rec loop (i:int) (e:exp) : exp = 
       (if (!changed) then 
         let _ = changed := false in
