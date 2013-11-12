@@ -202,6 +202,25 @@ let rec cfold_value (valu: value) : value =
   match valu with
   | Lambda (x, e) -> Lambda (x, cfold e)
   | PrimApp (S.Plus, [Int i; Int j]) -> Op (Int (i + j))
+  | PrimApp (S.Plus, [x; Int 0]) -> Op x
+  | PrimApp (S.Plus, [Int 0; x]) -> Op x
+  | PrimApp (S.Minus, [Int i; Int j]) -> Op (Int (i - j))
+  | PrimApp (S.Minus, [x; Int 0]) -> Op x
+  | PrimApp (S.Times, [Int i; Int j]) -> Op (Int (i * j))
+  | PrimApp (S.Times, [x; Int 0]) -> Op (Int 0)
+  | PrimApp (S.Times, [Int 0; x]) -> Op (Int 0)
+  | PrimApp (S.Times, [x; Int 1]) -> Op x
+  | PrimApp (S.Times, [Int 1; x]) -> Op x
+  | PrimApp (S.Div, [Int i; Int j]) -> Op (Int (i / j))
+  | PrimApp (S.Div, [x; Int 1]) -> Op x
+(*
+  | PrimApp (S.Fst, [S.Cons [x; _]]) -> x
+  | PrimApp (S.Snd, [S.Cons [_; x]]) -> x
+*)
+  | PrimApp (S.Eq, [Int i; Int j]) -> if i = j then Op (Int 1) else Op (Int 0)
+  | PrimApp (S.Eq, [x; y]) -> if x = y then Op (Int 1) else valu
+  | PrimApp (S.Lt, [Int i; Int j]) -> if i < j then Op (Int 1) else Op (Int 0)
+  | PrimApp (S.Lt, [x; y]) -> if x = y then Op (Int 0) else valu
   (* TODO *)
   | _ -> valu
 and cfold (e: exp) : exp =
@@ -357,7 +376,7 @@ let redtest (e:exp) : exp = raise EXTRA_CREDIT
 let optimize inline_threshold e = 
     (* let opt = fun x -> dce (cprop (redtest (cse (cfold ((inline inline_threshold) x))))) in
   *)
-    let opt = fun x -> dce (cse (cfold x)) in
+    let opt = fun x -> dce (cprop (cse (cfold x))) in
     let rec loop (i:int) (e:exp) : exp = 
       (if (!changed) then 
         let _ = changed := false in
