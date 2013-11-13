@@ -150,14 +150,32 @@ let change x = (changed := true; x)
 let empty_env x = None
 let extend env x w = fun y -> if y = x then Some w else env y
 
+let count_occurs_in_operand (v: var) (op: operand) =
+  match op with
+  | Var x -> if v = x then 1 else 0
+  | _ -> 0
+
+let rec count_occurs_in_value (v: var) (valu: value) : int =
+  match valu with
+  | Op op -> count_occurs_in_operand v op
+  | PrimApp (_, ops) -> List.fold_left (fun a b -> a + count_occurs_in_operand v b) 0 ops
+  | Lambda (x, e) -> count_occurs v e
+and count_occurs (v: var) (e: exp) : int =
+  match e with
+  | Return w -> count_occurs_in_operand v w
+  | LetVal (x, valu, e) -> (count_occurs_in_value v valu) + (count_occurs v e)
+  | LetCall (x, op1, op2, e) -> (count_occurs_in_operand v op1) + (count_occurs_in_operand v op2) + (count_occurs v e)
+  | LetIf (x, op, e1, e2, e) -> (count_occurs_in_operand v op) + (count_occurs v e1) + (count_occurs v e2) + (count_occurs v e)
+
 (* operand propagation -- LetVal(x,Op w,e) --> e[w/x] -- just like notes. *)
-let rec cprop_exp (env : var -> operand option) (e:exp) = 
+let rec cprop_exp (env : var -> value option) (e:exp) = 
     match e with
       Return w -> Return (cprop_oper env w)
     | LetVal(x,Op w,e) -> 
-        change(cprop_exp (extend env x (cprop_oper env w)) e)
-    | LetVal(x,PrimApp(p,ws),e) -> 
-        LetVal(x,PrimApp(p,List.map (cprop_oper env) ws),cprop_exp env e)
+        change(cprop_exp (extend env x (Op (cprop_oper env w))) e)
+    | LetVal(x,PrimApp(p,ws),e) -> let v = PrimApp(p,List.map (cprop_oper env) ws) in
+        if count_occurs x e <= 1 then LetVal(x,v,cprop_exp (extend env x v) e)
+        else LetVal(x,v,cprop_exp env e)
     | LetVal(x,Lambda(y,e1),e2) -> 
         LetVal(x,Lambda(y,cprop_exp env e1),cprop_exp env e2)
     | LetCall(x,w1,w2,e) -> 
@@ -165,9 +183,9 @@ let rec cprop_exp (env : var -> operand option) (e:exp) =
     | LetIf(x,w,e1,e2,e) -> 
         LetIf(x,cprop_oper env w,cprop_exp env e1,cprop_exp env e2,
               cprop_exp env e)
-and cprop_oper (env : var -> operand option) (w:operand) = 
+and cprop_oper (env : var -> value option) (w:operand) : operand = 
     match w with
-      Var x -> (match env x with None -> w | Some w' -> w')
+    | Var x -> (match env x with None -> w | Some w' -> (match w' with Op w'' -> change(w'') | _ -> w))
     | Int _ -> w
 
 let cprop e = cprop_exp empty_env e
@@ -186,7 +204,7 @@ let cprop e = cprop_exp empty_env e
  * due to variable capture.)  
  *)
 let splice x e1 e2 = 
-    let rec splice_exp final (env : var -> operand option) (e:exp) = 
+    let rec splice_exp final (env : var -> value option) (e:exp) = 
       match e with
         Return w -> 
           if final then LetVal(x,Op (cprop_oper env w),e2)
@@ -194,22 +212,22 @@ let splice x e1 e2 =
       | LetVal(y,v,e) -> 
           let y' = fresh_var() in
           LetVal(y',loop_value env v,
-                splice_exp final (extend env y (Var y')) e)
+                splice_exp final (extend env y (Op (Var y'))) e)
       | LetCall(y,w1,w2,e) -> 
           let y' = fresh_var() in
           LetCall(y',cprop_oper env w1,cprop_oper env w2,
-                  splice_exp final (extend env y (Var y')) e)
+                  splice_exp final (extend env y (Op (Var y'))) e)
       | LetIf(y,w,e1,e2,e) -> 
           let y' = fresh_var() in
           LetIf(y',cprop_oper env w, splice_exp false env e1,
                 splice_exp false env e2, 
-                splice_exp final (extend env y (Var y')) e)
+                splice_exp final (extend env y (Op (Var y'))) e)
     and loop_value env v = 
       match v with
         Op w -> Op (cprop_oper env w)
       | Lambda(y,e) -> 
           let y' = fresh_var() in 
-          Lambda(y',splice_exp false (extend env y (Var y')) e)
+          Lambda(y',splice_exp false (extend env y (Op (Var y'))) e)
       | PrimApp(p,ws) -> PrimApp(p,List.map (cprop_oper env) ws) in
   splice_exp true empty_env e1
 
@@ -323,23 +341,6 @@ let count_table (e:exp) =
       | Int _ -> () in
     occ_e e; table
 
-let count_occurs_in_operand (v: var) (op: operand) =
-  match op with
-  | Var x -> if v = x then 1 else 0
-  | _ -> 0
-
-let rec count_occurs_in_value (v: var) (valu: value) : int =
-  match valu with
-  | Op op -> count_occurs_in_operand v op
-  | PrimApp (_, ops) -> List.fold_left (fun a b -> a + count_occurs_in_operand v b) 0 ops
-  | Lambda (x, e) -> count_occurs v e
-and count_occurs (v: var) (e: exp) : int =
-  match e with
-  | Return w -> count_occurs_in_operand v w
-  | LetVal (x, valu, e) -> (count_occurs_in_value v valu) + (count_occurs v e)
-  | LetCall (x, op1, op2, e) -> (count_occurs_in_operand v op1) + (count_occurs_in_operand v op2) + (count_occurs v e)
-  | LetIf (x, op, e1, e2, e) -> (count_occurs_in_operand v op) + (count_occurs v e1) + (count_occurs v e2) + (count_occurs v e)
-
 (* dead code elimination *)
 let rec dce (e: exp) : exp =
   match e with
@@ -372,7 +373,7 @@ let size_inline_thresh (i: int) (e: exp) : bool =
 let rec operand_to_lambda (env: var -> value option) (op: operand) : value option =
   let fn = (match op with Var v -> v | Int _ -> raise FATAL) in
   let valopt = env fn in
-  match env fn with
+  match valopt with
     | None -> valopt
     | Some (Lambda _) -> valopt
     | Some (Op o) -> operand_to_lambda env o
@@ -409,7 +410,7 @@ let redtest (e: exp) : exp = raise EXTRA_CREDIT
 (* optimize the code by repeatedly performing optimization passes until
  * there is no change. *)
 let optimize inline_threshold e = 
-    let opt = fun x -> dce (cprop (* redtest *) (cse (cfold ((inline always_inline_thresh) x)))) in
+    let opt = fun x -> dce (cprop (* redtest *) (cse (cfold ((inline (size_inline_thresh 100)) x)))) in
     let rec loop (i:int) (e:exp) : exp = 
       (if (!changed) then 
         let _ = changed := false in
