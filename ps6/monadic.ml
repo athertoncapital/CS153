@@ -376,6 +376,15 @@ and size_exp e =
 let size_inline_thresh (i: int) (e: exp) : bool =
   size_exp e < i
 
+let rec operand_to_lambda (env: var -> value option) (op: operand) : value option =
+  let fn = (match op with Var v -> v | Int _ -> raise FATAL) in
+  let valopt = env fn in
+  match env fn with
+    | None -> valopt
+    | Some (Lambda _) -> valopt
+    | Some (Op o) -> operand_to_lambda env o
+    | Some (PrimApp _) -> None
+
 (* inlining 
  * only inline the expression e if (inline_threshold e) return true.
  *)
@@ -385,10 +394,11 @@ let rec inline_exp (env: var -> value option) (e: exp) : exp =
   | LetVal (x, v, e) -> (match v with
     | Lambda _ -> LetVal (x, v, inline_exp (extend env x v) e)
     | _ -> LetVal (x, v, inline_exp env e))
-  | LetCall (x, f, w, e) -> let fn = (match f with Var v -> v | Int _ -> raise FATAL) in
-    (match env fn with
-      | None -> LetCall (x, f, w, inline_exp env e)
-      | Some v -> change (LetVal (x, v, inline_exp env e)))
+  | LetCall (x, f, w, e) -> let fn = operand_to_lambda env f in
+    (match fn with
+      | Some (Lambda (x2, e2)) -> change (splice x (LetVal (x2, Op w, e2)) (inline_exp env e))
+      | _ -> LetCall (x, f, w, inline_exp env e)
+    )
   | LetIf (x, w, e1, e2, e) -> LetIf (x, w, inline_exp env e1, inline_exp env e2, inline_exp env e)
 
 let inline (inline_threshold: exp -> bool) (e: exp) : exp =
