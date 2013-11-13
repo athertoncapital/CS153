@@ -5,6 +5,7 @@ type var = string
 
 exception TODO
 exception EXTRA_CREDIT
+exception FATAL
 
 (* operands -- pure and small *)
 type operand = Var of var | Int of int
@@ -367,21 +368,24 @@ and size_exp e =
 (* return true if the expression e is smaller than i, i.e. it has fewer
  * constructors
  *)
-let size_inline_thresh (i : int) (e : exp) : bool =
-  (size_exp e) < i
+let size_inline_thresh (i: int) (e: exp) : bool =
+  size_exp e < i
 
 (* inlining 
  * only inline the expression e if (inline_threshold e) return true.
  *)
 let rec inline_exp (env: var -> value option) (e: exp) : exp =
-  raise TODO
-  (*
   match e with
   | Return w -> e
-  | LetVal (x, v, e) -> LetVal (x, v, inline_exp (extend env e)
-  | LetCall (x, f, w, e) -> LetCall (x, f, )
-  | LetIf (x, w, e1, e2, e) -> 
-*)
+  | LetVal (x, v, e) -> (match v with
+    | Lambda _ -> LetVal (x, v, inline_exp (extend env x v) e)
+    | _ -> LetVal (x, v, inline_exp env e))
+  | LetCall (x, f, w, e) -> let fn = (match f with Var v -> v | Int _ -> raise FATAL) in
+    (match env fn with
+      | None -> LetCall (x, f, w, inline_exp env e)
+      | Some v -> change (LetVal (x, v, inline_exp env e)))
+  | LetIf (x, w, e1, e2, e) -> LetIf (x, w, inline_exp env e1, inline_exp env e2, inline_exp env e)
+
 let inline (inline_threshold: exp -> bool) (e: exp) : exp =
   if inline_threshold e then inline_exp empty_env e else e
 
@@ -392,15 +396,14 @@ let inline (inline_threshold: exp -> bool) (e: exp) : exp =
  *   (since x < 1 implies x < 2)
  * - This is similar to constant folding + logic programming
  *)
-let redtest (e:exp) : exp = raise EXTRA_CREDIT 
- 
+let redtest (e:exp) : exp = raise EXTRA_CREDIT
 
 (* optimize the code by repeatedly performing optimization passes until
  * there is no change. *)
 let optimize inline_threshold e = 
     (* let opt = fun x -> dce (cprop (redtest (cse (cfold ((inline inline_threshold) x))))) in
   *)
-    let opt = fun x -> dce (cprop (cse (cfold x))) in
+    let opt = fun x -> dce (cprop (cse (cfold ((inline always_inline_thresh) x)))) in
     let rec loop (i:int) (e:exp) : exp = 
       (if (!changed) then 
         let _ = changed := false in
