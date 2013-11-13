@@ -229,14 +229,7 @@ and cse_exp (env: value -> var option) (e: exp) : exp =
 
 let cse (e: exp) : exp =
   cse_exp empty_env e
-(*
-let rec flatten (x: var) (e1: exp) (e2: exp) : exp =
-  match e1 with
-  | Return w -> LetVal (x, Op w, e2)
-  | LetVal (y, v, e1) -> LetVal (y, v, flatten x e1 e2)
-  | LetCall (y, f, ws, e1) -> LetCall (y, f, ws, flatten x e1 e2)
-  | LetIf (y, w, et, ef, ec) -> LetIf (y, w, et, ef, flatten x ec e2)
-*)
+
 (* constant folding
  * Apply primitive operations which can be evaluated. e.g. fst (1,2) = 1
  *)
@@ -416,9 +409,7 @@ let redtest (e: exp) : exp = raise EXTRA_CREDIT
 (* optimize the code by repeatedly performing optimization passes until
  * there is no change. *)
 let optimize inline_threshold e = 
-    (* let opt = fun x -> dce (cprop (redtest (cse (cfold ((inline inline_threshold) x))))) in
-  *)
-    let opt = fun x -> dce (cprop (cse (cfold ((inline always_inline_thresh) x)))) in
+    let opt = fun x -> dce (cprop (* redtest *) (cse (cfold ((inline always_inline_thresh) x)))) in
     let rec loop (i:int) (e:exp) : exp = 
       (if (!changed) then 
         let _ = changed := false in
