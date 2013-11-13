@@ -240,9 +240,9 @@ let rec flatten (x: var) (e1: exp) (e2: exp) : exp =
 (* constant folding
  * Apply primitive operations which can be evaluated. e.g. fst (1,2) = 1
  *)
-let rec cfold_value (valu: value) : value =
+let rec cfold_value (env: var -> value option) (valu: value) : value =
   match valu with
-  | Lambda (x, e) -> Lambda (x, cfold e)
+  | Lambda (x, e) -> Lambda (x, cfold_exp env e)
   | PrimApp (S.Plus, [Int i; Int j]) -> change (Op (Int (i + j)))
   | PrimApp (S.Plus, [x; Int 0]) -> change (Op x)
   | PrimApp (S.Plus, [Int 0; x]) -> change (Op x)
@@ -255,24 +255,30 @@ let rec cfold_value (valu: value) : value =
   | PrimApp (S.Times, [Int 1; x]) -> change (Op x)
   | PrimApp (S.Div, [Int i; Int j]) -> change (Op (Int (i / j)))
   | PrimApp (S.Div, [x; Int 1]) -> change (Op x)
-(*
-  | PrimApp (S.Fst, [S.Cons [x; _]]) -> x
-  | PrimApp (S.Snd, [S.Cons [_; x]]) -> x
-*)
+  | PrimApp (S.Fst, [x]) -> (match x with Int _ -> raise FATAL | Var x ->
+    (match env x with None -> raise FATAL | Some v -> (match v with
+      | PrimApp (S.Cons, [a; b]) -> Op a
+      | _ -> valu)))
+  | PrimApp (S.Snd, [x]) -> (match x with Int _ -> raise FATAL | Var x ->
+    (match env x with None -> raise FATAL | Some v -> (match v with
+      | PrimApp (S.Cons, [a; b]) -> Op b
+      | _ -> valu)))
   | PrimApp (S.Eq, [Int i; Int j]) -> change (if i = j then Op (Int 1) else Op (Int 0))
   | PrimApp (S.Eq, [x; y]) -> if x = y then change (Op (Int 1)) else valu
   | PrimApp (S.Lt, [Int i; Int j]) -> change (if i < j then Op (Int 1) else Op (Int 0))
   | PrimApp (S.Lt, [x; y]) -> if x = y then change (Op (Int 0)) else valu
   (* TODO *)
   | _ -> valu
-and cfold (e: exp) : exp =
+and cfold_exp (env: var -> value option) (e: exp) =
   match e with
   | Return w -> e
-  | LetVal (x, v, e) -> LetVal (x, cfold_value v, cfold e)
-  | LetCall (x, f, w, e) -> LetCall (x, f, w, cfold e) (* TODO ? *)
-  | LetIf (x, Int 0, e1, e2, e) -> change (cfold (splice x e2 e))
-  | LetIf (x, Int _, e1, e2, e) -> change (cfold (splice x e1 e))
-  | LetIf (x, w, e1, e2, e) -> LetIf (x, w, cfold e1, cfold e2, cfold e)
+  | LetVal (x, v, e) -> LetVal (x, cfold_value env v, cfold_exp (extend env x v) e)
+  | LetCall (x, f, w, e) -> LetCall (x, f, w, cfold_exp env e) (* TODO ? *)
+  | LetIf (x, Int 0, e1, e2, e) -> change (cfold_exp env (splice x e2 e))
+  | LetIf (x, Int _, e1, e2, e) -> change (cfold_exp env (splice x e1 e))
+  | LetIf (x, w, e1, e2, e) -> LetIf (x, w, cfold_exp env e1, cfold_exp env e2, cfold_exp env e)
+
+let cfold (e: exp) : exp = cfold_exp empty_env e
 
 (* To support a somewhat more efficient form of dead-code elimination and
  * inlining, we first construct a table saying how many times each variable 
@@ -396,14 +402,14 @@ let inline (inline_threshold: exp -> bool) (e: exp) : exp =
  *   (since x < 1 implies x < 2)
  * - This is similar to constant folding + logic programming
  *)
-let redtest (e:exp) : exp = raise EXTRA_CREDIT
+let redtest (e: exp) : exp = raise EXTRA_CREDIT
 
 (* optimize the code by repeatedly performing optimization passes until
  * there is no change. *)
 let optimize inline_threshold e = 
     (* let opt = fun x -> dce (cprop (redtest (cse (cfold ((inline inline_threshold) x))))) in
   *)
-    let opt = fun x -> dce (cprop (cse (cfold ((inline always_inline_thresh) x)))) in
+    let opt = fun x -> dce (cprop (cse (cfold x))) in
     let rec loop (i:int) (e:exp) : exp = 
       (if (!changed) then 
         let _ = changed := false in
