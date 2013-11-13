@@ -372,7 +372,7 @@ let size_inline_thresh (i: int) (e: exp) : bool =
 let rec operand_to_lambda (env: var -> value option) (op: operand) : value option =
   let fn = (match op with Var v -> v | Int _ -> raise FATAL) in
   let valopt = env fn in
-  match env fn with
+  match valopt with
     | None -> valopt
     | Some (Lambda _) -> valopt
     | Some (Op o) -> operand_to_lambda env o
