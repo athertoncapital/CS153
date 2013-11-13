@@ -339,13 +339,13 @@ let rec count_occurs_in_value (v: var) (valu: value) : int =
   match valu with
   | Op op -> count_occurs_in_operand v op
   | PrimApp (_, ops) -> List.fold_left (fun a b -> a + count_occurs_in_operand v b) 0 ops
-  | Lambda (x, e) -> (if v = x then 1 else 0) + (count_occurs v e)
+  | Lambda (x, e) -> count_occurs v e
 and count_occurs (v: var) (e: exp) : int =
   match e with
   | Return w -> count_occurs_in_operand v w
-  | LetVal (x, valu, e) -> (if v = x then 1 else 0) + (count_occurs_in_value v valu) + (count_occurs v e)
-  | LetCall (x, op1, op2, e) -> (if v = x then 1 else 0) + (count_occurs_in_operand v op1) + (count_occurs_in_operand v op2) + (count_occurs v e)
-  | LetIf (x, op, e1, e2, e) -> (if v = x then 1 else 0) + (count_occurs_in_operand v op) + (count_occurs v e1) + (count_occurs v e2) + (count_occurs v e)
+  | LetVal (x, valu, e) -> (count_occurs_in_value v valu) + (count_occurs v e)
+  | LetCall (x, op1, op2, e) -> (count_occurs_in_operand v op1) + (count_occurs_in_operand v op2) + (count_occurs v e)
+  | LetIf (x, op, e1, e2, e) -> (count_occurs_in_operand v op) + (count_occurs v e1) + (count_occurs v e2) + (count_occurs v e)
 
 (* dead code elimination *)
 let rec dce (e: exp) : exp =
@@ -418,7 +418,7 @@ let redtest (e: exp) : exp = raise EXTRA_CREDIT
 let optimize inline_threshold e = 
     (* let opt = fun x -> dce (cprop (redtest (cse (cfold ((inline inline_threshold) x))))) in
   *)
-    let opt = fun x -> dce (cprop (cse (cfold x))) in
+    let opt = fun x -> dce (cprop (cse (cfold ((inline always_inline_thresh) x)))) in
     let rec loop (i:int) (e:exp) : exp = 
       (if (!changed) then 
         let _ = changed := false in
@@ -429,4 +429,3 @@ let optimize inline_threshold e =
       else e) in
     changed := true;
     loop 1 e
-
