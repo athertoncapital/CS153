@@ -354,7 +354,15 @@ let never_inline_thresh  (e: exp) : bool = false (** Never inline  **)
 (* return true if the expression e is smaller than i, i.e. it has fewer
  * constructors
  *)
-let size_inline_thresh (i: int) (e: exp) : bool = raise TODO
+let size_inline_thresh (i : int) (e : exp) : bool =
+  let rec size_exp e = 
+    match e with
+    | Return o -> 1
+    | LetVal (_, _, e) -> 1 + size_exp e
+    | LetCall (_, _, _, e) -> 1 + size_exp e
+    | LetIf (_, _, e1, e2, e3) -> 1 + (size_exp e1) + (size_exp e2) + (size_exp e3)
+  in
+  (size_exp e) < i
 
 (* inlining 
  * only inline the expression e if (inline_threshold e) return true.
