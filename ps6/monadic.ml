@@ -228,7 +228,7 @@ and cse_exp (env: value -> var option) (e: exp) : exp =
 
 let cse (e: exp) : exp =
   cse_exp empty_env e
-(*)
+(*
 let rec flatten (x: var) (e1: exp) (e2: exp) : exp =
   match e1 with
   | Return w -> LetVal (x, Op w, e2)
@@ -242,26 +242,26 @@ let rec flatten (x: var) (e1: exp) (e2: exp) : exp =
 let rec cfold_value (valu: value) : value =
   match valu with
   | Lambda (x, e) -> Lambda (x, cfold e)
-  | PrimApp (S.Plus, [Int i; Int j]) -> Op (Int (i + j))
-  | PrimApp (S.Plus, [x; Int 0]) -> Op x
-  | PrimApp (S.Plus, [Int 0; x]) -> Op x
-  | PrimApp (S.Minus, [Int i; Int j]) -> Op (Int (i - j))
-  | PrimApp (S.Minus, [x; Int 0]) -> Op x
-  | PrimApp (S.Times, [Int i; Int j]) -> Op (Int (i * j))
-  | PrimApp (S.Times, [x; Int 0]) -> Op (Int 0)
-  | PrimApp (S.Times, [Int 0; x]) -> Op (Int 0)
-  | PrimApp (S.Times, [x; Int 1]) -> Op x
-  | PrimApp (S.Times, [Int 1; x]) -> Op x
-  | PrimApp (S.Div, [Int i; Int j]) -> Op (Int (i / j))
-  | PrimApp (S.Div, [x; Int 1]) -> Op x
+  | PrimApp (S.Plus, [Int i; Int j]) -> change (Op (Int (i + j)))
+  | PrimApp (S.Plus, [x; Int 0]) -> change (Op x)
+  | PrimApp (S.Plus, [Int 0; x]) -> change (Op x)
+  | PrimApp (S.Minus, [Int i; Int j]) -> change (Op (Int (i - j)))
+  | PrimApp (S.Minus, [x; Int 0]) -> change (Op x)
+  | PrimApp (S.Times, [Int i; Int j]) -> change (Op (Int (i * j)))
+  | PrimApp (S.Times, [x; Int 0]) -> change (Op (Int 0))
+  | PrimApp (S.Times, [Int 0; x]) -> change (Op (Int 0))
+  | PrimApp (S.Times, [x; Int 1]) -> change (Op x)
+  | PrimApp (S.Times, [Int 1; x]) -> change (Op x)
+  | PrimApp (S.Div, [Int i; Int j]) -> change (Op (Int (i / j)))
+  | PrimApp (S.Div, [x; Int 1]) -> change (Op x)
 (*
   | PrimApp (S.Fst, [S.Cons [x; _]]) -> x
   | PrimApp (S.Snd, [S.Cons [_; x]]) -> x
 *)
-  | PrimApp (S.Eq, [Int i; Int j]) -> if i = j then Op (Int 1) else Op (Int 0)
-  | PrimApp (S.Eq, [x; y]) -> if x = y then Op (Int 1) else valu
-  | PrimApp (S.Lt, [Int i; Int j]) -> if i < j then Op (Int 1) else Op (Int 0)
-  | PrimApp (S.Lt, [x; y]) -> if x = y then Op (Int 0) else valu
+  | PrimApp (S.Eq, [Int i; Int j]) -> change (if i = j then Op (Int 1) else Op (Int 0))
+  | PrimApp (S.Eq, [x; y]) -> if x = y then change (Op (Int 1)) else valu
+  | PrimApp (S.Lt, [Int i; Int j]) -> change (if i < j then Op (Int 1) else Op (Int 0))
+  | PrimApp (S.Lt, [x; y]) -> if x = y then change (Op (Int 0)) else valu
   (* TODO *)
   | _ -> valu
 and cfold (e: exp) : exp =
@@ -269,8 +269,8 @@ and cfold (e: exp) : exp =
   | Return w -> e
   | LetVal (x, v, e) -> LetVal (x, cfold_value v, cfold e)
   | LetCall (x, f, w, e) -> LetCall (x, f, w, cfold e) (* TODO ? *)
-  | LetIf (x, Int 0, e1, e2, e) -> cfold (splice x e2 e)
-  | LetIf (x, Int _, e1, e2, e) -> cfold (splice x e1 e)
+  | LetIf (x, Int 0, e1, e2, e) -> change (cfold (splice x e2 e))
+  | LetIf (x, Int _, e1, e2, e) -> change (cfold (splice x e1 e))
   | LetIf (x, w, e1, e2, e) -> LetIf (x, w, cfold e1, cfold e2, cfold e)
 
 (* To support a somewhat more efficient form of dead-code elimination and
@@ -344,7 +344,7 @@ and count_occurs (v: var) (e: exp) : int =
 let rec dce (e: exp) : exp =
   match e with
   | Return w -> e
-  | LetVal (x, v, e) -> if count_occurs x e = 0 then dce e else LetVal (x, v, dce e)
+  | LetVal (x, v, e) -> if count_occurs x e = 0 then change (dce e) else LetVal (x, v, dce e)
   | LetCall (x, f, w, e) -> LetCall (x, f, w, dce e)
   | LetIf (x, w, e1, e2, e) -> LetIf (x, w, dce e1, dce e2, dce e)
 
@@ -367,14 +367,17 @@ let size_inline_thresh (i : int) (e : exp) : bool =
 (* inlining 
  * only inline the expression e if (inline_threshold e) return true.
  *)
-let rec inline_all (env: var -> value option) (e: exp) : exp = raise TODO
-(*
+let rec inline_exp (env: var -> value option) (e: exp) : exp =
+  raise TODO
+  (*
   match e with
   | Return w -> e
+  | LetVal (x, v, e) -> LetVal (x, v, inline_exp (extend env e)
+  | LetCall (x, f, w, e) -> LetCall (x, f, )
+  | LetIf (x, w, e1, e2, e) -> 
 *)
-
 let inline (inline_threshold: exp -> bool) (e: exp) : exp =
-  if inline_threshold e then inline_all empty_env e else e
+  if inline_threshold e then inline_exp empty_env e else e
 
 (* reduction of conditions
  * - Optimize conditionals based on contextual information, e.g.
