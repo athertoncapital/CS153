@@ -351,17 +351,23 @@ let rec dce (e: exp) : exp =
 let always_inline_thresh (e: exp) : bool = true  (** Always inline **)
 let never_inline_thresh  (e: exp) : bool = false (** Never inline  **)
 
+let rec size_val v =
+  match v with
+  | Op _ -> 1
+  | PrimApp (_, ls) -> 1 + (List.length ls)
+  | Lambda (_, e) -> 1 + (size_exp e)
+  
+and size_exp e = 
+  match e with
+  | Return _ -> 2
+  | LetVal (_, v, e) -> 1 + (size_val v) + (size_exp e)
+  | LetCall (_, _, _, e) -> 3 + (size_exp e)
+  | LetIf (_, _, e1, e2, e3) -> 2 + (size_exp e1) + (size_exp e2) + (size_exp e3)
+
 (* return true if the expression e is smaller than i, i.e. it has fewer
  * constructors
  *)
 let size_inline_thresh (i : int) (e : exp) : bool =
-  let rec size_exp e = 
-    match e with
-    | Return o -> 1
-    | LetVal (_, _, e) -> 1 + size_exp e
-    | LetCall (_, _, _, e) -> 1 + size_exp e
-    | LetIf (_, _, e1, e2, e3) -> 1 + (size_exp e1) + (size_exp e2) + (size_exp e3)
-  in
   (size_exp e) < i
 
 (* inlining 
