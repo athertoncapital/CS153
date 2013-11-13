@@ -171,6 +171,47 @@ and cprop_oper (env : var -> operand option) (w:operand) =
 
 let cprop e = cprop_exp empty_env e
 
+(* (1) inline functions 
+ * (2) reduce LetIf expressions when the value being tested is a constant.
+ * 
+ * In both cases, we are forced to re-flatten out what would otherwise
+ * be nested let-expressions.  Therefore, we use the "splice" helper
+ * function to splice the two expressions together.   In particular,
+ * splice x e1 e2 is equivalent to flattening out let x=e1 in e2.
+ * Note, however, that in the case of inlining where the threshold is
+ * above 1, we can end up duplicating the body of a function.  We must
+ * restore the invariant that no bound variable is duplicated by renaming
+ * each bound variable in the copy (else other optimizations will break
+ * due to variable capture.)  
+ *)
+let splice x e1 e2 = 
+    let rec splice_exp final (env : var -> operand option) (e:exp) = 
+      match e with
+        Return w -> 
+          if final then LetVal(x,Op (cprop_oper env w),e2)
+          else Return(cprop_oper env w)
+      | LetVal(y,v,e) -> 
+          let y' = fresh_var() in
+          LetVal(y',loop_value env v,
+                splice_exp final (extend env y (Var y')) e)
+      | LetCall(y,w1,w2,e) -> 
+          let y' = fresh_var() in
+          LetCall(y',cprop_oper env w1,cprop_oper env w2,
+                  splice_exp final (extend env y (Var y')) e)
+      | LetIf(y,w,e1,e2,e) -> 
+          let y' = fresh_var() in
+          LetIf(y',cprop_oper env w, splice_exp false env e1,
+                splice_exp false env e2, 
+                splice_exp final (extend env y (Var y')) e)
+    and loop_value env v = 
+      match v with
+        Op w -> Op (cprop_oper env w)
+      | Lambda(y,e) -> 
+          let y' = fresh_var() in 
+          Lambda(y',splice_exp false (extend env y (Var y')) e)
+      | PrimApp(p,ws) -> PrimApp(p,List.map (cprop_oper env) ws) in
+  splice_exp true empty_env e1
+
 (* common sub-value elimination -- as in the slides *)
 let rec cse_val (env: value -> var option) (v: value) =
   match v with
@@ -187,14 +228,14 @@ and cse_exp (env: value -> var option) (e: exp) : exp =
 
 let cse (e: exp) : exp =
   cse_exp empty_env e
-
+(*)
 let rec flatten (x: var) (e1: exp) (e2: exp) : exp =
   match e1 with
   | Return w -> LetVal (x, Op w, e2)
   | LetVal (y, v, e1) -> LetVal (y, v, flatten x e1 e2)
   | LetCall (y, f, ws, e1) -> LetCall (y, f, ws, flatten x e1 e2)
   | LetIf (y, w, et, ef, ec) -> LetIf (y, w, et, ef, flatten x ec e2)
-
+*)
 (* constant folding
  * Apply primitive operations which can be evaluated. e.g. fst (1,2) = 1
  *)
@@ -228,8 +269,8 @@ and cfold (e: exp) : exp =
   | Return w -> e
   | LetVal (x, v, e) -> LetVal (x, cfold_value v, cfold e)
   | LetCall (x, f, w, e) -> LetCall (x, f, w, cfold e) (* TODO ? *)
-  | LetIf (x, Int 0, e1, e2, e) -> cfold (flatten x e2 e)
-  | LetIf (x, Int _, e1, e2, e) -> cfold (flatten x e1 e)
+  | LetIf (x, Int 0, e1, e2, e) -> cfold (splice x e2 e)
+  | LetIf (x, Int _, e1, e2, e) -> cfold (splice x e1 e)
   | LetIf (x, w, e1, e2, e) -> LetIf (x, w, cfold e1, cfold e2, cfold e)
 
 (* To support a somewhat more efficient form of dead-code elimination and
@@ -307,59 +348,25 @@ let rec dce (e: exp) : exp =
   | LetCall (x, f, w, e) -> LetCall (x, f, w, dce e)
   | LetIf (x, w, e1, e2, e) -> LetIf (x, w, dce e1, dce e2, dce e)
 
-(* (1) inline functions 
- * (2) reduce LetIf expressions when the value being tested is a constant.
- * 
- * In both cases, we are forced to re-flatten out what would otherwise
- * be nested let-expressions.  Therefore, we use the "splice" helper
- * function to splice the two expressions together.   In particular,
- * splice x e1 e2 is equivalent to flattening out let x=e1 in e2.
- * Note, however, that in the case of inlining where the threshold is
- * above 1, we can end up duplicating the body of a function.  We must
- * restore the invariant that no bound variable is duplicated by renaming
- * each bound variable in the copy (else other optimizations will break
- * due to variable capture.)  
- *)
-let splice x e1 e2 = 
-    let rec splice_exp final (env : var -> operand option) (e:exp) = 
-      match e with
-        Return w -> 
-          if final then LetVal(x,Op (cprop_oper env w),e2)
-          else Return(cprop_oper env w)
-      | LetVal(y,v,e) -> 
-          let y' = fresh_var() in
-          LetVal(y',loop_value env v,
-                splice_exp final (extend env y (Var y')) e)
-      | LetCall(y,w1,w2,e) -> 
-          let y' = fresh_var() in
-          LetCall(y',cprop_oper env w1,cprop_oper env w2,
-                  splice_exp final (extend env y (Var y')) e)
-      | LetIf(y,w,e1,e2,e) -> 
-          let y' = fresh_var() in
-          LetIf(y',cprop_oper env w, splice_exp false env e1,
-                splice_exp false env e2, 
-                splice_exp final (extend env y (Var y')) e)
-    and loop_value env v = 
-      match v with
-        Op w -> Op (cprop_oper env w)
-      | Lambda(y,e) -> 
-          let y' = fresh_var() in 
-          Lambda(y',splice_exp false (extend env y (Var y')) e)
-      | PrimApp(p,ws) -> PrimApp(p,List.map (cprop_oper env) ws) in
-  splice_exp true empty_env e1
-
-let always_inline_thresh (e : exp) : bool = true  (** Always inline **)
-let never_inline_thresh  (e : exp) : bool = false (** Never inline  **)
+let always_inline_thresh (e: exp) : bool = true  (** Always inline **)
+let never_inline_thresh  (e: exp) : bool = false (** Never inline  **)
 
 (* return true if the expression e is smaller than i, i.e. it has fewer
  * constructors
  *)
-let size_inline_thresh (i : int) (e : exp) : bool = raise TODO 
+let size_inline_thresh (i: int) (e: exp) : bool = raise TODO
 
 (* inlining 
  * only inline the expression e if (inline_threshold e) return true.
  *)
-let inline (inline_threshold: exp -> bool) (e:exp) : exp = raise TODO 
+let rec inline_all (env: var -> value option) (e: exp) : exp = raise TODO
+(*
+  match e with
+  | Return w -> e
+*)
+
+let inline (inline_threshold: exp -> bool) (e: exp) : exp =
+  if inline_threshold e then inline_all empty_env e else e
 
 (* reduction of conditions
  * - Optimize conditionals based on contextual information, e.g.
