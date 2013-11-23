@@ -164,7 +164,11 @@ let build_interfere_graph (f : func) : interfere_graph =
 
 (* given an interference graph, generate a string representing it *)
 let str_of_interfere_graph (g : interfere_graph) : string =
-  raise Implement_Me
+  let str_of_edges (v: var) (vs: VarSet.t) : string =
+    VarSet.fold (fun v2 s -> if v < v2 then s ^ v ^ " -- " ^ v2 ^ ";\n" else s) vs "  "
+  in
+  let header = VarMap.fold (fun v vs s -> s ^ (str_of_edges v !vs)) g "graph g {\n" in
+  header ^ "}"
 
 (*******************************************************************)
 (* PS8 TODO:  graph-coloring, coalescing register assignment *)
