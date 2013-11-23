@@ -16,6 +16,17 @@ module VarSet = Set.Make(struct
     let compare = compare 
   end)
 
+module LabelSet = Set.Make(struct 
+    type t = label
+    let compare = compare 
+  end)
+
+module LabelMap = Map.Make(struct
+    type t = label
+    let compare = compare
+  end
+)
+
 type interfere_graph = unit
 
 (* given a function (i.e., list of basic blocks), construct the
@@ -61,6 +72,60 @@ let rec block_kills (b: block) : VarSet.t =
   match b with
   | s::b -> VarSet.union (kills s) (block_kills b)
   | _ -> VarSet.empty
+
+let get_succ_from_inst (i: inst) : label list =
+  match i with
+  | Call (Lab l) -> [l]
+  | Jump (l) -> [l]
+  | If (_, _, _, l1, l2) -> if l1 == l2 then [l1] else [l1 ; l2]
+  | _ -> []
+
+let succ_of (b: block) : label list =
+  get_succ_from_inst (List.nth (b) ((List.length b) - 1))
+
+let label_of (b: block) : label=
+  match List.hd b with
+  | Label l -> l
+  | _ -> raise FatalError
+
+let succs_of_func (f: func) : (label list) LabelMap.t =
+  List.fold_left (fun dict bloc -> LabelMap.add (label_of bloc) (succ_of bloc) dict) LabelMap.empty f
+
+let succ = ref LabelMap.empty
+let labels = ref []
+let livein = ref LabelMap.empty
+let liveout = ref LabelMap.empty
+let gens_dict = ref LabelMap.empty
+let kills_dict = ref LabelMap.empty
+let changed = ref false
+
+let init (f: func) : unit =
+  succ := succs_of_func f;
+  labels := List.map label_of f;
+  let temp = List.fold_left (fun dict bloc -> LabelMap.add (label_of bloc) (block_gens bloc) dict) LabelMap.empty f in
+  livein := temp;
+  liveout := LabelMap.empty;
+  gens_dict := temp;
+  kills_dict := List.fold_left (fun dict bloc -> LabelMap.add (label_of bloc) (block_kills bloc) dict) LabelMap.empty f;
+  changed := false
+
+let update_liveness_for_block (l: label) : unit =
+  let succs = LabelMap.find l !succ in
+  let old_out = LabelMap.find l !liveout in
+  let new_out = List.fold_left (fun s lab -> VarSet.union s (LabelMap.find lab !livein)) VarSet.empty succs in
+  if VarSet.equal old_out new_out then ()
+  else 
+    let new_in = VarSet.union (LabelMap.find l !gens_dict) (VarSet.diff new_out (LabelMap.find l !kills_dict)) in
+    liveout := LabelMap.add l new_out !liveout;
+    livein := LabelMap.add l new_in !livein;
+    changed := true
+
+let rec build_liveness () : unit =
+  if not !changed then ()
+  else changed := false;
+    List.iter update_liveness_for_block !labels
+
+
 
 (*******************************************************************)
 (* PS8 TODO:  graph-coloring, coalescing register assignment *)
