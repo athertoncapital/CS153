@@ -24,21 +24,14 @@ module LabelSet = Set.Make(struct
 module LabelMap = Map.Make(struct
     type t = label
     let compare = compare
-  end
-)
+  end)
 
-type interfere_graph = unit
+module VarMap = Map.Make(struct
+    type t = var
+    let compare = compare
+  end)
 
-(* given a function (i.e., list of basic blocks), construct the
- * interference graph for that function.  This will require that
- * you build a dataflow analysis for calculating what set of variables
- * are live-in and live-out for each program point. *)
-let build_interfere_graph (f : func) : interfere_graph =
-    raise Implement_Me
-
-(* given an interference graph, generate a string representing it *)
-let str_of_interfere_graph (g : interfere_graph) : string =
-    raise Implement_Me
+type interfere_graph = (VarSet.t ref) VarMap.t
 
 let vars_of_ops (ops: operand list) : VarSet.t =
   let helper a b =
@@ -125,7 +118,53 @@ let rec build_liveness () : unit =
   else changed := false;
     List.iter update_liveness_for_block !labels
 
+let add_edge (v1: var) (v2: var) (g: interfere_graph) : interfere_graph =
+  if VarMap.mem v1 g then 
+    let es = VarMap.find v1 g in
+      es := VarSet.add v2 !es; g
+  else 
+    VarMap.add v1 (ref (VarSet.singleton v2)) g
 
+let add_edges (v1: var) (vs: VarSet.t) (g: interfere_graph) : interfere_graph =
+  if VarMap.mem v1 g then
+    let es = VarMap.find v1 g in
+      es := VarSet.union !es vs ; g
+  else
+    VarMap.add v1 (ref vs) g
+
+let add_mutual_edges (source: VarSet.t) (sink: VarSet.t) (g: interfere_graph) : interfere_graph =
+  VarSet.fold (fun v g -> add_edges v sink g) source g
+
+let add_block_edges (b: block) (lin: VarSet.t) (g: interfere_graph) : interfere_graph =
+  let g = add_mutual_edges lin lin g in
+  let rec helper b lin g =
+    match b with
+    | i :: b ->
+      let genned = gens i in
+      let killed = kills i in
+      let genned_minus_killed = VarSet.diff genned killed in
+      let lin_plus_genned = VarSet.union lin genned in
+      let new_lin = VarSet.diff lin_plus_genned killed in
+      if VarSet.equal new_lin lin 
+        then helper b lin g
+      else 
+        helper b new_lin (add_mutual_edges genned_minus_killed new_lin g)
+    | [] -> g
+  in 
+  helper b lin g
+
+(* given a function (i.e., list of basic blocks), construct the
+ * interference graph for that function.  This will require that
+ * you build a dataflow analysis for calculating what set of variables
+ * are live-in and live-out for each program point. *)
+let build_interfere_graph (f : func) : interfere_graph =
+  let _ = init f in
+  let _ = build_liveness() in
+  List.fold_left (fun g bloc -> add_block_edges bloc (LabelMap.find (label_of bloc) !livein) g) VarMap.empty f
+
+(* given an interference graph, generate a string representing it *)
+let str_of_interfere_graph (g : interfere_graph) : string =
+  raise Implement_Me
 
 (*******************************************************************)
 (* PS8 TODO:  graph-coloring, coalescing register assignment *)
