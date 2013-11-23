@@ -10,6 +10,12 @@ exception FatalError
  * y such that x and y are live at the same point in time.  It's up to
  * you how you want to represent the graph.  I've just put in a dummy
  * definition for now.  *)
+
+module VarSet = Set.Make(struct 
+    type t = var
+    let compare = compare 
+  end)
+
 type interfere_graph = unit
 
 (* given a function (i.e., list of basic blocks), construct the
@@ -23,6 +29,38 @@ let build_interfere_graph (f : func) : interfere_graph =
 let str_of_interfere_graph (g : interfere_graph) : string =
     raise Implement_Me
 
+let vars_of_ops (ops: operand list) : VarSet.t =
+  let helper a b =
+    match b with
+    | Var v -> VarSet.add v a
+    | _ -> a
+  in List.fold_left helper VarSet.empty ops
+
+let gens (i: inst) : VarSet.t =
+  match i with
+  | Move (_, Var v) -> VarSet.singleton v
+  | Arith (_, op1, _, op2) -> vars_of_ops [op1; op2]
+  | Load (_, Var v, _) -> VarSet.singleton v
+  | Store (_, _, Var v) -> VarSet.singleton v
+  | _ -> VarSet.empty
+
+let kills (i: inst) : VarSet.t =
+  match i with
+  | Move (Var v, _) -> VarSet.singleton v
+  | Arith (Var v, _, _, _) -> VarSet.singleton v
+  | Load (Var v , _, _) -> VarSet.singleton v
+  | _ -> VarSet.empty
+
+let rec block_gens (b: block) : VarSet.t =
+  match b with
+  | [If (op1, _, op2, _, _)] -> vars_of_ops [op1; op2]
+  | s::b -> VarSet.union (VarSet.diff (block_gens b) (kills s)) (gens s)
+  | _ -> VarSet.empty
+
+let rec block_kills (b: block) : VarSet.t =
+  match b with
+  | s::b -> VarSet.union (kills s) (block_kills b)
+  | _ -> VarSet.empty
 
 (*******************************************************************)
 (* PS8 TODO:  graph-coloring, coalescing register assignment *)
