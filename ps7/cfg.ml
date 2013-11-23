@@ -31,7 +31,7 @@ module VarMap = Map.Make(struct
     let compare = compare
   end)
 
-type interfere_graph = (VarSet.t ref) VarMap.t
+type interfere_graph = VarSet.t VarMap.t
 
 let vars_of_ops (ops: operand list) : VarSet.t =
   let helper a b =
@@ -121,16 +121,16 @@ let rec build_liveness () : unit =
 let add_edge (v1: var) (v2: var) (g: interfere_graph) : interfere_graph =
   if VarMap.mem v1 g then 
     let es = VarMap.find v1 g in
-      es := VarSet.add v2 !es; g
+      VarMap.add v1 (VarSet.add v2 es) g
   else 
-    VarMap.add v1 (ref (VarSet.singleton v2)) g
+    VarMap.add v1 (VarSet.singleton v2) g
 
 let add_edges (v1: var) (vs: VarSet.t) (g: interfere_graph) : interfere_graph =
   if VarMap.mem v1 g then
     let es = VarMap.find v1 g in
-      es := VarSet.union !es vs ; g
+      VarMap.add v1 (VarSet.union es vs) g
   else
-    VarMap.add v1 (ref vs) g
+    VarMap.add v1 vs g
 
 let add_mutual_edges (source: VarSet.t) (sink: VarSet.t) (g: interfere_graph) : interfere_graph =
   VarSet.fold (fun v g -> add_edges v sink g) source g
@@ -168,7 +168,7 @@ let str_of_interfere_graph (g : interfere_graph) : string =
   let str_of_edges (v: var) (vs: VarSet.t) : string =
     VarSet.fold (fun v2 s -> if v < v2 then s ^ v ^ " -- " ^ v2 ^ ";\n" else s) vs "  "
   in
-  let header = VarMap.fold (fun v vs s -> s ^ (str_of_edges v !vs)) g "graph g {\n" in
+  let header = VarMap.fold (fun v vs s -> s ^ (str_of_edges v vs)) g "graph g {\n" in
   header ^ "}"
 
 (*******************************************************************)
