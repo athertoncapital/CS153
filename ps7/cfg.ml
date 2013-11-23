@@ -97,7 +97,7 @@ let init (f: func) : unit =
   labels := List.map label_of f;
   let temp = List.fold_left (fun dict bloc -> LabelMap.add (label_of bloc) (block_gens bloc) dict) LabelMap.empty f in
   livein := temp;
-  liveout := LabelMap.empty;
+  liveout := List.fold_left (fun dict l -> LabelMap.add l VarSet.empty dict) LabelMap.empty !labels;
   gens_dict := temp;
   kills_dict := List.fold_left (fun dict bloc -> LabelMap.add (label_of bloc) (block_kills bloc) dict) LabelMap.empty f;
   changed := false
@@ -160,6 +160,7 @@ let add_block_edges (b: block) (lin: VarSet.t) (g: interfere_graph) : interfere_
 let build_interfere_graph (f : func) : interfere_graph =
   let _ = init f in
   let _ = build_liveness() in
+  let _ = Printf.printf "%s\n" "graph built" in
   List.fold_left (fun g bloc -> add_block_edges bloc (LabelMap.find (label_of bloc) !livein) g) VarMap.empty f
 
 (* given an interference graph, generate a string representing it *)
