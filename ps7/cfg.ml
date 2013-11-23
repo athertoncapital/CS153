@@ -6,7 +6,7 @@ exception FatalError
 (*******************************************************************)
 (* PS7 TODO:  interference graph construction *)
 
-(* an interference graph maps a variable x to the set of variables that
+(* an interference graph maps a variable x to the set of variables
  * y such that x and y are live at the same point in time.  It's up to
  * you how you want to represent the graph.  I've just put in a dummy
  * definition for now.  *)
@@ -34,30 +34,30 @@ module VarMap = Map.Make(struct
 type interfere_graph = VarSet.t VarMap.t
 
 let vars_of_ops (ops: operand list) : VarSet.t =
-  let helper a b =
-    match b with
-    | Var v -> VarSet.add v a
-    | _ -> a
+  let helper vset op =
+    match op with
+    | Var x -> VarSet.add x vset
+    | _ -> vset
   in List.fold_left helper VarSet.empty ops
 
 let gens (i: inst) : VarSet.t =
   match i with
-  | Move (_, Var v) -> VarSet.singleton v
+  | Move (_, Var y) -> VarSet.singleton y
   | Arith (_, op1, _, op2) -> vars_of_ops [op1; op2]
-  | Load (_, Var v, _) -> VarSet.singleton v
-  | Store (_, _, Var v) -> VarSet.singleton v
+  | Load (_, Var y, _) -> VarSet.singleton y
+  | Store (op1, _, op2) -> vars_of_ops [op1; op2]
+  | If (op1, _, op2, _, _) -> vars_of_ops [op1; op2]
   | _ -> VarSet.empty
 
 let kills (i: inst) : VarSet.t =
   match i with
-  | Move (Var v, _) -> VarSet.singleton v
-  | Arith (Var v, _, _, _) -> VarSet.singleton v
-  | Load (Var v , _, _) -> VarSet.singleton v
+  | Move (Var x, _) -> VarSet.singleton x
+  | Arith (Var x, _, _, _) -> VarSet.singleton x
+  | Load (Var x , _, _) -> VarSet.singleton x
   | _ -> VarSet.empty
 
 let rec block_gens (b: block) : VarSet.t =
   match b with
-  | [If (op1, _, op2, _, _)] -> vars_of_ops [op1; op2]
   | s::b -> VarSet.union (VarSet.diff (block_gens b) (kills s)) (gens s)
   | _ -> VarSet.empty
 
@@ -68,17 +68,17 @@ let rec block_kills (b: block) : VarSet.t =
 
 let get_succ_from_inst (i: inst) : label list =
   match i with
-  | Call (Lab l) -> [l]
-  | Jump (l) -> [l]
-  | If (_, _, _, l1, l2) -> if l1 == l2 then [l1] else [l1 ; l2]
+  | Call (Lab lbl) -> [lbl]
+  | Jump lbl -> [lbl]
+  | If (_, _, _, l1, l2) -> if l1 = l2 then [l1] else [l1; l2]
   | _ -> []
 
 let succ_of (b: block) : label list =
-  get_succ_from_inst (List.nth (b) ((List.length b) - 1))
+  get_succ_from_inst (List.nth b ((List.length b) - 1))
 
-let label_of (b: block) : label=
-  match List.hd b with
-  | Label l -> l
+let label_of (b: block) : label =
+  match b with
+  | (Label lbl)::_ -> lbl
   | _ -> raise FatalError
 
 let succs_of_func (f: func) : (label list) LabelMap.t =
@@ -157,14 +157,14 @@ let add_block_edges (b: block) (lin: VarSet.t) (g: interfere_graph) : interfere_
  * interference graph for that function.  This will require that
  * you build a dataflow analysis for calculating what set of variables
  * are live-in and live-out for each program point. *)
-let build_interfere_graph (f : func) : interfere_graph =
+let build_interfere_graph (f: func) : interfere_graph =
   let _ = init f in
   let _ = build_liveness() in
   let _ = Printf.printf "%s\n" "graph built" in
   List.fold_left (fun g bloc -> add_block_edges bloc (LabelMap.find (label_of bloc) !livein) g) VarMap.empty f
 
 (* given an interference graph, generate a string representing it *)
-let str_of_interfere_graph (g : interfere_graph) : string =
+let str_of_interfere_graph (g: interfere_graph) : string =
   let str_of_edges (v: var) (vs: VarSet.t) : string =
     VarSet.fold (fun v2 s -> if v < v2 then s ^ v ^ " -- " ^ v2 ^ ";\n" else s) vs "  "
   in
@@ -182,11 +182,11 @@ let str_of_interfere_graph (g : interfere_graph) : string =
    function that doesn't use any variables (except for function
    names.)
 *)
-let reg_alloc (f : func) : func = 
+let reg_alloc (f: func) : func = 
     raise Implement_Me
 
 (* Finally, translate the ouptut of reg_alloc to Mips instructions *)
-let cfg_to_mips (f : func ) : Mips.inst list = 
+let cfg_to_mips (f: func) : Mips.inst list = 
     raise Implement_Me
 
 
@@ -217,5 +217,3 @@ let print_interference_graph (():unit) (f : C.func) : unit =
 let _ =
   let prog = parse_file() in
   List.fold_left print_interference_graph () prog
-
-
