@@ -171,7 +171,7 @@ let build_interfere_graph (f: func) : interfere_graph =
 (* given an interference graph, generate a string representing it *)
 let str_of_interfere_graph (g: interfere_graph) : string =
   let str_of_edges (v: var) (vs: VarSet.t) : string =
-    VarSet.fold (fun v2 s -> if v < v2 then s ^ v ^ " -- " ^ v2 ^ ";\n" else s) vs "  "
+    VarSet.fold (fun v2 s -> if v < v2 then s ^ "  " ^ v ^ " -- " ^ v2 ^ ";\n" else s) vs ""
   in
   let header = VarMap.fold (fun v vs s -> s ^ (str_of_edges v vs)) g "graph g {\n" in
   header ^ "}"
@@ -194,8 +194,6 @@ let reg_alloc (f: func) : func =
 let cfg_to_mips (f: func) : Mips.inst list = 
     raise Implement_Me
 
-
-
 (*******************************************************************)
 (* Command-Line Interface for printing CFG. You probably will not 
     need to modify this for PS7, but will definitely need to for 
@@ -205,18 +203,20 @@ let cfg_to_mips (f: func) : Mips.inst list =
 *)
 let parse_file() =
   let argv = Sys.argv in
-  let _ = 
+  let _ =
     if Array.length argv != 2
     then (prerr_string ("usage: " ^ argv.(0) ^ " [file-to-parse]\n");
     exit 1) in
   let ch = open_in argv.(1) in
   Cish_parse.program Cish_lex.lexer (Lexing.from_channel ch)
 
-let parse_stdin() = 
+let parse_stdin() =
   Cish_parse.program Cish_lex.lexer (Lexing.from_channel stdin)
 
-let print_interference_graph (():unit) (f : C.func) : unit =
-  let graph = build_interfere_graph (fn2blocks f) in
+let print_interference_graph () (f: C.func) : unit =
+  let bs = fn2blocks f in
+  let _ = Printf.printf "%s\n" (fun2string bs) in
+  let graph = build_interfere_graph bs in
   Printf.printf "%s\n%s\n\n" (C.fn2string f) (str_of_interfere_graph graph)
 
 let _ =
