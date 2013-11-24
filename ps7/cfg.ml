@@ -34,11 +34,11 @@ module VarMap = Map.Make(struct
 type interfere_graph = VarSet.t VarMap.t
 
 let vars_of_ops (ops: operand list) : VarSet.t =
-  let helper vset op =
+  let add_op vset op =
     match op with
     | Var x -> VarSet.add x vset
     | _ -> vset
-  in List.fold_left helper VarSet.empty ops
+  in List.fold_left add_op VarSet.empty ops
 
 let gens (i: inst) : VarSet.t =
   match i with
@@ -97,26 +97,26 @@ let init (f: func) : unit =
   labels := List.map label_of f;
   let temp = List.fold_left (fun dict bloc -> LabelMap.add (label_of bloc) (block_gens bloc) dict) LabelMap.empty f in
   livein := temp;
-  liveout := List.fold_left (fun dict l -> LabelMap.add l VarSet.empty dict) LabelMap.empty !labels;
+  liveout := List.fold_left (fun dict lbl -> LabelMap.add lbl VarSet.empty dict) LabelMap.empty !labels;
   gens_dict := temp;
   kills_dict := List.fold_left (fun dict bloc -> LabelMap.add (label_of bloc) (block_kills bloc) dict) LabelMap.empty f;
-  changed := false
+  changed := true
 
-let update_liveness_for_block (l: label) : unit =
-  let succs = LabelMap.find l !succ in
-  let old_out = LabelMap.find l !liveout in
+let update_liveness_for_block (lbl: label) : unit =
+  changed := false;
+  let succs = LabelMap.find lbl !succ in
+  let old_out = LabelMap.find lbl !liveout in
   let new_out = List.fold_left (fun s lab -> VarSet.union s (LabelMap.find lab !livein)) VarSet.empty succs in
-  if VarSet.equal old_out new_out then ()
-  else 
-    let new_in = VarSet.union (LabelMap.find l !gens_dict) (VarSet.diff new_out (LabelMap.find l !kills_dict)) in
-    liveout := LabelMap.add l new_out !liveout;
-    livein := LabelMap.add l new_in !livein;
-    changed := true
+  if VarSet.equal old_out new_out then () else
+  let new_in = VarSet.union (LabelMap.find lbl !gens_dict) (VarSet.diff new_out (LabelMap.find lbl !kills_dict)) in
+  liveout := LabelMap.add lbl new_out !liveout;
+  livein := LabelMap.add lbl new_in !livein;
+  changed := true
 
 let rec build_liveness () : unit =
-  if not !changed then ()
-  else changed := false;
-    List.iter update_liveness_for_block !labels
+  if not !changed then () else
+  changed := false;
+  List.iter update_liveness_for_block !labels
 
 let add_edge (v1: var) (v2: var) (g: interfere_graph) : interfere_graph =
   if VarMap.mem v1 g then 
@@ -128,30 +128,35 @@ let add_edge (v1: var) (v2: var) (g: interfere_graph) : interfere_graph =
 let add_edges (v1: var) (vs: VarSet.t) (g: interfere_graph) : interfere_graph =
   if VarMap.mem v1 g then
     let es = VarMap.find v1 g in
-      VarMap.add v1 (VarSet.union es vs) g
+      VarMap.add v1 (VarSet.union vs es) g
   else
     VarMap.add v1 vs g
 
 let add_mutual_edges (source: VarSet.t) (sink: VarSet.t) (g: interfere_graph) : interfere_graph =
-  VarSet.fold (fun v g -> add_edges v sink g) source g
+  let add_one_way group1 group2 g =
+    VarSet.fold (fun v g -> add_edges v group2 g) group1 g
+  in
+  let g = add_one_way source sink g in
+  let g = add_one_way sink source g in
+  g
 
-let add_block_edges (b: block) (lin: VarSet.t) (g: interfere_graph) : interfere_graph =
-  let g = add_mutual_edges lin lin g in
-  let rec helper b lin g =
+let add_block_edges (b: block) (livein: VarSet.t) (g: interfere_graph) : interfere_graph =
+  let g = add_mutual_edges livein livein g in
+  let rec process_stmts b livein g =
     match b with
-    | i :: b ->
+    | i::b ->
       let genned = gens i in
       let killed = kills i in
       let genned_minus_killed = VarSet.diff genned killed in
-      let lin_plus_genned = VarSet.union lin genned in
-      let new_lin = VarSet.diff lin_plus_genned killed in
-      if VarSet.equal new_lin lin 
-        then helper b lin g
-      else 
-        helper b new_lin (add_mutual_edges genned_minus_killed new_lin g)
+      let livein_plus_genned = VarSet.union livein genned in
+      let new_livein = VarSet.diff livein_plus_genned killed in
+      if VarSet.equal new_livein livein 
+        then process_stmts b livein g
+      else
+        process_stmts b new_livein (add_mutual_edges genned_minus_killed new_livein g)
     | [] -> g
   in 
-  helper b lin g
+  process_stmts b livein g
 
 (* given a function (i.e., list of basic blocks), construct the
  * interference graph for that function.  This will require that
@@ -160,7 +165,7 @@ let add_block_edges (b: block) (lin: VarSet.t) (g: interfere_graph) : interfere_
 let build_interfere_graph (f: func) : interfere_graph =
   let _ = init f in
   let _ = build_liveness() in
-  let _ = Printf.printf "%s\n" "graph built" in
+  let _ = Printf.printf "graph built\n" in
   List.fold_left (fun g bloc -> add_block_edges bloc (LabelMap.find (label_of bloc) !livein) g) VarMap.empty f
 
 (* given an interference graph, generate a string representing it *)
