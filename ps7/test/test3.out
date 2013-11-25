@@ -52,7 +52,6 @@ $22 := x8
 $23 := x9
 return
 
-graph built
 main() {
    j = 1;
    k = 2;

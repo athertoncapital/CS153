@@ -9,22 +9,17 @@ x6 := $20
 x7 := $21
 x8 := $22
 x9 := $23
-a := 3
-b := 5
-d := 4
-x := 100
-if a>b goto .L3 else goto .L2
+a := 0
+b := 0
+if a>0 goto .L3 else goto .L2
 .L3:
-x10 := a+b
-c := x10
-d := 2
+out := a
 jump .L1
 .L2:
+out := b
 jump .L1
 .L1:
-x11 := b*d
-c := x11
-$2 := 5
+$2 := out
 jump .L0
 .L4:
 jump .L0
@@ -42,46 +37,29 @@ $23 := x9
 return
 
 main() {
-   a = 3;
-   b = 5;
-   d = 4;
-   x = 100;
-   if (a>b) {
-     c = a+b;
-     d = 2;
+   a = 0;
+   b = 0;
+   if (a>0) {
+     out = a;
    } else {
-     0;
+     out = b;
    }
-   c = b*d;
-   return 5;
+   return out;
 }
 
 graph g {
   a -- b;
-  b -- d;
-  b -- x0;
-  b -- x1;
-  b -- x10;
-  b -- x2;
-  b -- x3;
-  b -- x4;
-  b -- x5;
-  b -- x6;
-  b -- x7;
-  b -- x8;
-  b -- x9;
-  d -- x0;
-  d -- x1;
-  d -- x2;
-  d -- x3;
-  d -- x4;
-  d -- x5;
-  d -- x6;
-  d -- x7;
-  d -- x8;
-  d -- x9;
+  out -- x0;
+  out -- x1;
+  out -- x2;
+  out -- x3;
+  out -- x4;
+  out -- x5;
+  out -- x6;
+  out -- x7;
+  out -- x8;
+  out -- x9;
   x0 -- x1;
-  x0 -- x11;
   x0 -- x2;
   x0 -- x3;
   x0 -- x4;
@@ -90,7 +68,6 @@ graph g {
   x0 -- x7;
   x0 -- x8;
   x0 -- x9;
-  x1 -- x11;
   x1 -- x2;
   x1 -- x3;
   x1 -- x4;
@@ -99,14 +76,6 @@ graph g {
   x1 -- x7;
   x1 -- x8;
   x1 -- x9;
-  x11 -- x2;
-  x11 -- x3;
-  x11 -- x4;
-  x11 -- x5;
-  x11 -- x6;
-  x11 -- x7;
-  x11 -- x8;
-  x11 -- x9;
   x2 -- x3;
   x2 -- x4;
   x2 -- x5;

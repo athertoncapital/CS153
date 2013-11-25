@@ -29,7 +29,6 @@ $22 := x8
 $23 := x9
 return
 
-graph built
 main() {
    a = 3;
    b = 4;
