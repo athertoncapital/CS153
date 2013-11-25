@@ -72,7 +72,6 @@ let rec block_kills (b: block) : VarSet.t =
 
 let get_succ_from_inst (i: inst) : label list =
   match i with
-  | Call (Lab lbl) -> [lbl]
   | Jump lbl -> [lbl]
   | If (_, _, _, l1, l2) -> if l1 = l2 then [l1] else [l1; l2]
   | _ -> []
@@ -168,7 +167,6 @@ let add_block_edges (b: block) (liveout: VarSet.t) (g: interfere_graph) : interf
 let build_interfere_graph (f: func) : interfere_graph =
   let _ = init f in
   let _ = build_liveness() in
-  let _ = Printf.printf "graph built\n" in
   List.fold_left (fun g bloc -> add_block_edges bloc (LabelMap.find (label_of bloc) !liveout) g) VarMap.empty f
 
 (* given an interference graph, generate a string representing it *)

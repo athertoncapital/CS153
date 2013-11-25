@@ -1,0 +1,34 @@
+sub (s, t) {
+	a = s;
+	b = t;
+	x = (a - b);
+	if (a > b) {
+		for (i = 0 ; a > b; a=a-1) {
+			b = b - x;
+		}
+		return b;
+	}
+	else {
+		if (x > 0) {
+			a = x + 1;
+			b = a - x;
+			x = b;
+			return x;
+		}
+		else {
+			c = x - 1;
+			b = x - c;
+			x = b;
+		}
+	}
+	return x;
+}
+	
+
+
+main () {
+	a = 1;
+	b = 2;
+	c = sub(a, b);
+	return c;
+}
