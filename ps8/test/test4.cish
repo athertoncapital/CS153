@@ -1,0 +1,10 @@
+add (x, y) {
+	a = x + y;
+	return a;
+}
+
+main () {
+	c = 3;
+	d = 4;
+	return add(c, d);
+}
