@@ -24,6 +24,11 @@ module VarSet = Set.Make(struct
     let compare = compare 
   end)
 
+module EdgeSet = Set.Make(struct 
+    type t = var * var
+    let compare = compare 
+  end)
+
 module LabelSet = Set.Make(struct 
     type t = label
     let compare = compare 
@@ -38,6 +43,47 @@ module VarMap = Map.Make(struct
     type t = var
     let compare = compare
   end)
+
+module InterfereGraph = 
+  struct
+    type t = {mutable adjacency_list: VarSet.t VarMap.t; 
+              mutable adjacency_set: EdgeSet.t; 
+              precolored: VarSet.t; 
+              mutable select_stack: var list;
+              mutable coalescedNodes: VarSet.t; }
+    let init (precolored: VarSet.t) : t = 
+      {adjacency_list = VarMap.empty;
+       adjacency_set = EdgeSet.empty;
+       precolored = precolored;
+       select_stack = [];
+       coalescedNodes = VarSet.empty; }
+
+    let add_edge (u:var) (v:var) (graph: t) : t = 
+      if u != v then 
+        (graph.adjacency_set <- EdgeSet.add (v, u) (EdgeSet.add (u, v) graph.adjacency_set); 
+        (if not (VarSet.mem u graph.precolored) then
+          if VarMap.mem u graph.adjacency_list then 
+            let es = VarMap.find u graph.adjacency_list in
+              graph.adjacency_list <- VarMap.add u (VarSet.add v es) graph.adjacency_list
+          else 
+            graph.adjacency_list <- VarMap.add u (VarSet.singleton v) graph.adjacency_list);
+        (if not (VarSet.mem v graph.precolored) then
+          if VarMap.mem v graph.adjacency_list then 
+            let es = VarMap.find v graph.adjacency_list in
+              graph.adjacency_list <- VarMap.add v (VarSet.add u es) graph.adjacency_list
+          else 
+            graph.adjacency_list <- VarMap.add v (VarSet.singleton u) graph.adjacency_list);
+        graph)
+      else graph
+
+    let add_edges (us: VarSet.t) (vs: VarSet.t) (graph: t) : t =
+      let add_edges_from_var_to_set (vs: VarSet.t) (u: var) (graph: t) : t =
+        VarSet.fold (add_edge u) vs graph in
+      VarSet.fold (add_edges_from_var_to_set vs) us graph
+
+
+  end
+
 
 type interfere_graph = VarSet.t VarMap.t
 
