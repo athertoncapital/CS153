@@ -62,7 +62,7 @@ module InterfereGraph =
               mutable color: int VarMap.t;
               }
 
-    let init_graph (precolored: VarSet.t) : t = 
+    let init (precolored: VarSet.t) : t = 
       {adjacency_list = VarMap.empty;
        adjacency_set = EdgeSet.empty;
 
@@ -107,6 +107,9 @@ module InterfereGraph =
     let add_edges (us: VarSet.t) (vs: VarSet.t) (graph: t) : t =
       VarSet.fold (add_edges_from_set_to_var vs) us graph
 
+    let is_edge (u: var) (v: var) (graph: t): bool =
+      EdgeSet.mem (u, v) graph.adjacency_set
+
     let adjacent (u: var) (graph: t) : VarSet.t =
       if VarMap.mem u graph.adjacency_list then
         let neighbors = VarMap.find u graph.adjacency_list in
@@ -133,6 +136,47 @@ module InterfereGraph =
       VarSet.filter (fun u -> decrement_degree u graph = (threshold - 1)) neighbors
 
   end
+
+module WorkLists =
+  struct
+    type t = {precolored : VarSet.t;
+              initial : VarSet.t;
+              mutable simplify_list : VarSet.t;
+              mutable freeze_list : VarSet.t;
+              mutable spill_list : VarSet.t;
+
+              graph : InterfereGraph.t;
+            }
+
+    let init (precolored: VarSet.t) (initial: VarSet.t) : t =
+      {precolored = precolored;
+       initial = initial;
+       simplify_list = VarSet.empty;
+       freeze_list = VarSet.empty;
+       spill_list = VarSet.empty;
+
+       graph = InterfereGraph.init precolored;}
+
+  end
+
+module MoveLists =
+  struct
+    type t = {mutable coalescedMoves : EdgeSet.t;
+              mutable constrainedMoves : EdgeSet.t;
+              mutable frozenMoves : EdgeSet.t;
+              mutable worklistMoves : EdgeSet.t;
+              mutable activeMoves : EdgeSet.t;
+              mutable moveList : var VarMap.t;}
+    let init () : t =
+      {coalescedMoves = EdgeSet.empty;
+      constrainedMoves = EdgeSet.empty;
+      frozenMoves = EdgeSet.empty;
+      worklistMoves = EdgeSet.empty;
+      activeMoves = EdgeSet.empty;
+      moveList = VarMap.empty;}
+  end
+
+
 
 
 type interfere_graph = VarSet.t VarMap.t
