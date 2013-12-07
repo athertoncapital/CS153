@@ -50,13 +50,16 @@ module InterfereGraph =
               mutable adjacency_set: EdgeSet.t; 
               precolored: VarSet.t; 
               mutable select_stack: var list;
-              mutable coalescedNodes: VarSet.t; }
+              mutable coalescedNodes: VarSet.t;
+              mutable aliases: var VarMap.t }
+
     let init (precolored: VarSet.t) : t = 
       {adjacency_list = VarMap.empty;
        adjacency_set = EdgeSet.empty;
        precolored = precolored;
        select_stack = [];
-       coalescedNodes = VarSet.empty; }
+       coalescedNodes = VarSet.empty;
+       aliases = VarMap.empty; }
 
     let add_edge (u:var) (v:var) (graph: t) : t = 
       if u != v then 
@@ -81,7 +84,21 @@ module InterfereGraph =
         VarSet.fold (add_edge u) vs graph in
       VarSet.fold (add_edges_from_var_to_set vs) us graph
 
+    let adjacent (u: var) (graph: t) : VarSet.t =
+      if VarMap.mem u graph.adjacency_list then
+        let neighbors = VarMap.find u graph.adjacency_list in
+        let neighbors_minus_select_stack = List.fold_left (fun n v -> VarSet.remove v n) neighbors graph.select_stack in
+        VarSet.diff neighbors_minus_select_stack graph.coalescedNodes
+      else
+        VarSet.empty
 
+    let get_alias (u: var) (graph: t) : var =
+      if VarMap.mem u graph.aliases then VarMap.find u graph.aliases else u
+
+    let coalesce_nodes (u: var) (v: var) (graph: t) : t = 
+      graph.coalescedNodes <- VarSet.add v graph.coalescedNodes;
+      graph.aliases <- VarMap.add v u graph.aliases;
+      graph
   end
 
 
