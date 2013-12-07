@@ -13,6 +13,12 @@ exception FatalError
  * you how you want to represent the graph.  I've just put in a dummy
  * definition for now.  *)
 
+let r2 = Reg(Mips.R2)
+let r4 = Reg(Mips.R4)
+let r5 = Reg(Mips.R5)
+let r6 = Reg(Mips.R6)
+let r7 = Reg(Mips.R7)
+
 module VarSet = Set.Make(struct 
     type t = var
     let compare = compare 
@@ -43,6 +49,7 @@ let vars_of_ops (ops: operand list) : VarSet.t =
     match op with
     | Var x -> VarSet.add x vset
     | Lab l -> VarSet.add l vset
+    | Reg r -> VarSet.add (Mips.reg2string r) vset
     | _ -> vset
   in List.fold_left add_op VarSet.empty ops
 
@@ -53,6 +60,7 @@ let gens (i: inst) : VarSet.t =
   | Load (_, op, _) -> vars_of_ops [op]
   | Store (op1, _, op2) -> vars_of_ops [op1; op2]
   | If (op1, _, op2, _, _) -> vars_of_ops [op1; op2]
+  | Call _ ->  vars_of_ops [r4; r5; r6; r7]
   | _ -> VarSet.empty
 
 let kills (i: inst) : VarSet.t =
@@ -60,6 +68,7 @@ let kills (i: inst) : VarSet.t =
   | Move (op, _) -> vars_of_ops [op]
   | Arith (op, _, _, _) -> vars_of_ops [op]
   | Load (op , _, _) -> vars_of_ops [op]
+  | Return -> vars_of_ops [r2]
   | _ -> VarSet.empty
 
 let rec block_gens (b: block) : VarSet.t =
