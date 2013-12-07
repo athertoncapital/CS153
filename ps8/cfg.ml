@@ -137,47 +137,65 @@ module InterfereGraph =
 
   end
 
+
+
+module MoveLists =
+  struct
+    type t = {mutable coalesced_moves : EdgeSet.t;
+              mutable constrained_moves : EdgeSet.t;
+              mutable frozen_moves : EdgeSet.t;
+              mutable worklist_moves : EdgeSet.t;
+              mutable active_moves : EdgeSet.t;
+              mutable move_list : EdgeSet.t VarMap.t;}
+    let init () : t =
+      {coalesced_moves = EdgeSet.empty;
+      constrained_moves = EdgeSet.empty;
+      frozen_moves = EdgeSet.empty;
+      worklist_moves = EdgeSet.empty;
+      active_moves = EdgeSet.empty;
+      move_list = VarMap.empty;}
+
+    let node_moves (node: var) (movelists: t) : EdgeSet.t =
+      if VarMap.mem node movelists.move_list then
+        let moves = VarMap.find node movelists.move_list in
+        EdgeSet.inter moves (EdgeSet.union movelists.active_moves movelists.worklist_moves)
+      else EdgeSet.empty
+
+    let is_move_related (node: var) (movelists: t) : bool =
+      not (EdgeSet.is_empty (node_moves node movelists))
+
+  end
+
 module WorkLists =
   struct
-    type t = {precolored : VarSet.t;
-              initial : VarSet.t;
+    type t = {
               mutable simplify_list : VarSet.t;
               mutable freeze_list : VarSet.t;
               mutable spill_list : VarSet.t;
 
-              graph : InterfereGraph.t;
             }
 
-    let init (precolored: VarSet.t) (initial: VarSet.t) : t =
-      {precolored = precolored;
-       initial = initial;
+    let init (precolored: VarSet.t) (initial: VarSet.t) (g: InterfereGraph.t) (movelists: MoveLists.t): t =
+      {
        simplify_list = VarSet.empty;
        freeze_list = VarSet.empty;
-       spill_list = VarSet.empty;
+       spill_list = VarSet.empty;}
 
-       graph = InterfereGraph.init precolored;}
+    let assign_node (g: InterfereGraph.t) (worklists: t) (movelists: MoveLists.t) (threshold: int) (node: var) : unit =
+      let d = InterfereGraph.get_degree node g in
+      if d >= threshold then
+        worklists.spill_list <- VarSet.add node worklists.spill_list
+      else if MoveLists.is_move_related node movelists then
+        worklists.freeze_list <- VarSet.add node worklists.freeze_list
+      else
+        worklists.simplify_list <- VarSet.add node worklists.simplify_list
+
+    let make_worklist (g: InterfereGraph.t) (worklists: t) (movelists: MoveLists.t) (threshold: int) (initial: VarSet.t) : unit =
+      VarSet.iter (assign_node g worklists movelists threshold) initial
 
   end
 
-module MoveLists =
-  struct
-    type t = {mutable coalescedMoves : EdgeSet.t;
-              mutable constrainedMoves : EdgeSet.t;
-              mutable frozenMoves : EdgeSet.t;
-              mutable worklistMoves : EdgeSet.t;
-              mutable activeMoves : EdgeSet.t;
-              mutable moveList : var VarMap.t;}
-    let init () : t =
-      {coalescedMoves = EdgeSet.empty;
-      constrainedMoves = EdgeSet.empty;
-      frozenMoves = EdgeSet.empty;
-      worklistMoves = EdgeSet.empty;
-      activeMoves = EdgeSet.empty;
-      moveList = VarMap.empty;}
-  end
-
-
-
+type everything = {graph: InterfereGraph.t; worklists: WorkLists.t; movelists: MoveLists.t;}
 
 type interfere_graph = VarSet.t VarMap.t
 
