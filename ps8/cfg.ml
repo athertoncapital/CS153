@@ -51,7 +51,8 @@ module InterfereGraph =
               precolored: VarSet.t; 
               mutable select_stack: var list;
               mutable coalescedNodes: VarSet.t;
-              mutable aliases: var VarMap.t }
+              mutable aliases: var VarMap.t; 
+              mutable degree: int VarMap.t;}
 
     let init (precolored: VarSet.t) : t = 
       {adjacency_list = VarMap.empty;
@@ -59,7 +60,8 @@ module InterfereGraph =
        precolored = precolored;
        select_stack = [];
        coalescedNodes = VarSet.empty;
-       aliases = VarMap.empty; }
+       aliases = VarMap.empty;
+       degree = VarMap.empty; }
 
     let add_edge (u:var) (v:var) (graph: t) : t = 
       if u != v then 
@@ -67,15 +69,19 @@ module InterfereGraph =
         (if not (VarSet.mem u graph.precolored) then
           if VarMap.mem u graph.adjacency_list then 
             let es = VarMap.find u graph.adjacency_list in
-              graph.adjacency_list <- VarMap.add u (VarSet.add v es) graph.adjacency_list
+              graph.adjacency_list <- VarMap.add u (VarSet.add v es) graph.adjacency_list;
+              graph.degree <- VarMap.add u ((VarMap.find u graph.degree) + 1) graph.degree
           else 
-            graph.adjacency_list <- VarMap.add u (VarSet.singleton v) graph.adjacency_list);
+            graph.adjacency_list <- VarMap.add u (VarSet.singleton v) graph.adjacency_list;
+            graph.degree <- VarMap.add u 0 graph.degree);
         (if not (VarSet.mem v graph.precolored) then
           if VarMap.mem v graph.adjacency_list then 
             let es = VarMap.find v graph.adjacency_list in
-              graph.adjacency_list <- VarMap.add v (VarSet.add u es) graph.adjacency_list
+              graph.adjacency_list <- VarMap.add v (VarSet.add u es) graph.adjacency_list;
+              graph.degree <- VarMap.add v ((VarMap.find v graph.degree) + 1) graph.degree
           else 
-            graph.adjacency_list <- VarMap.add v (VarSet.singleton u) graph.adjacency_list);
+            graph.adjacency_list <- VarMap.add v (VarSet.singleton u) graph.adjacency_list;
+            graph.degree <- VarMap.add v 0 graph.degree);
         graph)
       else graph
 
