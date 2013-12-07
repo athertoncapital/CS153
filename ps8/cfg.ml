@@ -129,7 +129,7 @@ let gens (i: inst) : VarSet.t =
   | Load (_, op, _) -> vars_of_ops [op]
   | Store (op1, _, op2) -> vars_of_ops [op1; op2]
   | If (op1, _, op2, _, _) -> vars_of_ops [op1; op2]
-  | Return -> vars_of_ops [r2]
+  | Return -> vars_of_ops [r2; r31]
   | Call _ ->  vars_of_ops [r4; r5; r6; r7]
   | _ -> VarSet.empty
 
@@ -138,7 +138,6 @@ let kills (i: inst) : VarSet.t =
   | Move (op, _) -> vars_of_ops [op]
   | Arith (op, _, _, _) -> vars_of_ops [op]
   | Load (op , _, _) -> vars_of_ops [op]
-  | Return -> vars_of_ops [r4; r5; r6; r7]
   | Call _ -> vars_of_ops [r2]
   | _ -> VarSet.empty
 
