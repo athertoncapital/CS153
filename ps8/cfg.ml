@@ -18,6 +18,7 @@ let r4 = Reg(Mips.R4)
 let r5 = Reg(Mips.R5)
 let r6 = Reg(Mips.R6)
 let r7 = Reg(Mips.R7)
+let r31 = Reg(Mips.R31)
 
 module VarSet = Set.Make(struct 
     type t = var
@@ -48,20 +49,35 @@ module InterfereGraph =
   struct
     type t = {mutable adjacency_list: VarSet.t VarMap.t; 
               mutable adjacency_set: EdgeSet.t; 
-              precolored: VarSet.t; 
-              mutable select_stack: var list;
-              mutable coalescedNodes: VarSet.t;
-              mutable aliases: var VarMap.t; 
-              mutable degree: int VarMap.t;}
 
-    let init (precolored: VarSet.t) : t = 
+              precolored: VarSet.t; 
+
+              mutable spilledNodes: VarSet.t;
+              mutable coalescedNodes: VarSet.t;
+              mutable coloredNodes: VarSet.t;
+              mutable select_stack: var list;
+
+              mutable aliases: var VarMap.t;
+              mutable degree: int VarMap.t;
+              mutable color: int VarMap.t;
+              }
+
+    let init_graph (precolored: VarSet.t) : t = 
       {adjacency_list = VarMap.empty;
        adjacency_set = EdgeSet.empty;
+
        precolored = precolored;
-       select_stack = [];
+
+       spilledNodes = VarSet.empty;
        coalescedNodes = VarSet.empty;
+       coloredNodes = VarSet.empty;
+
+       select_stack = [];
+
        aliases = VarMap.empty;
-       degree = VarMap.empty; }
+       degree = VarMap.empty;
+       color = VarMap.empty; 
+       }
 
     let add_edge (u:var) (v:var) (graph: t) : t = 
       if u != v then 
@@ -85,10 +101,11 @@ module InterfereGraph =
         graph)
       else graph
 
+    let add_edges_from_set_to_var (vs: VarSet.t) (u: var) (graph: t) : t =
+      VarSet.fold (add_edge u) vs graph
+
     let add_edges (us: VarSet.t) (vs: VarSet.t) (graph: t) : t =
-      let add_edges_from_var_to_set (vs: VarSet.t) (u: var) (graph: t) : t =
-        VarSet.fold (add_edge u) vs graph in
-      VarSet.fold (add_edges_from_var_to_set vs) us graph
+      VarSet.fold (add_edges_from_set_to_var vs) us graph
 
     let adjacent (u: var) (graph: t) : VarSet.t =
       if VarMap.mem u graph.adjacency_list then
@@ -101,10 +118,20 @@ module InterfereGraph =
     let get_alias (u: var) (graph: t) : var =
       if VarMap.mem u graph.aliases then VarMap.find u graph.aliases else u
 
-    let coalesce_nodes (u: var) (v: var) (graph: t) : t = 
+    let get_degree (u: var) (graph: t) : int = 
+      VarMap.find u graph.degree
+
+    let decrement_degree (u: var) (graph: t) : int =
+      let new_degree = VarMap.find u graph.degree - 1 in
+      graph.degree <- VarMap.add u new_degree graph.degree; new_degree
+
+    let coalesce_and_return_new_low_degree_nodes (u: var) (v: var) (threshold: int) (graph: t) : VarSet.t = 
       graph.coalescedNodes <- VarSet.add v graph.coalescedNodes;
       graph.aliases <- VarMap.add v u graph.aliases;
-      graph
+      let neighbors = adjacent v graph in
+      let graph = add_edges_from_set_to_var (adjacent v graph) u graph in 
+      VarSet.filter (fun u -> decrement_degree u graph = (threshold - 1)) neighbors
+
   end
 
 
