@@ -124,19 +124,11 @@ module InterfereGraph =
     let get_degree (u: var) (graph: t) : int = 
       VarMap.find u graph.degree
 
-    let decrement_degree (u: var) (graph: t) : int =
-      let new_degree = VarMap.find u graph.degree - 1 in
-      graph.degree <- VarMap.add u new_degree graph.degree; new_degree
-
-    let coalesce_and_return_new_low_degree_nodes (u: var) (v: var) (threshold: int) (graph: t) : VarSet.t = 
-      graph.coalescedNodes <- VarSet.add v graph.coalescedNodes;
-      graph.aliases <- VarMap.add v u graph.aliases;
-      let neighbors = adjacent v graph in
-      let graph = add_edges_from_set_to_var (adjacent v graph) u graph in 
-      VarSet.filter (fun u -> decrement_degree u graph = (threshold - 1)) neighbors
+    let dec_degree (u: var) (graph: t) : int =
+      let deg = VarMap.find u graph.degree in
+      graph.degree <- VarMap.add u (deg - 1) graph.degree; deg
 
   end
-
 
 
 module MoveLists =
@@ -163,6 +155,21 @@ module MoveLists =
 
     let is_move_related (node: var) (movelists: t) : bool =
       not (EdgeSet.is_empty (node_moves node movelists))
+
+    let transfer_from_active_to_worklist (movelists: t) (move: var * var) : unit =
+      if EdgeSet.mem move movelists.active_moves 
+      then
+        (movelists.active_moves <- EdgeSet.remove move movelists.active_moves;
+        movelists.worklist_moves <- EdgeSet.add move movelists.worklist_moves)
+      else ()
+
+    let enable_move (movelists: t) (node: var) : unit =
+      let moves = node_moves node movelists in
+      EdgeSet.iter (transfer_from_active_to_worklist movelists) moves
+
+    let enable_moves (movelists: t) (nodes: VarSet.t) : unit = 
+      VarSet.iter (enable_move movelists) nodes
+      
 
   end
 
@@ -193,9 +200,66 @@ module WorkLists =
     let make_worklist (g: InterfereGraph.t) (worklists: t) (movelists: MoveLists.t) (threshold: int) (initial: VarSet.t) : unit =
       VarSet.iter (assign_node g worklists movelists threshold) initial
 
+    let move_from_spill_to_freeze (u: var) (worklists: t) : unit =
+      if VarSet.mem u worklists.spill_list then 
+        (worklists.spill_list <- VarSet.remove u worklists.spill_list;
+        worklists.freeze_list <- VarSet.add u worklists.freeze_list)
+      else raise FatalError
+
+    let move_from_spill_to_simplify (u: var) (worklists: t) : unit =
+      if VarSet.mem u worklists.spill_list then 
+        (worklists.spill_list <- VarSet.remove u worklists.spill_list;
+        worklists.simplify_list <- VarSet.add u worklists.simplify_list)
+      else raise FatalError
+
   end
 
-type everything = {graph: InterfereGraph.t; worklists: WorkLists.t; movelists: MoveLists.t;}
+open InterfereGraph
+open MoveLists
+open WorkLists
+type everything = {graph: InterfereGraph.t; worklists: WorkLists.t; movelists: MoveLists.t; threshold: int}
+
+let decrement_degree (u: var) (s: everything) : everything =
+  let graph = s.graph in
+  let deg = InterfereGraph.dec_degree u graph in
+  if deg = s.threshold then
+    let _ = MoveLists.enable_moves s.movelists (VarSet.union (VarSet.singleton u) (InterfereGraph.adjacent u s.graph)) in
+    (if MoveLists.is_move_related u s.movelists then
+      WorkLists.move_from_spill_to_freeze u s.worklists
+    else
+      WorkLists.move_from_spill_to_simplify u s.worklists); s
+  else s
+
+
+(* need to fix this to take something of type everything instead of type graph
+let coalesce_and_return_new_low_degree_nodes (u: var) (v: var) (threshold: int) (graph: t) : VarSet.t = 
+  graph.coalescedNodes <- VarSet.add v graph.coalescedNodes;
+  graph.aliases <- VarMap.add v u graph.aliases;
+  let neighbors = adjacent v graph in
+  let graph = add_edges_from_set_to_var (adjacent v graph) u graph in 
+  VarSet.filter (fun u -> decrement_degree u graph = (threshold - 1)) neighbors
+
+let simplify_and_return_new_low_degree_nodes (u: var) (threshold: int) (graph: t) : VarSet.t =
+  select_stack <- u::select_stack;
+  VarSet.filter (fun u -> decrement_degree u graph = (threshold - 1)) (adjacent u graph)
+*)
+
+
+
+let rec simplify (s:everything) : everything =
+  if VarSet.is_empty s.worklists.simplify_list then s
+    else 
+      let n = VarSet.choose s.worklists.simplify_list in
+      let _ = s.graph.select_stack <- n::s.graph.select_stack in
+      let neighbors = InterfereGraph.adjacent n s.graph in
+      let s = VarSet.fold (decrement_degree) neighbors s in
+      simplify s
+    
+    
+
+
+
+
 
 type interfere_graph = VarSet.t VarMap.t
 
