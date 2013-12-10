@@ -104,11 +104,9 @@ module InterfereGraph =
         adjacency_set = remove_helper graph.adjacency_set;
         move_set = remove_helper graph.move_set;
       }
+end
 
-  end
-
-
-type interfere_graph = VarSet.t VarMap. t
+type interfere_graph = VarSet.t VarMap.t
 
 let print_set s = 
   VarSet.iter (Printf.printf "%s ") s; print_string "\n"
