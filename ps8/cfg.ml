@@ -311,9 +311,19 @@ let build_interfere_graph (f: func) : InterfereGraph.t =
 let reg_alloc (f: func) : func = 
     raise Implement_Me
 
+let rec inst_list_to_mips (insts: inst list) : Mips.inst list =
+  match insts with
+  | head::tail -> 
+    (match head with
+    | Label lbl -> Mips.Label lbl
+    (* TODO *)
+    | _ -> Mips.Label "hi"
+    ) :: (inst_list_to_mips tail)
+  | _ -> []
+
 (* Finally, translate the ouptut of reg_alloc to Mips instructions *)
 let cfg_to_mips (f: func) : Mips.inst list = 
-    raise Implement_Me
+  inst_list_to_mips (List.fold_left (@) [] f)
 
 (*******************************************************************)
 (* Command-Line Interface for printing CFG. You probably will not 
