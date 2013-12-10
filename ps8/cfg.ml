@@ -144,6 +144,11 @@ module InterfereGraph =
     let get_freeze (k: int) (graph: t) : var option =
       find (can_freeze k graph) (VarSet.elements graph.nodes)
 
+    let can_spill (k: int) (graph: t) (u: var) : bool =
+      degree u graph >= k
+
+    let get_spill (k: int) (graph: t) : var option =
+      find (can_spill k graph) (VarSet.elements graph.nodes)
   end
 
 type interfere_graph = VarSet.t VarMap.t
