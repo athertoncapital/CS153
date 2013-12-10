@@ -47,31 +47,36 @@ module VarMap = Map.Make(struct
 
 module InterfereGraph = 
   struct
-    type t =
-      {
-        adjacency_set: EdgeSet.t; 
-        move_set: EdgeSet.t;
-      }
+    type t = {adjacency_set: EdgeSet.t; 
+              move_set: EdgeSet.t;
+              nodes : VarSet.t;
+             }
 
     let init () : t = 
       {
         adjacency_set = EdgeSet.empty;
         move_set = EdgeSet.empty;
+        nodes = VarSet.empty;
       }
 
     let verify_bidirectionality (graph: t) : bool =
       EdgeSet.for_all (fun (u, v) -> EdgeSet.mem (v, u) graph.adjacency_set) graph.adjacency_set &&
       EdgeSet.for_all (fun (u, v) -> EdgeSet.mem (v, u) graph.move_set) graph.move_set
 
-    let add_edge (u: var) (v: var) (graph: t) : t =
+    let add_nodes (ns: VarSet.t) (graph: t) : t = 
+      {graph with nodes = VarSet.union ns graph.nodes}
+
+    let add_edge (u:var) (v:var) (graph: t) : t =
       if u = v then graph else
         let new_adjacency_set = EdgeSet.add (v, u) (EdgeSet.add (u, v) graph.adjacency_set) in
-          {graph with adjacency_set = new_adjacency_set}
+        let new_nodes = VarSet.add v (VarSet.add u graph.nodes) in
+          {graph with adjacency_set = new_adjacency_set; nodes = new_nodes}
 
-    let add_move (u: var) (v: var) (graph: t) : t =
+    let add_move (u:var) (v:var) (graph: t) : t =
       if u = v then graph else
         let new_move_set = EdgeSet.add (v, u) (EdgeSet.add (u, v) graph.move_set) in
-          {graph with move_set = new_move_set}
+        let new_nodes = VarSet.add v (VarSet.add u graph.nodes) in
+          {graph with move_set = new_move_set; nodes = new_nodes}
 
     let neighbors (u: var) (graph: t) : VarSet.t =
       EdgeSet.fold (fun edge set -> if fst edge = u then VarSet.add (snd edge) set else set) graph.adjacency_set VarSet.empty
@@ -89,22 +94,33 @@ module InterfereGraph =
       let combine_helper (edges: EdgeSet.t) : EdgeSet.t = 
         let new_edges = EdgeSet.remove (v, u) (EdgeSet.remove (u, v) edges) in
         let (change, save) = EdgeSet.partition (function (x, y) -> x = v || y = v) new_edges in
-        EdgeSet.fold (fun edge set -> if fst edge = v then EdgeSet.add (u, snd edge) set else EdgeSet.add((fst edge), u) set) change save
-        in
-        {
-          adjacency_set = combine_helper graph.adjacency_set;
-          move_set = combine_helper graph.move_set;
-        }
+        EdgeSet.fold (fun edge set -> if (fst edge) = v then EdgeSet.add (u, (snd edge)) set else EdgeSet.add((fst edge), u) set) change save
+      in
+
+      {adjacency_set = combine_helper graph.adjacency_set;
+       move_set = combine_helper graph.move_set;
+       nodes = VarSet.remove v graph.nodes}
 
     let remove (u: var) (graph: t) : t =
       let remove_helper (edges: EdgeSet.t) : EdgeSet.t =
         EdgeSet.filter (function (x, y) -> x != u && y != u) edges
       in
-      {
-        adjacency_set = remove_helper graph.adjacency_set;
-        move_set = remove_helper graph.move_set;
-      }
-end
+
+      {adjacency_set = remove_helper graph.adjacency_set;
+       move_set = remove_helper graph.move_set;
+       nodes = VarSet.remove u graph.nodes}
+
+    let move_related (u: var) (graph: t) : bool =
+      EdgeSet.exists (function (x, y) -> x = u || y = u) graph.move_set
+
+    let get_simplify (k: int) (graph: t) : var option =
+      let rec get_next (ls: var list) : var option = 
+        match ls with
+        | hd::tl -> if move_related hd graph && degree hd graph < k then Some hd else get_next tl
+        | _ -> None
+      in get_next (VarSet.elements graph.nodes)
+
+  end
 
 type interfere_graph = VarSet.t VarMap.t
 
