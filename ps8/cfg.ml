@@ -45,6 +45,11 @@ module VarMap = Map.Make(struct
     let compare = compare
   end)
 
+let rec find f ls =
+  match ls with
+  | hd::tl -> if f hd then Some hd else find f tl
+  | _ -> None
+
 module InterfereGraph = 
   struct
     type t = {adjacency_set: EdgeSet.t; 
@@ -113,12 +118,19 @@ module InterfereGraph =
     let move_related (u: var) (graph: t) : bool =
       EdgeSet.exists (function (x, y) -> x = u || y = u) graph.move_set
 
+    let can_simplify (k: int) (graph: t) (u: var) : bool =
+      move_related u graph && degree u graph < k
+
     let get_simplify (k: int) (graph: t) : var option =
-      let rec get_next (ls: var list) : var option = 
-        match ls with
-        | hd::tl -> if move_related hd graph && degree hd graph < k then Some hd else get_next tl
-        | _ -> None
-      in get_next (VarSet.elements graph.nodes)
+      find (can_simplify k graph) (VarSet.elements graph.nodes)
+
+    let georges (k: int) (graph: t) (edge: var * var) : bool =
+      let (x, y) = edge in
+      let ts = neighbors x graph in
+      not (VarSet.exists (fun t -> not (is_edge y t graph || degree t graph < k)) ts)
+
+    let get_coalesce (k: int) (graph: t) : (var * var) option =
+      find (georges k graph) (EdgeSet.elements (EdgeSet.diff graph.move_set graph.adjacency_set))
 
   end
 
