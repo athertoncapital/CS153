@@ -90,11 +90,11 @@ module InterfereGraph =
         let new_edges = EdgeSet.remove (v, u) (EdgeSet.remove (u, v) edges) in
         let (change, save) = EdgeSet.partition (function (x, y) -> x = v || y = v) new_edges in
         EdgeSet.fold (fun edge set -> if fst edge = v then EdgeSet.add (u, snd edge) set else EdgeSet.add((fst edge), u) set) change save
-      in
-      {
-        adjacency_set = combine_helper graph.adjacency_set;
-        move_set = combine_helper graph.move_set;
-      }
+        in
+        {
+          adjacency_set = combine_helper graph.adjacency_set;
+          move_set = combine_helper graph.move_set;
+        }
 
     let remove (u: var) (graph: t) : t =
       let remove_helper (edges: EdgeSet.t) : EdgeSet.t =
