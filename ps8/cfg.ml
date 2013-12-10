@@ -115,11 +115,17 @@ module InterfereGraph =
        move_set = remove_helper graph.move_set;
        nodes = VarSet.remove u graph.nodes}
 
+    let freeze (u: var) (graph: t) : t =
+      let remove_helper (edges: EdgeSet.t) : EdgeSet.t =
+        EdgeSet.filter (function (x, y) -> x != u && y != u) edges
+      in
+      {graph with move_set = remove_helper graph.move_set;}
+
     let move_related (u: var) (graph: t) : bool =
       EdgeSet.exists (function (x, y) -> x = u || y = u) graph.move_set
 
     let can_simplify (k: int) (graph: t) (u: var) : bool =
-      move_related u graph && degree u graph < k
+      not (move_related u graph) && degree u graph < k
 
     let get_simplify (k: int) (graph: t) : var option =
       find (can_simplify k graph) (VarSet.elements graph.nodes)
@@ -131,6 +137,12 @@ module InterfereGraph =
 
     let get_coalesce (k: int) (graph: t) : (var * var) option =
       find (georges k graph) (EdgeSet.elements (EdgeSet.diff graph.move_set graph.adjacency_set))
+
+    let can_freeze (k: int) (graph: t) (u: var) : bool =
+      move_related u graph && degree u graph < k
+
+    let get_freeze (k: int) (graph: t) : var option =
+      find (can_freeze k graph) (VarSet.elements graph.nodes)
 
   end
 
