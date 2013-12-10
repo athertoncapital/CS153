@@ -64,6 +64,20 @@ module InterfereGraph =
         nodes = VarSet.empty;
       }
 
+    let edge_set_to_string (set: EdgeSet.t) : string =
+      "graph g {\n" ^
+      (EdgeSet.fold (fun (x, y) str -> if x < y then str ^ " " ^ x ^ " -- " ^ y ^ ";\n" else str) set "") ^
+      "}\n"
+
+    (* given an interference graph, generate a string representing it *)
+    let to_string (graph: t) : string =
+      "Nodes:\n" ^
+      (VarSet.fold (fun node str -> str ^ node ^ " ") graph.nodes "") ^ "\n" ^
+      "Adjacency set:\n" ^
+      edge_set_to_string graph.adjacency_set ^
+      "Move set:\n" ^
+      edge_set_to_string graph.move_set
+
     let verify_bidirectionality (graph: t) : bool =
       EdgeSet.for_all (fun (u, v) -> EdgeSet.mem (v, u) graph.adjacency_set) graph.adjacency_set &&
       EdgeSet.for_all (fun (u, v) -> EdgeSet.mem (v, u) graph.move_set) graph.move_set
@@ -82,6 +96,17 @@ module InterfereGraph =
         let new_move_set = EdgeSet.add (v, u) (EdgeSet.add (u, v) graph.move_set) in
         let new_nodes = VarSet.add v (VarSet.add u graph.nodes) in
           {graph with move_set = new_move_set; nodes = new_nodes}
+
+    let add_edges (v1: var) (vs: VarSet.t) (graph: t) : t =
+      VarSet.fold (fun v new_graph -> add_edge v1 v new_graph) vs graph
+
+    let add_mutual_edges (source: VarSet.t) (sink: VarSet.t) (graph: t) : t =
+      let add_one_way group1 group2 graph =
+        VarSet.fold (fun v g -> add_edges v group2 g) group1 graph
+      in
+      let graph = add_one_way source sink graph in
+      let graph = add_one_way sink source graph in
+      graph
 
     let neighbors (u: var) (graph: t) : VarSet.t =
       EdgeSet.fold (fun edge set -> if fst edge = u then VarSet.add (snd edge) set else set) graph.adjacency_set VarSet.empty
@@ -149,9 +174,7 @@ module InterfereGraph =
 
     let get_spill (k: int) (graph: t) : var option =
       find (can_spill k graph) (VarSet.elements graph.nodes)
-  end
-
-type interfere_graph = VarSet.t VarMap.t
+end
 
 let print_set s = 
   VarSet.iter (Printf.printf "%s ") s; print_string "\n"
@@ -245,61 +268,34 @@ let rec build_liveness () : unit =
   changed := false;
   List.iter update_liveness_for_block !labels
 
-let add_edge (v1: var) (v2: var) (g: interfere_graph) : interfere_graph =
-  if VarMap.mem v1 g then 
-    let es = VarMap.find v1 g in
-      VarMap.add v1 (VarSet.add v2 es) g
-  else 
-    VarMap.add v1 (VarSet.singleton v2) g
-
-let add_edges (v1: var) (vs: VarSet.t) (g: interfere_graph) : interfere_graph =
-  if VarMap.mem v1 g then
-    let es = VarMap.find v1 g in
-      VarMap.add v1 (VarSet.union vs es) g
-  else
-    VarMap.add v1 vs g
-
-let add_mutual_edges (source: VarSet.t) (sink: VarSet.t) (g: interfere_graph) : interfere_graph =
-  let add_one_way group1 group2 g =
-    VarSet.fold (fun v g -> add_edges v group2 g) group1 g
-  in
-  let g = add_one_way source sink g in
-  let g = add_one_way sink source g in
-  g
-
-let add_block_edges (b: block) (liveout: VarSet.t) (g: interfere_graph) : interfere_graph =
+let add_block_edges (b: block) (liveout: VarSet.t) (g: InterfereGraph.t) : InterfereGraph.t =
   let rec process_stmts b liveout g =
     match b with
     | i::b ->
       let (g, liveout) = process_stmts b liveout g in
+      (* let _ = (match i with
+        | Move (x, y) ->
+      *)
       let genned = gens i in
       let killed = kills i in
       let out_minus_killed = VarSet.diff liveout killed in
-      let livein = VarSet.union genned out_minus_killed in    
-      if VarSet.equal liveout livein 
+      let livein = VarSet.union genned out_minus_killed in
+      if VarSet.equal liveout livein
         then (g, livein)
       else
-        (add_mutual_edges genned livein g, livein)
-    | [] -> (add_mutual_edges liveout liveout g, liveout)
-  in 
+        (InterfereGraph.add_mutual_edges genned livein g, livein)
+    | [] -> (InterfereGraph.add_mutual_edges liveout liveout g, liveout)
+  in
   fst (process_stmts b liveout g)
 
 (* given a function (i.e., list of basic blocks), construct the
  * interference graph for that function.  This will require that
  * you build a dataflow analysis for calculating what set of variables
  * are live-in and live-out for each program point. *)
-let build_interfere_graph (f: func) : interfere_graph =
+let build_interfere_graph (f: func) : InterfereGraph.t =
   let _ = init f in
   let _ = build_liveness() in
-  List.fold_left (fun g bloc -> add_block_edges bloc (LabelMap.find (label_of bloc) !liveout) g) VarMap.empty f
-
-(* given an interference graph, generate a string representing it *)
-let str_of_interfere_graph (g: interfere_graph) : string =
-  let str_of_edges (v: var) (vs: VarSet.t) : string =
-    VarSet.fold (fun v2 s -> if v < v2 then s ^ "  " ^ v ^ " -- " ^ v2 ^ ";\n" else s) vs ""
-  in
-  let header = VarMap.fold (fun v vs s -> s ^ (str_of_edges v vs)) g "graph g {\n" in
-  header ^ "}"
+  List.fold_left (fun g bloc -> add_block_edges bloc (LabelMap.find (label_of bloc) !liveout) g) (InterfereGraph.init ()) f
 
 (*******************************************************************)
 (* PS8 TODO:  graph-coloring, coalescing register assignment *)
@@ -342,7 +338,7 @@ let print_interference_graph () (f: C.func) : unit =
   let bs = fn2blocks f in
   let _ = Printf.printf "%s\n" (fun2string bs) in
   let graph = build_interfere_graph bs in
-  Printf.printf "%s\n%s\n\n" (C.fn2string f) (str_of_interfere_graph graph)
+  Printf.printf "%s\n%s\n\n" (C.fn2string f) (InterfereGraph.to_string graph)
 
 let _ =
   let prog = parse_file() in
