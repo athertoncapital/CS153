@@ -525,13 +525,15 @@ let rec inst_list_to_mips (insts: inst list) : Mips.inst list =
   | head::tail ->
     (match head with
     | Label lbl -> [Mips.Label lbl]
-    | Move (op1, op2) -> [Mips.Or (op_to_reg op1, op_to_reg op2, Mips.Immed (Word32.fromInt 0))]
+    | Move (op1, op2) -> [Mips.Or (op_to_reg op1, Mips.R0, op_to_mips op2)]
     | Arith (op, a, arith, b) ->
       let reg = op_to_reg op in
       let a_reg = op_to_reg a in
       (match arith with
       | Plus -> [Mips.Add (reg, a_reg, op_to_mips b)]
-      | Minus -> [Mips.Sub (reg, a_reg, op_to_reg b)]
+      | Minus -> (match b with
+        | Int i -> [Mips.Add (reg, a_reg, Mips.Immed (Word32.fromInt (-i)))]
+        | _ -> [Mips.Sub (reg, a_reg, op_to_reg b)])
       | Times -> [Mips.Mul (reg, a_reg, op_to_reg b)]
       | Div -> [Mips.Div (reg, a_reg, op_to_reg b)]
       )
