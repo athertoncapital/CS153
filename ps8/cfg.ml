@@ -260,7 +260,7 @@ let vars_of_ops (ops: operand list) : VarSet.t =
     match op with
     | Var x -> VarSet.add x vset
     | Lab l -> VarSet.add l vset
-    | Reg r -> if r = Mips.R0 or r = Mips.R1 or r = Mips.R26 or r = Mips.R27 then vset else VarSet.add (Mips.reg2string r) vset
+    | Reg r -> if r = Mips.R0 || r = Mips.R1 || r = Mips.R26 || r = Mips.R27 then vset else VarSet.add (Mips.reg2string r) vset
     | _ -> vset
   in List.fold_left add_op VarSet.empty ops
 
