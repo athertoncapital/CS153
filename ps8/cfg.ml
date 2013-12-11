@@ -186,18 +186,18 @@ module InterfereGraph =
 
     let remove (u: var) (graph: t) : t =
       let remove_helper (edges: EdgeSet.t) : EdgeSet.t =
-        EdgeSet.filter (function (x, y) -> x != u && y != u) edges
+        EdgeSet.filter (function (x, y) -> x <> u && y <> u) edges
       in
-
       {graph with adjacency_set = remove_helper graph.adjacency_set;
        move_set = remove_helper graph.move_set;
        nodes = VarSet.remove u graph.nodes;}
 
     let freeze (u: var) (graph: t) : t =
       let remove_helper (edges: EdgeSet.t) : EdgeSet.t =
-        EdgeSet.filter (function (x, y) -> x != u && y != u) edges
+        EdgeSet.filter (function (x, y) -> x <> u && y <> u) edges
       in
-      {graph with move_set = remove_helper graph.move_set;}
+      Printf.printf "%d\n" (EdgeSet.cardinal (remove_helper graph.move_set));
+      {graph with move_set = remove_helper graph.move_set}
 
     let move_related (u: var) (graph: t) : bool =
       EdgeSet.exists (function (x, y) -> x = u || y = u) graph.move_set
@@ -238,7 +238,7 @@ module InterfereGraph =
         true
 
     let get_spill (k: int) (graph: t) : var option =
-      let o = find (can_spill k graph) (VarSet.elements (VarSet.filter (fun v -> v.[0] != '?') graph.nodes)) in
+      let o = find (can_spill k graph) (VarSet.elements (VarSet.filter (fun v -> v.[0] <> '?') graph.nodes)) in
       if o = None then
         let o = find (can_spill k graph) (VarSet.elements graph.nodes) in
           match o with
@@ -389,7 +389,7 @@ let build_interfere_graph (f: func) (precolored: var list) : InterfereGraph.t =
 *)
 
 let gen_selected_and_aliases (k: int) (graph: InterfereGraph.t): (var list * var VarMap.t) =
-  let rec helper (select_stack: var list) (aliases: var VarMap.t) (graph: InterfereGraph.t): (var list * var VarMap.t) =
+  let rec helper (select_stack: var list) (aliases: var VarMap.t) (graph: InterfereGraph.t) : (var list * var VarMap.t) =
     let _ = print_string (InterfereGraph.to_string graph) in
     let o = InterfereGraph.get_simplify k graph in
     match o with
