@@ -389,7 +389,7 @@ let rec color (k: int) (f: func) : int VarMap.t =
     color k new_f
 
 let reg_alloc (f: func) : func = 
-  let coloring = color 20000 f in
+  let coloring = color 1000 f in
   f
 
 let op_to_mips (op: operand) : Mips.operand =
