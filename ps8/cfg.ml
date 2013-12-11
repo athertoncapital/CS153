@@ -361,14 +361,54 @@ let build_interfere_graph (f: func) : InterfereGraph.t =
 let reg_alloc (f: func) : func = 
     raise Implement_Me
 
+let op_to_mips (op: operand) : Mips.operand =
+  match op with
+  | Int i -> Mips.Immed (Word32.fromInt i)
+  | Reg r -> Mips.Reg r
+  | _ -> raise FatalError
+
+let op_to_reg (op: operand) : Mips.reg =
+  match op with
+  | Reg r -> r
+  | _ -> raise FatalError
+
+let op_to_label (op: operand) : label =
+  match op with
+  | Lab lbl -> lbl
+  | _ -> raise FatalError
+
 let rec inst_list_to_mips (insts: inst list) : Mips.inst list =
   match insts with
   | head::tail -> 
     (match head with
-    | Label lbl -> Mips.Label lbl
-    (* TODO *)
-    | _ -> Mips.Label "hi"
-    ) :: (inst_list_to_mips tail)
+    | Label lbl -> [Mips.Label lbl]
+    | Move (op1, op2) -> [Mips.Or (op_to_reg op1, op_to_reg op2, Mips.Immed (Word32.fromInt 0))]
+    | Arith (op, a, arith, b) ->
+      let reg = op_to_reg op in
+      let a_reg = op_to_reg a in
+      (match arith with
+      | Plus -> [Mips.Add (reg, a_reg, op_to_mips b)]
+      | Minus -> [Mips.Sub (reg, a_reg, op_to_reg b)]
+      | Times -> [Mips.Mul (reg, a_reg, op_to_reg b)]
+      | Div -> [Mips.Div (reg, a_reg, op_to_reg b)]
+      )
+    | Load (op1, op2, i) -> [Mips.Lw (op_to_reg op1, op_to_reg op2, Word32.fromInt i)]
+    | Store (op1, i, op2) -> [Mips.Sw (op_to_reg op2, op_to_reg op1, Word32.fromInt i)]
+    | Call op -> [Mips.Jal (op_to_label op)]
+    | Jump lbl -> [Mips.J lbl]
+    | If (op1, comp, op2, lbl1, lbl2) ->
+      let reg1 = op_to_reg op1 in
+      let reg2 = op_to_reg op2 in
+      (match comp with
+      | Eq -> [Mips.Beq (reg1, reg2, lbl1); Mips.B lbl2]
+      | Neq -> [Mips.Bne (reg1, reg2, lbl1); Mips.B lbl2]
+      | Lt -> [Mips.Blt (reg1, reg2, lbl1); Mips.B lbl2]
+      | Lte -> [Mips.Ble (reg1, reg2, lbl1); Mips.B lbl2]
+      | Gt -> [Mips.Bgt (reg1, reg2, lbl1); Mips.B lbl2]
+      | Gte -> [Mips.Bge (reg1, reg2, lbl1); Mips.B lbl2]
+      )
+    | Return -> [Mips.Jr Mips.R31]
+    ) @ (inst_list_to_mips tail)
   | _ -> []
 
 (* Finally, translate the ouptut of reg_alloc to Mips instructions *)
