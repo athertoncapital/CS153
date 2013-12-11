@@ -20,7 +20,7 @@ let r6 = Reg(Mips.R6)
 let r7 = Reg(Mips.R7)
 let r31 = Reg(Mips.R31)
 
-let string2reg (r:string): Mips.reg = 
+let string2reg (r:string): Mips.reg =
   match r with
   | "$0" -> Mips.R0
   | "$1" -> Mips.R1
@@ -56,7 +56,7 @@ let string2reg (r:string): Mips.reg =
   | "$31" -> Mips.R31
   | _ -> raise FatalError
 
-module VarSet = Set.Make(struct 
+module VarSet = Set.Make(struct
     type t = var
     let compare = compare
   end)
@@ -484,7 +484,7 @@ let reg_alloc (f: func) : func =
     | Lab v -> if (IntMap.mem (VarMap.find v coloring) color_to_register) then Reg (string2reg (IntMap.find (VarMap.find v coloring) color_to_register)) else (Printf.printf "SUM TING GON WONG WIFF COLOR OF %d \n" (VarMap.find v coloring); raise FatalError)
     | _ -> v
   in
-  let substitute (i: inst) : inst= 
+  let substitute (i: inst) : inst=
     match i with
     | Move (x, y) -> let r1, r2 = var_to_reg x, var_to_reg y in
         Move (r1, r2)
@@ -502,7 +502,7 @@ let reg_alloc (f: func) : func =
     match i with
     | Move (x, y) -> not (x = y)
     | _ -> true
-  in Printf.printf "%s\n" (fun2string f); 
+  in Printf.printf "%s\n" (fun2string f);
   let out = List.map (fun b -> List.filter pred (List.map substitute b)) f in
   let _ = print_string "code gen complete \n" in
   Printf.printf "%s\n" (fun2string out); out

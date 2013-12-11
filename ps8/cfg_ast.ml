@@ -4,7 +4,7 @@
  * whether two temps have conflicting live ranges.  For PS 8, your job is
  * to implement the coallescing register allocator as described in class
  * (and in the book) to assign temps to physical registers and then map
- * the resulting code down to MIPS.  
+ * the resulting code down to MIPS.
  *)
 module C = Cish_ast
 type var = string
@@ -20,11 +20,11 @@ let fp = Reg(Mips.R30)
 let ra = Reg(Mips.R31)
 
 type compareop = Eq | Neq | Lt | Lte | Gt | Gte
-type arithop = Plus | Minus | Times | Div 
+type arithop = Plus | Minus | Times | Div
 
 (* essentially, a subset of the MIPS instructions but with
  * support for using temps as operands. *)
-type inst = 
+type inst =
   Label of label
 | Move of operand * operand                     (* x := y *)
 | Arith of operand * operand * arithop * operand (* x := y + z *)
@@ -38,10 +38,10 @@ type inst =
 
 (* basic blocks -- instead of capturing the structure of basic
  * blocks (as done in class), we just represent them as lists
- * of instructions where we assume that each block starts with a 
- * Label and ends with either a Jump, If, or Return and that 
+ * of instructions where we assume that each block starts with a
+ * Label and ends with either a Jump, If, or Return and that
  * there is no intervening Label, Jump, If, or Return. *)
-type block = inst list 
+type block = inst list
 
 (* a function is a list of basic blocks -- the first block is
  * assumed to be the entry point to the function. *)
@@ -57,14 +57,14 @@ let op2string = function
   | (Reg r) -> Mips.reg2string r
   | (Lab x) -> x
 
-let arithop2string p = 
+let arithop2string p =
     match p with
       Plus -> "+"
     | Minus -> "-"
     | Times -> "*"
     | Div -> "/"
 
-let compareop2string p = 
+let compareop2string p =
     match p with
         Eq -> "="
       | Neq -> "!="
@@ -73,8 +73,8 @@ let compareop2string p =
       | Lte -> "<="
       | Gte -> ">="
 
-let inst2string i = 
-    match i with 
+let inst2string i =
+    match i with
       (Label x) -> x^":"
     | Move(x,y) -> (op2string x) ^ " := " ^ (op2string y)
     | Arith(x,y,p,z) -> (op2string x) ^ " := " ^ (op2string y) ^
@@ -89,16 +89,16 @@ let inst2string i =
                        (op2string y)^" goto "^t^" else goto "^f
     | Return -> "return"
 
-let block2string b = 
+let block2string b =
     String.concat "" (List.map (fun i -> (inst2string i)^"\n") b)
 
-let fun2string bs = 
+let fun2string bs =
     String.concat "" (List.map block2string bs)
 
-let prog2string p = 
+let prog2string p =
     String.concat "" (List.map fun2string p)
 
-let inc r = let c = !r in r := c+1; c 
+let inc r = let c = !r in r := c+1; c
 (* generate fresh labels *)
 let label_counter = ref 0
 let new_label() = ".L" ^ (string_of_int(inc label_counter))
@@ -114,8 +114,8 @@ let new_temp() = "x" ^ (string_of_int(inc temp_counter))
  * you should watch out for any bugs that are in the resulting code.
  *)
 exception Impossible
-    
-let fn2blocks (C.Fn {C.name=name;C.args=args;C.body=body;C.pos=pos}) : block list = 
+
+let fn2blocks (C.Fn {C.name=name;C.args=args;C.body=body;C.pos=pos}) : block list =
     let epilogue = new_label() in
     (* just keep a list of instructions around *)
     let curr_insts : inst list ref = ref [] in
@@ -124,16 +124,16 @@ let fn2blocks (C.Fn {C.name=name;C.args=args;C.body=body;C.pos=pos}) : block lis
     let extend env (x:var) operand = fun y -> if y = x then operand else env y in
     (* emits instructions to compute the expression's value
      * and returns the operand that holds that value. *)
-    let rec emit_exp env (e,pos) : operand = ( 
+    let rec emit_exp env (e,pos) : operand = (
         match e with
           C.Int i -> Int i
         | C.Var x -> env x
         (* arithmetic expressions *)
-        | C.Binop(e1,((C.Plus | C.Minus | C.Times | C.Div) as p),e2) -> 
+        | C.Binop(e1,((C.Plus | C.Minus | C.Times | C.Div) as p),e2) ->
           emit_arith env e1 p e2
         (* conditional expressions -- compile as if we had
          * if (e) x=1 else x=0 *)
-        | (C.Binop(_) | C.Not(_) | C.And(_) | C.Or(_)) -> 
+        | (C.Binop(_) | C.Not(_) | C.And(_) | C.Or(_)) ->
             let x = new_temp() in
             let env = extend env x (Var x) in
             let s = (C.If((e,pos),
@@ -141,22 +141,22 @@ let fn2blocks (C.Fn {C.name=name;C.args=args;C.body=body;C.pos=pos}) : block lis
                     (C.Exp(C.Assign(x,(C.Int 0,pos)),pos),pos)),pos) in
             let _ = emit_stmt env s in
             Var x
-        | C.Assign(x,e) -> 
+        | C.Assign(x,e) ->
             let y = emit_exp env e in
-            let _ = emit_inst (Move(env x,y)) in 
+            let _ = emit_inst (Move(env x,y)) in
             y
-        | C.Load e -> 
+        | C.Load e ->
             let t = Var(new_temp()) in
             let _ = emit_inst (Load(t,emit_exp env e,0)) in
             t
-        | C.Store(e1,e2) -> 
+        | C.Store(e1,e2) ->
             let x = emit_exp env e1 in
             let y = emit_exp env e2 in
-            let _ = emit_inst (Store(x,0,y)) in 
+            let _ = emit_inst (Store(x,0,y)) in
             y
-        | C.Malloc(e) -> 
+        | C.Malloc(e) ->
             emit_exp env (C.Call((C.Var "malloc",pos),[e]),pos)
-        | C.Call(e,es) -> 
+        | C.Call(e,es) ->
             let t = Var(new_temp()) in
             let x = emit_exp env e in
             let xs = List.map (emit_exp env) es in
@@ -164,15 +164,15 @@ let fn2blocks (C.Fn {C.name=name;C.args=args;C.body=body;C.pos=pos}) : block lis
             let arg_space = 4 * (if nargs <= 4 then 4 else nargs) in
             (* move arguments into appropriate positions *)
             let rec move_args = function
-                (x::xs,0) -> 
+                (x::xs,0) ->
                   (emit_inst (Move(Reg(Mips.R4),x)); move_args(xs,1))
               | (x::xs,1) ->
                   (emit_inst (Move(Reg(Mips.R5),x)); move_args(xs,2))
               | (x::xs,2) ->
                   (emit_inst (Move(Reg(Mips.R6),x)); move_args(xs,3))
-              | (x::xs,3) -> 
+              | (x::xs,3) ->
                 (emit_inst (Move(Reg(Mips.R7),x)); move_args(xs,4))
-              | (x::xs,i) -> 
+              | (x::xs,i) ->
                   (emit_inst (Store(sp,4*i,x)); move_args(xs,i+1))
               | ([],_) -> () in
             (* allocate space for arguments *)
@@ -186,34 +186,57 @@ let fn2blocks (C.Fn {C.name=name;C.args=args;C.body=body;C.pos=pos}) : block lis
             (* move result into temp t *)
             let _ = emit_inst (Move(t,Reg(Mips.R2))) in
             t
-    )        
+    )
     (* specialized function for arithmetic binops *)
-    and emit_arith env (e1:C.exp) (b:C.binop) (e2:C.exp) : operand = ( 
+    and emit_arith env (e1:C.exp) (b:C.binop) (e2:C.exp) : operand = (
         let x = emit_exp env e1 in
         let y = emit_exp env e2 in
         let t = Var(new_temp()) in (* result temp *)
+        let t1 = Var(new_temp()) in
+        let t2 = Var(new_temp()) in
+        emit_inst (Move (t1, x));
+        emit_inst (Move (t2, y));
           (match b with
-             C.Plus -> emit_inst(Arith(t,x,Plus,y))
-           | C.Minus -> emit_inst(Arith(t,x,Minus,y))
-           | C.Times -> emit_inst(Arith(t,x,Times,y))
-           | C.Div -> emit_inst(Arith(t,x,Div,y))
-           | _ -> raise Impossible); t        
+             C.Plus -> emit_inst(Arith(t,t1,Plus,t2))
+           | C.Minus -> emit_inst(Arith(t,t1,Minus,t2))
+           | C.Times -> emit_inst(Arith(t,t1,Times,t2))
+           | C.Div -> emit_inst(Arith(t,t1,Div,t2))
+           | _ -> raise Impossible); t
     )
-    (* specialize translation of conditional expressions in 
+    (* specialize translation of conditional expressions in
      * a testing context to jump to true_lab or false_lab. *)
     and emit_cond env ((r,pos) as e) (true_lab:label) (false_lab:label) = (
         match r with
           C.Not e -> emit_cond env e false_lab true_lab
-        | C.And(e1,e2) -> 
+        | C.And(e1,e2) ->
             let t = new_label() in
             let _ = emit_cond env e1 t false_lab in
             let _ = emit_inst (Label t) in
             emit_cond env e2 true_lab false_lab
-        | C.Or(e1,e2) -> 
+        | C.Or(e1,e2) ->
             let f = new_label() in
             let _ = emit_cond env e1 true_lab f in
             let _ = emit_inst (Label f) in
             emit_cond env e2 true_lab false_lab
+        | C.Binop(e1, cond (* ((C.Eq | C.Neq | C.Lt | C.Gt | C.Lte | C.Gte) as cond) *), e2) ->
+          let e1 = emit_exp env e1 in
+          let e2 = emit_exp env e2 in
+          let cond = (match cond with
+            | C.Eq -> Eq
+            | C.Neq -> Neq
+            | C.Lt -> Lt
+            | C.Gt -> Gt
+            | C.Lte -> Lte
+            | C.Gte -> Gte
+            | _ -> raise Impossible
+          ) in
+          let t1 = Var(new_temp()) in
+          let t2 = Var(new_temp()) in
+          Printf.printf "sup bitch\n";
+          emit_inst (Move (t1, e1));
+          emit_inst (Move (t2, e2));
+          emit_inst (If (t1, cond, t2, true_lab, false_lab))
+          (*
         | C.Binop(e1,C.Eq,e2) ->
             emit_inst (If(emit_exp env e1,Eq,emit_exp env e2,
                           true_lab,false_lab))
@@ -232,15 +255,18 @@ let fn2blocks (C.Fn {C.name=name;C.args=args;C.body=body;C.pos=pos}) : block lis
         | C.Binop(e1,C.Gte,e2) ->
             emit_inst (If(emit_exp env e1,Gte,emit_exp env e2,
                           true_lab,false_lab))
-        | _ -> emit_inst(If(emit_exp env e,Neq,Int 0,true_lab,
-                              false_lab))
-    )             
+            *)
+        | _ ->
+          let t1 = Var(new_temp()) in
+          emit_inst (Move (t1, emit_exp env e));
+          emit_inst(If(t1,Neq,Reg Mips.R0,true_lab,false_lab))
+    )
     (* emit code for statements *)
-    and emit_stmt env (s,pos) : unit = ( 
+    and emit_stmt env (s,pos) : unit = (
         match s with
           C.Exp e -> (let _ = emit_exp env e in ())
         | C.Seq(s1,s2) -> (let _ = emit_stmt env s1 in emit_stmt env s2)
-        | C.If(e,s1,s2) -> 
+        | C.If(e,s1,s2) ->
             let (t,f,j) = (new_label(),new_label(),new_label()) in
             let _ = emit_cond env e t f in
             let _ = emit_inst (Label t) in
@@ -259,10 +285,10 @@ let fn2blocks (C.Fn {C.name=name;C.args=args;C.body=body;C.pos=pos}) : block lis
             let _ = emit_inst (Label test) in
             let _ = emit_cond env e loop dOne in
             emit_inst (Label dOne)
-        | C.For(e1,e2,e3,s) -> 
+        | C.For(e1,e2,e3,s) ->
             let _ = emit_exp env e1 in
             emit_stmt env (C.While(e2,(C.Seq(s,(C.Exp e3,pos)),pos)),pos)
-        | C.Return e -> 
+        | C.Return e ->
             let v = emit_exp env e in
             (* move result into R2 and jump to epilogue *)
             let _ = emit_inst (Move(Reg Mips.R2,v)) in
@@ -270,9 +296,9 @@ let fn2blocks (C.Fn {C.name=name;C.args=args;C.body=body;C.pos=pos}) : block lis
             (* must insert another dummy label to keep basic blocks
              * well-formed *)
             emit_inst (Label (new_label()))
-        | C.Let(x,e,s) -> 
+        | C.Let(x,e,s) ->
             (* due to variable shadowing, we map each source-level
-             * variable to a fresh temp using an environment. 
+             * variable to a fresh temp using an environment.
              *)
             let v = emit_exp env e in
             let x' = Var(new_temp()) in
@@ -280,17 +306,17 @@ let fn2blocks (C.Fn {C.name=name;C.args=args;C.body=body;C.pos=pos}) : block lis
             let _ = emit_inst (Move(x',v)) in
             emit_stmt env' s
     ) in
-    
-    let callee_regs = 
-        [fp;ra] @ (List.map (fun x -> Reg x) 
+
+    let callee_regs =
+        [fp;ra] @ (List.map (fun x -> Reg x)
                       [Mips.R16;Mips.R17;Mips.R18;Mips.R19;Mips.R20;
                        Mips.R21;Mips.R22;Mips.R23]) in
 
     (* generate code to move the callee-saves registers into fresh
      * temps, and then return an association list mapping each callee-
      * saves register to its associated temp. *)
-    let save_callee_regs () : (operand * operand) list = 
-        List.map (fun r -> 
+    let save_callee_regs () : (operand * operand) list =
+        List.map (fun r ->
                     let t = Var(new_temp()) in
                     let _ = emit_inst (Move(t,r)) in
                     (r,t)
@@ -298,7 +324,7 @@ let fn2blocks (C.Fn {C.name=name;C.args=args;C.body=body;C.pos=pos}) : block lis
 
     (* generate code to restore the callee-saves registers from their
      * associated temps. *)
-    let restore_callee_regs reg_n_temp_list = 
+    let restore_callee_regs reg_n_temp_list =
         List.iter (fun (r,t) -> emit_inst (Move(r,t))) reg_n_temp_list in
 
     (* generate code to load any arguments into temps and return an
@@ -319,7 +345,7 @@ let fn2blocks (C.Fn {C.name=name;C.args=args;C.body=body;C.pos=pos}) : block lis
             load_args new_env (xs,i+1) in
 
     (* break the list of instructions into basic blocks *)
-    let get_blocks insts = 
+    let get_blocks insts =
         (* a block should start with a label *)
         let rec get_block = function
           (Label x::insts) ->
@@ -329,16 +355,16 @@ let fn2blocks (C.Fn {C.name=name;C.args=args;C.body=body;C.pos=pos}) : block lis
         | (i::rest) ->
             (print_string "error! "; print_string (inst2string i); print_string "\n";
              raise Impossible)
-        (* the rest of the block should be terminated by a 
+        (* the rest of the block should be terminated by a
          * Return, If, or Jump. *)
-        and get_mid_block (insts,prev) : block * (inst list) = 
+        and get_mid_block (insts,prev) : block * (inst list) =
             match insts with
-              ((Return | If _ | Jump _) as i)::insts -> 
+              ((Return | If _ | Jump _) as i)::insts ->
                 (List.rev(i::prev),insts)
             | (Label _)::_ -> raise Impossible
             | [] -> raise Impossible
             | (i::insts) -> get_mid_block (insts,i::prev) in
-        let rec get_bs (insts :inst list) : block list = 
+        let rec get_bs (insts :inst list) : block list =
             match get_block insts with
               Some (b,insts) -> b::(get_bs insts)
             | None -> [] in
@@ -352,7 +378,7 @@ let fn2blocks (C.Fn {C.name=name;C.args=args;C.body=body;C.pos=pos}) : block lis
     let env = load_args empty_env (args,0) in
     (* generate the body of the function *)
     let _ = emit_stmt env body in
-    (* put in a dummy jump to the epilogue in case the program 
+    (* put in a dummy jump to the epilogue in case the program
      * returned already *)
     let _ = emit_inst (Jump epilogue) in
     (* generate epilogue *)
