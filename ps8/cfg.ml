@@ -20,19 +20,19 @@ let r6 = Reg(Mips.R6)
 let r7 = Reg(Mips.R7)
 let r31 = Reg(Mips.R31)
 
-module VarSet = Set.Make(struct 
+module VarSet = Set.Make(struct
     type t = var
-    let compare = compare 
+    let compare = compare
   end)
 
-module EdgeSet = Set.Make(struct 
+module EdgeSet = Set.Make(struct
     type t = var * var
-    let compare = compare 
+    let compare = compare
   end)
 
-module LabelSet = Set.Make(struct 
+module LabelSet = Set.Make(struct
     type t = label
-    let compare = compare 
+    let compare = compare
   end)
 
 module LabelMap = Map.Make(struct
@@ -55,15 +55,15 @@ let rec find f ls =
   | hd::tl -> if f hd then Some hd else find f tl
   | _ -> None
 
-module InterfereGraph = 
+module InterfereGraph =
   struct
-    type t = {adjacency_set: EdgeSet.t; 
+    type t = {adjacency_set: EdgeSet.t;
               move_set: EdgeSet.t;
               nodes : VarSet.t;
               precolored : var list;
              }
 
-    let init (pc: var list) : t = 
+    let init (pc: var list) : t =
       {
         adjacency_set = EdgeSet.empty;
         move_set = EdgeSet.empty;
@@ -92,7 +92,7 @@ module InterfereGraph =
       EdgeSet.for_all (fun (u, v) -> EdgeSet.mem (v, u) graph.adjacency_set) graph.adjacency_set &&
       EdgeSet.for_all (fun (u, v) -> EdgeSet.mem (v, u) graph.move_set) graph.move_set
 
-    let add_nodes (ns: VarSet.t) (graph: t) : t = 
+    let add_nodes (ns: VarSet.t) (graph: t) : t =
       {graph with nodes = VarSet.union ns graph.nodes}
 
     let add_edge (u: var) (v: var) (graph: t) : t =
@@ -127,11 +127,11 @@ module InterfereGraph =
     let is_edge (u: var) (v: var) (graph: t) : bool =
       EdgeSet.mem (u, v) graph.adjacency_set
 
-    let is_move (u: var) (v: var) (graph: t) : bool = 
+    let is_move (u: var) (v: var) (graph: t) : bool =
       EdgeSet.mem (u, v) graph.move_set
 
     let combine (u: var) (v: var) (graph: t) : t =
-      let combine_helper (edges: EdgeSet.t) : EdgeSet.t = 
+      let combine_helper (edges: EdgeSet.t) : EdgeSet.t =
         let new_edges = EdgeSet.remove (v, u) (EdgeSet.remove (u, v) edges) in
         let (change, save) = EdgeSet.partition (function (x, y) -> x = v || y = v) new_edges in
         EdgeSet.fold (fun edge set ->
@@ -199,7 +199,7 @@ module InterfereGraph =
     let get_spill (k: int) (graph: t) : var option =
       let o = find (can_spill k graph) (VarSet.elements (VarSet.filter (fun v -> v.[0] != '?') graph.nodes)) in
       if o = None then
-        let o = find (can_spill k graph) (VarSet.elements graph.nodes) in 
+        let o = find (can_spill k graph) (VarSet.elements graph.nodes) in
           match o with
           | None -> o
           | _ ->
@@ -208,7 +208,7 @@ module InterfereGraph =
 
 end
 
-let print_set s = 
+let print_set s =
   VarSet.iter (Printf.printf "%s ") s; print_string "\n"
 
 let vars_of_ops (ops: operand list) : VarSet.t =
@@ -361,7 +361,7 @@ let gen_selected_and_aliases (k: int) (graph: InterfereGraph.t): (var list * var
             let o = InterfereGraph.get_freeze k graph in
             match o with
             | Some v -> Printf.printf "freezing %s \n" v; helper select_stack aliases (InterfereGraph.freeze v graph)
-            | None -> 
+            | None ->
                 let o = InterfereGraph.get_spill k graph in
                 match o with
                 | Some v -> Printf.printf "%s\n" ("potential spill: " ^ v);
@@ -372,24 +372,24 @@ let gen_selected_and_aliases (k: int) (graph: InterfereGraph.t): (var list * var
 let attempt_color (k: int) (graph: InterfereGraph.t) : int VarMap.t * var list =
   let precolored = InterfereGraph.get_precolored graph in
   if (List.length precolored) > k then
-    (Printf.printf "More precolored nodes than colors \n"; raise FatalError)
-  else 
+    (Printf.printf "More precolored nodes than colors\n"; raise FatalError)
+  else
 
-  let rec range x y = 
-    if x >= y then IntSet.empty else IntSet.add x (range (x + 1) y) 
+  let rec range x y =
+    if x >= y then IntSet.empty else IntSet.add x (range (x + 1) y)
   in
 
   let all_colors = range 0 k in
-  let rec color_precolor (coloring: int VarMap.t) (color: int) (nodes: var list): (int VarMap.t) = 
+  let rec color_precolor (coloring: int VarMap.t) (color: int) (nodes: var list): (int VarMap.t) =
     match nodes with
     | hd :: tl -> color_precolor (VarMap.add hd color coloring) (color + 1) tl
-    | [] -> coloring 
-  in 
+    | [] -> coloring
+  in
 
-  let precoloring = color_precolor VarMap.empty 0 precolored in 
+  let precoloring = color_precolor VarMap.empty 0 precolored in
 
   let select_stack, aliases = gen_selected_and_aliases k graph in
-  let _ = print_string "selection completed" in
+  let _ = print_string "selection completed\n" in
   let select_color (c: int VarMap.t * var list) (node: var): int VarMap.t * var list =
     let _ = Printf.printf "coloring %s\n" node in
     let (coloring, spilled) = c in
@@ -405,9 +405,9 @@ let attempt_color (k: int) (graph: InterfereGraph.t) : int VarMap.t * var list =
         let neighbors = InterfereGraph.neighbors node graph in
         let unavailable = VarSet.fold (fun v colors -> if VarMap.mem v coloring then IntSet.add (VarMap.find v coloring) colors else colors) neighbors IntSet.empty in
         let available = IntSet.diff all_colors unavailable in
-        if IntSet.is_empty available then 
+        if IntSet.is_empty available then
           let _ = Printf.printf "spilled %s\n" node in
-          (coloring, node::spilled) 
+          (coloring, node::spilled)
         else
           let chosen = IntSet.choose available in
             let _ = Printf.printf "chosen color for %s is %d \n" node chosen in
@@ -428,7 +428,7 @@ let rec color (k: int) (precolored: var list) (f: func) : int VarMap.t =
     let new_f = rewrite_program f spilled_nodes in
     color k precolored new_f
 
-let reg_alloc (f: func) : func = 
+let reg_alloc (f: func) : func =
   let rec range x y = if x >= y then [] else x::(range (x+1) y) in
   let precolored = List.map (fun x -> "$" ^ string_of_int x) (range 1 32) in
   let _ = color 31 precolored f in
@@ -452,7 +452,7 @@ let op_to_label (op: operand) : label =
 
 let rec inst_list_to_mips (insts: inst list) : Mips.inst list =
   match insts with
-  | head::tail -> 
+  | head::tail ->
     (match head with
     | Label lbl -> [Mips.Label lbl]
     | Move (op1, op2) -> [Mips.Or (op_to_reg op1, op_to_reg op2, Mips.Immed (Word32.fromInt 0))]
@@ -485,14 +485,14 @@ let rec inst_list_to_mips (insts: inst list) : Mips.inst list =
   | _ -> []
 
 (* Finally, translate the ouptut of reg_alloc to Mips instructions *)
-let cfg_to_mips (f: func) : Mips.inst list = 
+let cfg_to_mips (f: func) : Mips.inst list =
   inst_list_to_mips (List.fold_left (@) [] f)
 
 (*******************************************************************)
-(* Command-Line Interface for printing CFG. You probably will not 
-    need to modify this for PS7, but will definitely need to for 
+(* Command-Line Interface for printing CFG. You probably will not
+    need to modify this for PS7, but will definitely need to for
     PS8. Feel free to add additional command-line options as you
-    see fit (e.g. -printmips, -evalmips, -printcfg, etc...). 
+    see fit (e.g. -printmips, -evalmips, -printcfg, etc...).
     Please make sure to document any changes you make.
 *)
 let parse_file() =
