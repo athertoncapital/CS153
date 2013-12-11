@@ -14,7 +14,7 @@ exception Implement_Me
 
 (* operands include scalars (ints), temps (variables), function names
  * (labels), and physical registers.  *)
-type operand = Int of int | Var of var | Lab of label | Reg of Mips.reg
+type operand = Int of int | Var of var | Lab of label | Reg of Mips.reg | SpilledPlaceholder of int
 let sp = Reg(Mips.R29)
 let fp = Reg(Mips.R30)
 let ra = Reg(Mips.R31)
@@ -56,6 +56,7 @@ let op2string = function
   | (Var x) -> x
   | (Reg r) -> Mips.reg2string r
   | (Lab x) -> x
+  | SpilledPlaceholder i -> "PreliminarySpilledSize is " ^ (string_of_int i)
 
 let arithop2string p =
     match p with

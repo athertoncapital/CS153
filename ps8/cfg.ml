@@ -407,7 +407,7 @@ let build_interfere_graph (f: func) (precolored: var list) : InterfereGraph.t =
 
 let gen_selected_and_aliases (k: int) (graph: InterfereGraph.t): (var list * var VarMap.t) =
   let rec helper (select_stack: var list) (aliases: var VarMap.t) (graph: InterfereGraph.t) : (var list * var VarMap.t) =
-    let _ = print_string (InterfereGraph.to_string graph) in
+    (* let _ = print_string (InterfereGraph.to_string graph) in *)
     let o = InterfereGraph.get_simplify k graph in
     match o with
     | Some v -> Printf.printf "simplifying %s\n" v; helper (v::select_stack) aliases (InterfereGraph.remove v graph)
@@ -477,8 +477,8 @@ let replace_label_with_var (v: var) (t: var) (lbl: label) : label =
 
 let rec rewrite_block (b: block) (spill: var) (memory: int VarMap.t) : block =
   match b with
-  | head::tail -> let temp = new_temp() in
-    let offset = VarMap.find spill memory in
+  | head::tail -> let temp = ("?"^new_temp()) in
+    let offset = (-4) * (VarMap.find spill memory) in
     let replace = replace_op_with_var spill temp in
     let replace_label = replace_label_with_var spill temp in
     let genned = gens head in
@@ -499,27 +499,30 @@ let rec rewrite_block (b: block) (spill: var) (memory: int VarMap.t) : block =
     (rewrite_block tail spill memory)
   | _ -> []
 
-let rewrite_block_nodes (b: block) (spilled: var list) : block =
-  let (memory, insts) = List.fold_left
-    (fun (map, insts) spill -> (VarMap.add spill 0 map, insts @ [Arith (Reg Mips.R29, Reg Mips.R29, Plus, Int (-4))]))
-    (VarMap.empty, []) spilled
+let rewrite_block_nodes (b: block) (spilled: var list) (memory: int VarMap.t): block =
+  List.fold_left (fun b spill -> rewrite_block b spill memory) b spilled
+
+let rewrite_program (f: func) (spilled: var list) (spilled_up_to_now : int) : (func * int) =
+  let rec gen_memory_mapping m vars i =
+    match vars with
+    | hd::tl -> gen_memory_mapping (VarMap.add hd i m) tl (i + 1)
+    | _ -> m
   in
-  insts @ (List.fold_left (fun b spill -> rewrite_block b spill memory) b spilled)
+  let memory_mapping = gen_memory_mapping (VarMap.empty) spilled (spilled_up_to_now + 1) in
+  let new_f = List.fold_left (fun a b -> a @ [rewrite_block_nodes b spilled memory_mapping]) [] f in
+  (new_f, spilled_up_to_now + List.length(spilled))
 
-let rewrite_program (f: func) (spilled: var list) : func =
-  List.fold_left (fun a b -> a @ [rewrite_block_nodes b spilled]) [] f
-
-let rewrite_program f s = f
-
-let rec color (k: int) (precolored: var list) (precoloring: int VarMap.t) (f: func) : int VarMap.t =
+let rec color (k: int) (precolored: var list) (precoloring: int VarMap.t) (f: func) (spilled_up_to_now : int): (int VarMap.t * int) =
+  let _ = Printf.printf "%s\n" (fun2string f) in
   let graph = build_interfere_graph f precolored in
+  let _ = Printf.printf "%s\n" (InterfereGraph.to_string graph) in
   let coloring, spilled_nodes = attempt_color k graph precoloring in
-  if spilled_nodes = [] then coloring else
+  if spilled_nodes = [] then coloring, spilled_up_to_now else
     let _ = Printf.printf "%s" "Now spilling: " in
     let _ = List.iter (Printf.printf "%s ") spilled_nodes in
     let _ = Printf.printf "%s" "\n" in
-    let new_f = rewrite_program f spilled_nodes in
-    color k precolored precoloring new_f
+    let new_f, new_spill_count = rewrite_program f spilled_nodes spilled_up_to_now in
+    color k precolored precoloring new_f new_spill_count
 
 let reg_alloc (f: func) : func =
   let rec range x y = if x >= y then [] else x::(range (x+1) y) in
@@ -528,7 +531,7 @@ let reg_alloc (f: func) : func =
   let precoloring = List.fold_left2 (fun m x y -> VarMap.add x y m) VarMap.empty precolored colors in
   let color_to_register = List.fold_left2 (fun m x y -> Printf.printf "%d is %s\n" y x; IntMap.add y x m) IntMap.empty precolored colors in
 
-  let coloring = color 28 precolored precoloring f in
+  let coloring, total_spills = color 28 precolored precoloring f 0 in
   let _ = print_string "\ncoloring complete \n" in
 
   let var_to_reg (v: operand) : operand =
@@ -551,12 +554,24 @@ let reg_alloc (f: func) : func =
         If (x2, a, y2, b, c)
     | _ -> i
   in
+
   let pred (i: inst) : bool =
     match i with
     | Move (x, y) -> not (x = y)
     | _ -> true
   in Printf.printf "%s\n" (fun2string f);
-  let out = List.map (fun b -> List.filter pred (List.map substitute b)) f in
+  let prelim = List.map (fun b -> List.filter pred (List.map substitute b)) f in
+
+  let out = if total_spills > 0 then 
+    let fix_calls (i: inst) : inst list =
+      if total_spills <= 0 then [i] else
+      match i with
+      | Call x -> [Arith(Reg(Mips.R29), Reg(Mips.R29), Plus, Int((total_spills + 1) * -4)); Call(x); Arith(Reg(Mips.R29), Reg(Mips.R29), Plus, Int((total_spills + 1) * 4))]
+      | _ -> [i]
+    in
+    List.fold_left (@) [] (List.map (List.map fix_calls) prelim)
+  else prelim in
+
   let _ = print_string "code gen complete \n" in
   Printf.printf "%s\n" (fun2string out); out
 
@@ -576,7 +591,7 @@ let rec inst_list_to_mips (insts: inst list) : Mips.inst list =
   | head::tail ->
     (match head with
     | Label lbl -> [Mips.Label lbl]
-    | Move (op1, op2) -> (* Printf.printf "Move\n"; *)[Mips.Or (op_to_reg op1, Mips.R0, op_to_mips op2)]
+    | Move (op1, op2) -> (* Printf.printf "Move\n"; *) [Mips.Or (op_to_reg op1, Mips.R0, op_to_mips op2)]
     | Arith (op, a, arith, b) -> (* Printf.printf "Arith\n"; *)
       let reg = op_to_reg op in
       let a_reg = op_to_reg a in
@@ -588,7 +603,7 @@ let rec inst_list_to_mips (insts: inst list) : Mips.inst list =
       | Times -> (* Printf.printf "Mul\n"; *) [Mips.Mul (reg, a_reg, op_to_reg b)]
       | Div -> (* Printf.printf "Div\n"; *) [Mips.Div (reg, a_reg, op_to_reg b)]
       )
-    | Load (op1, op2, i) -> (* Printf.printf "Lw\n"; *)[Mips.Lw (op_to_reg op1, op_to_reg op2, Word32.fromInt i)]
+    | Load (op1, op2, i) -> (* Printf.printf "Lw\n"; *) [Mips.Lw (op_to_reg op1, op_to_reg op2, Word32.fromInt i)]
     | Store (op1, i, op2) -> (* Printf.printf "Sw %s %d %s \n"  (op2string op1) i (op2string op2); *) [Mips.Sw (op_to_reg op2, op_to_reg op1, Word32.fromInt i)]
     | Call op -> (match op with
       | Lab lbl -> [Mips.Jal lbl]
