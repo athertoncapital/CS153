@@ -183,7 +183,7 @@ module InterfereGraph =
 
     let can_spill (k: int) (graph: t) (u: var) : bool =
       if degree u graph < k then
-        raise FatalError
+        (Printf.printf "Error in can_spill\n"; raise FatalError)
       else
         is_precolored graph u
 
@@ -254,7 +254,7 @@ let succ_of (b: block) : label list =
 let label_of (b: block) : label =
   match b with
   | (Label lbl)::_ -> lbl
-  | _ -> raise FatalError
+  | _ -> Printf.printf "Error in label_of\n"; raise FatalError
 
 let succs_of_func (f: func) : (label list) LabelMap.t =
   List.fold_left (fun dict bloc -> LabelMap.add (label_of bloc) (succ_of bloc) dict) LabelMap.empty f
@@ -396,17 +396,17 @@ let op_to_mips (op: operand) : Mips.operand =
   match op with
   | Int i -> Mips.Immed (Word32.fromInt i)
   | Reg r -> Mips.Reg r
-  | _ -> raise FatalError
+  | _ -> Printf.printf "Error in op_to_mips\n"; raise FatalError
 
 let op_to_reg (op: operand) : Mips.reg =
   match op with
   | Reg r -> r
-  | _ -> raise FatalError
+  | _ -> Printf.printf "Error in op_to_reg\n"; raise FatalError
 
 let op_to_label (op: operand) : label =
   match op with
   | Lab lbl -> lbl
-  | _ -> raise FatalError
+  | _ -> Printf.printf "Error in op_to_label\n"; raise FatalError
 
 let rec inst_list_to_mips (insts: inst list) : Mips.inst list =
   match insts with
