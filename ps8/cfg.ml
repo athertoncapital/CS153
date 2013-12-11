@@ -90,13 +90,13 @@ module InterfereGraph =
     let add_nodes (ns: VarSet.t) (graph: t) : t = 
       {graph with nodes = VarSet.union ns graph.nodes}
 
-    let add_edge (u:var) (v:var) (graph: t) : t =
+    let add_edge (u: var) (v: var) (graph: t) : t =
       if u = v then graph else
         let new_adjacency_set = EdgeSet.add (v, u) (EdgeSet.add (u, v) graph.adjacency_set) in
         let new_nodes = VarSet.add v (VarSet.add u graph.nodes) in
           {graph with adjacency_set = new_adjacency_set; nodes = new_nodes}
 
-    let add_move (u:var) (v:var) (graph: t) : t =
+    let add_move (u: var) (v: var) (graph: t) : t =
       if u = v then graph else
         let new_move_set = EdgeSet.add (v, u) (EdgeSet.add (u, v) graph.move_set) in
         let new_nodes = VarSet.add v (VarSet.add u graph.nodes) in
@@ -292,11 +292,11 @@ let add_block_edges (b: block) (liveout: VarSet.t) (g: InterfereGraph.t) : Inter
     match b with
     | i::b ->
       let (g, liveout) = process_stmts b liveout g in
-      (* let _ = (match i with
-        | Move (x, y) ->
-      *)
       let genned = gens i in
       let killed = kills i in
+      let g = (match i with
+        | Move (x, y) -> InterfereGraph.add_edge (op2string x) (op2string y) g
+        | _ -> g) in
       let out_minus_killed = VarSet.diff liveout killed in
       let livein = VarSet.union genned out_minus_killed in
       if VarSet.equal liveout livein
