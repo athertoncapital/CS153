@@ -295,7 +295,7 @@ let add_block_edges (b: block) (liveout: VarSet.t) (g: InterfereGraph.t) : Inter
       let genned = gens i in
       let killed = kills i in
       let g = (match i with
-        | Move (x, y) -> InterfereGraph.add_edge (op2string x) (op2string y) g
+        | Move (x, y) -> InterfereGraph.add_move (op2string x) (op2string y) g
         | _ -> g) in
       let out_minus_killed = VarSet.diff liveout killed in
       let livein = VarSet.union genned out_minus_killed in
