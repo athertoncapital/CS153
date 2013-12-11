@@ -370,16 +370,28 @@ let attempt_color (k: int) (graph: InterfereGraph.t) : int VarMap.t * var list =
   in
   let all_colors = range 0 k in
   let select_stack, aliases = gen_selected_and_aliases k graph in
+  let _ = print_string "selection completed" in
   let select_color (c: int VarMap.t * var list) (node: var): int VarMap.t * var list =
+    let _ = Printf.printf "coloring %s\n" node in
     let (coloring, spilled) = c in
       if VarMap.mem node aliases then
-        ((VarMap.add node (VarMap.find (VarMap.find node aliases) coloring) coloring), spilled)
+        let alias = VarMap.find node aliases in
+        let _ = Printf.printf "%s is an alias for %s\n" alias node in
+        if VarMap.mem alias coloring then
+          let _ = Printf.printf "using color %d for %s \n" (VarMap.find alias coloring) alias in
+          ((VarMap.add node (VarMap.find alias coloring) coloring), spilled)
+        else (coloring, spilled)
       else
+        let _ = print_string "not aliased \n" in
         let neighbors = InterfereGraph.neighbors node graph in
         let unavailable = VarSet.fold (fun v colors -> if VarMap.mem v coloring then IntSet.add (VarMap.find v coloring) colors else colors) neighbors IntSet.empty in
         let available = IntSet.diff all_colors unavailable in
-        if IntSet.is_empty available then (coloring, node::spilled) else
-          let chosen = IntSet.choose (IntSet.diff all_colors unavailable) in
+        if IntSet.is_empty available then 
+          let _ = Printf.printf "spilled %s\n" node in
+          (coloring, node::spilled) 
+        else
+          let chosen = IntSet.choose available in
+            let _ = Printf.printf "chosen color for %s is %d \n" node chosen in
             (VarMap.add node chosen coloring, spilled)
       in
       List.fold_left select_color (VarMap.empty, []) select_stack
