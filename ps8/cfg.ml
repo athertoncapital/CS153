@@ -165,7 +165,7 @@ module InterfereGraph =
       List.mem u graph.precolored
 
     let can_simplify (k: int) (graph: t) (u: var) : bool =
-      let _ = print_string "trying to simplify" in
+      let _ = print_string "trying to simplify\n" in
       not (move_related u graph) && degree u graph < k && not (is_precolored graph u)
 
     let get_simplify (k: int) (graph: t) : var option =
@@ -178,19 +178,19 @@ module InterfereGraph =
       not (VarSet.exists (fun t -> not (is_edge y t graph || degree t graph < k)) ts)
 
     let get_coalesce (k: int) (graph: t) : (var * var) option =
-      let _ = print_string "trying to coalesce" in
+      let _ = print_string "trying to coalesce\n" in
       find (georges k graph) (EdgeSet.elements (EdgeSet.diff graph.move_set graph.adjacency_set))
 
     let can_freeze (k: int) (graph: t) (u: var) : bool =
       move_related u graph && degree u graph < k
 
     let get_freeze (k: int) (graph: t) : var option =
-      let _ = print_string "trying to freeze" in
+      let _ = print_string "trying to freeze\n" in
       find (can_freeze k graph) (VarSet.elements graph.nodes)
 
     let can_spill (k: int) (graph: t) (u: var) : bool =
       if is_precolored graph u then false else
-      let _ = print_string "trying to spill" in
+      let _ = print_string "trying to spill\n" in
       if degree u graph < k then
         (Printf.printf "Error in can_spill\n"; raise FatalError)
       else
