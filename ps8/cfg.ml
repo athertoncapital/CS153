@@ -466,8 +466,26 @@ let attempt_color (k: int) (graph: InterfereGraph.t) (precoloring: int VarMap.t)
       in
       List.fold_left select_color (precoloring, []) select_stack
 
-let rewrite_program (f: func) (spilled_nodes: var list) =
-  raise Implement_Me
+let rewrite_block (b: block) (spill: var) : block =
+  match b with
+  | head::tail -> (match head with
+    | Label lbl ->
+    | Move (op1, op2) ->
+    | Arith (op, a, arith, b) ->
+    | Load (op1, op2, i) ->
+    | Store (op1, i, op2) ->
+    | Call op ->
+    | Jump lbl ->
+    | If (op1, comp, op2, lbl1, lbl2) ->
+    | Return ->
+    ) :: (rewrite_block tail spill)
+  | _ -> []
+
+let rewrite_block_nodes (b: block) (spilled: var list) : block =
+  List.fold_left (fun b spill -> rewrite_block b spill) b spilled
+
+let rewrite_program (f: func) (spilled_nodes: var list) : func =
+  List.fold_left (fun a b -> a @ rewrite_block b) [] f
 
 let rec color (k: int) (precolored: var list) (precoloring: int VarMap.t) (f: func) : int VarMap.t =
   let graph = build_interfere_graph f precolored in
@@ -529,11 +547,6 @@ let op_to_reg (op: operand) : Mips.reg =
   | Reg r -> r
   | _ -> Printf.printf "Error in op_to_reg\n"; raise FatalError
 
-let op_to_label (op: operand) : label =
-  match op with
-  | Lab lbl -> lbl
-  | _ -> Printf.printf "Error in op_to_label\n"; raise FatalError
-
 let rec inst_list_to_mips (insts: inst list) : Mips.inst list =
   match insts with
   | head::tail ->
@@ -553,7 +566,10 @@ let rec inst_list_to_mips (insts: inst list) : Mips.inst list =
       )
     | Load (op1, op2, i) -> (* Printf.printf "Lw\n"; *) [Mips.Lw (op_to_reg op1, op_to_reg op2, Word32.fromInt i)]
     | Store (op1, i, op2) -> (* Printf.printf "Sw\n"; *) [Mips.Sw (op_to_reg op2, op_to_reg op1, Word32.fromInt i)]
-    | Call op -> [Mips.Jal (op_to_label op)]
+    | Call op -> (match op with
+      | Label lbl -> [Mips.Jal lbl]
+      | Reg r -> [Mips.Jalr r]
+      | _ -> raise FatalError)
     | Jump lbl -> [Mips.J lbl]
     | If (op1, comp, op2, lbl1, lbl2) -> (* Printf.printf "If\n"; *)
       let reg1 = op_to_reg op1 in
