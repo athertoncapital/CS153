@@ -60,13 +60,15 @@ module InterfereGraph =
     type t = {adjacency_set: EdgeSet.t; 
               move_set: EdgeSet.t;
               nodes : VarSet.t;
+              precolored : var list;
              }
 
-    let init () : t = 
+    let init (pc: var list) : t = 
       {
         adjacency_set = EdgeSet.empty;
         move_set = EdgeSet.empty;
         nodes = VarSet.empty;
+        precolored = pc;
       }
 
     let edge_set_to_string (set: EdgeSet.t) : string =
@@ -82,6 +84,9 @@ module InterfereGraph =
       edge_set_to_string graph.adjacency_set ^
       "Move set:\n" ^
       edge_set_to_string graph.move_set
+
+    let get_precolored (graph: t) : var list =
+      graph.precolored
 
     let verify_bidirectionality (graph: t) : bool =
       EdgeSet.for_all (fun (u, v) -> EdgeSet.mem (v, u) graph.adjacency_set) graph.adjacency_set &&
@@ -132,18 +137,18 @@ module InterfereGraph =
         EdgeSet.fold (fun edge set -> if (fst edge) = v then EdgeSet.add (u, (snd edge)) set else EdgeSet.add((fst edge), u) set) change save
       in
 
-      {adjacency_set = combine_helper graph.adjacency_set;
+      {graph with adjacency_set = combine_helper graph.adjacency_set;
        move_set = combine_helper graph.move_set;
-       nodes = VarSet.remove v graph.nodes}
+       nodes = VarSet.remove v graph.nodes;}
 
     let remove (u: var) (graph: t) : t =
       let remove_helper (edges: EdgeSet.t) : EdgeSet.t =
         EdgeSet.filter (function (x, y) -> x != u && y != u) edges
       in
 
-      {adjacency_set = remove_helper graph.adjacency_set;
+      {graph with adjacency_set = remove_helper graph.adjacency_set;
        move_set = remove_helper graph.move_set;
-       nodes = VarSet.remove u graph.nodes}
+       nodes = VarSet.remove u graph.nodes;}
 
     let freeze (u: var) (graph: t) : t =
       let remove_helper (edges: EdgeSet.t) : EdgeSet.t =
@@ -155,7 +160,7 @@ module InterfereGraph =
       EdgeSet.exists (function (x, y) -> x = u || y = u) graph.move_set
 
     let is_precolored (graph: t) (u: var): bool =
-      false
+      List.mem u graph.precolored
 
     let can_simplify (k: int) (graph: t) (u: var) : bool =
       let _ = print_string "trying to simplify" in
@@ -325,7 +330,9 @@ let add_block_edges (b: block) (liveout: VarSet.t) (g: InterfereGraph.t) : Inter
 let build_interfere_graph (f: func) : InterfereGraph.t =
   let _ = init f in
   let _ = build_liveness() in
-  List.fold_left (fun g bloc -> add_block_edges bloc (LabelMap.find (label_of bloc) !liveout) g) (InterfereGraph.init ()) f
+  let rec range x y = if x >= y then [] else x::(range (x+1) y) in
+  let precolored = List.map (fun x -> "$" ^ string_of_int x) (range 1 32) in
+  List.fold_left (fun g bloc -> add_block_edges bloc (LabelMap.find (label_of bloc) !liveout) g) (InterfereGraph.init (precolored)) f
 
 (*******************************************************************)
 (* PS8 TODO:  graph-coloring, coalescing register assignment *)
@@ -362,10 +369,24 @@ let gen_selected_and_aliases (k: int) (graph: InterfereGraph.t): (var list * var
   in helper [] VarMap.empty graph
 
 let attempt_color (k: int) (graph: InterfereGraph.t) : int VarMap.t * var list =
+  let precolored = InterfereGraph.get_precolored graph in
+  if (List.length precolored) > k then
+    (Printf.printf "More precolored nodes than colors \n"; raise FatalError)
+  else 
+
   let rec range x y = 
     if x >= y then IntSet.empty else IntSet.add x (range (x + 1) y) 
   in
+
   let all_colors = range 0 k in
+  let rec color_precolor (coloring: int VarMap.t) (color: int) (nodes: var list): (int VarMap.t) = 
+    match nodes with
+    | hd :: tl -> color_precolor (VarMap.add hd color coloring) (color + 1) tl
+    | [] -> coloring 
+  in 
+
+  let precoloring = color_precolor VarMap.empty 0 precolored in 
+
   let select_stack, aliases = gen_selected_and_aliases k graph in
   let _ = print_string "selection completed" in
   let select_color (c: int VarMap.t * var list) (node: var): int VarMap.t * var list =
@@ -391,7 +412,7 @@ let attempt_color (k: int) (graph: InterfereGraph.t) : int VarMap.t * var list =
             let _ = Printf.printf "chosen color for %s is %d \n" node chosen in
             (VarMap.add node chosen coloring, spilled)
       in
-      List.fold_left select_color (VarMap.empty, []) select_stack
+      List.fold_left select_color (precoloring, []) select_stack
 
 let rewrite_program (f: func) (spilled_nodes: var list) =
   raise Implement_Me
