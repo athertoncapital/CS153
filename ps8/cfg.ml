@@ -475,9 +475,9 @@ let replace_op_with_var (v: var) (t: var) (op: operand) : operand =
 let replace_label_with_var (v: var) (t: var) (lbl: label) : label =
   if lbl = v then t else lbl
 
-let rec rewrite_block (b: block) (spill: var) (memory: int VarMap.t) : block =
+let rec rewrite_block (b: block) (spill: var) (memory: int VarMap.t) (temp: var): block =
   match b with
-  | head::tail -> let temp = ("?"^new_temp()) in
+  | head::tail -> 
     let offset = (-4) * (VarMap.find spill memory) in
     let replace = replace_op_with_var spill temp in
     let replace_label = replace_label_with_var spill temp in
@@ -496,11 +496,11 @@ let rec rewrite_block (b: block) (spill: var) (memory: int VarMap.t) : block =
     | Return -> [Return]
     ) @
     (if VarSet.mem spill killed then [Store (Reg Mips.R29, offset, Var temp)] else []) @
-    (rewrite_block tail spill memory)
+    (rewrite_block tail spill memory temp)
   | _ -> []
 
 let rewrite_block_nodes (b: block) (spilled: var list) (memory: int VarMap.t): block =
-  List.fold_left (fun b spill -> rewrite_block b spill memory) b spilled
+  List.fold_left (fun b spill -> rewrite_block b spill memory ("?"^new_temp())) b spilled
 
 let rewrite_program (f: func) (spilled: var list) (spilled_up_to_now : int) : (func * int) =
   let rec gen_memory_mapping m vars i =
@@ -515,7 +515,7 @@ let rewrite_program (f: func) (spilled: var list) (spilled_up_to_now : int) : (f
 let rec color (k: int) (precolored: var list) (precoloring: int VarMap.t) (f: func) (spilled_up_to_now : int): (int VarMap.t * int) =
   let _ = Printf.printf "%s\n" (fun2string f) in
   let graph = build_interfere_graph f precolored in
-  let _ = Printf.printf "%s\n" (InterfereGraph.to_string graph) in
+  (* let _ = Printf.printf "%s\n" (InterfereGraph.to_string graph) in *)
   let coloring, spilled_nodes = attempt_color k graph precoloring in
   if spilled_nodes = [] then coloring, spilled_up_to_now else
     let _ = Printf.printf "%s" "Now spilling: " in

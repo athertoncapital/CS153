@@ -17,7 +17,7 @@ type reg = R0
      | R20 | R21 | R22 | R23 | R24 | R25 
      | R26 | R27 (* DO NOT USE ME: reserved for OS *)
      | R28
-            | R29 | R30 |R31  (* used for special purposes... *)
+            | R29 | R30 | R31  (* used for special purposes... *)
 
 type operand = Reg of reg | Immed of Word32.word
 
