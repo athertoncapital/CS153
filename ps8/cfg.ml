@@ -480,18 +480,22 @@ let rec rewrite_block (b: block) (spill: var) (memory: int VarMap.t) : block =
   | head::tail -> let temp = new_temp() in
     let replace = replace_op_with_var spill temp in
     let replace_label = replace_label_with_var spill temp in
-    (* if gens then load *) (match head with
-    | Label lbl -> Label (replace_label lbl)
-    | Move (op1, op2) -> Move (replace op1, replace op2)
-    | Arith (op, a, arith, b) -> Arith (replace op, replace a, arith, replace b)
-    | Load (op1, op2, i) -> Load (replace op1, replace op2, i)
-    | Store (op1, i, op2) -> Store (replace op1, i, replace op2)
-    | Call op -> Call (replace op)
-    | Jump lbl -> Jump (replace_label lbl)
-    | If (op1, comp, op2, lbl1, lbl2) -> If (replace op1, comp, replace op2, replace_label lbl1, replace_label lbl2)
-    | Return -> Return
-    ) :: (rewrite_block tail spill memory)
-    (* if kills then save *)
+    let genned = gens head in
+    let killed = kills head in
+    (if VarSet.mem spill genned then [Load (Var temp, Reg Mips.R29, 0)] else []) @
+    (match head with
+    | Label lbl -> [Label (replace_label lbl)]
+    | Move (op1, op2) -> [Move (replace op1, replace op2)]
+    | Arith (op, a, arith, b) -> [Arith (replace op, replace a, arith, replace b)]
+    | Load (op1, op2, i) -> [Load (replace op1, replace op2, i)]
+    | Store (op1, i, op2) -> [Store (replace op1, i, replace op2)]
+    | Call op -> [Call (replace op)]
+    | Jump lbl -> [Jump (replace_label lbl)]
+    | If (op1, comp, op2, lbl1, lbl2) -> [If (replace op1, comp, replace op2, replace_label lbl1, replace_label lbl2)]
+    | Return -> [Return]
+    ) @
+    (if VarSet.mem spill killed then [Store (Reg Mips.R29, 0, Var temp)] else []) @
+    (rewrite_block tail spill memory)
   | _ -> []
 
 let rewrite_block_nodes (b: block) (spilled: var list) : block =
