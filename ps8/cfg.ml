@@ -154,28 +154,32 @@ module InterfereGraph =
     let move_related (u: var) (graph: t) : bool =
       EdgeSet.exists (function (x, y) -> x = u || y = u) graph.move_set
 
+    let is_precolored (graph: t) (u: var): bool =
+      false
+
     let can_simplify (k: int) (graph: t) (u: var) : bool =
-      not (move_related u graph) && degree u graph < k
+      not (move_related u graph) && degree u graph < k && not (is_precolored graph u)
 
     let get_simplify (k: int) (graph: t) : var option =
       find (can_simplify k graph) (VarSet.elements graph.nodes)
 
     let georges (k: int) (graph: t) (edge: var * var) : bool =
       let (x, y) = edge in
+      if is_precolored graph x && is_precolored graph y then false else
       let ts = neighbors x graph in
       not (VarSet.exists (fun t -> not (is_edge y t graph || degree t graph < k)) ts)
 
     let get_coalesce (k: int) (graph: t) : (var * var) option =
-      find (georges k graph) (EdgeSet.elements (EdgeSet.diff graph.move_set graph.adjacency_set))
+      let o = find (georges k graph) (EdgeSet.elements (EdgeSet.diff graph.move_set graph.adjacency_set)) in
+      match o with
+      | Some (x, y) -> if is_precolored graph y then Some (y, x) else Some (x, y)
+      | None -> None
 
     let can_freeze (k: int) (graph: t) (u: var) : bool =
       move_related u graph && degree u graph < k
 
     let get_freeze (k: int) (graph: t) : var option =
       find (can_freeze k graph) (VarSet.elements graph.nodes)
-
-    let is_precolored (graph: t) (u: var): bool =
-      false
 
     let can_spill (k: int) (graph: t) (u: var) : bool =
       if degree u graph < k then
@@ -184,45 +188,10 @@ module InterfereGraph =
         is_precolored graph u
 
     let get_spill (k: int) (graph: t) : var option =
-      find (can_spill k graph) (VarSet.elements graph.nodes)
+      let o = find (can_spill k graph) (VarSet.elements (VarSet.filter (fun v -> v.[0] != '?') graph.nodes)) in
+      if o = None then Printf.printf "%s\n" "Warning: potentially spilling a temporary variable generated from a spill"; 
+        find (can_spill k graph) (VarSet.elements graph.nodes)
 end
-
-let gen_selected_and_aliases (k: int) (graph: InterfereGraph.t): (var list * var VarMap.t) =
-  let rec helper (select_stack: var list) (aliases: var VarMap.t) (graph: InterfereGraph.t): (var list * var VarMap.t) =
-    let o = InterfereGraph.get_simplify k graph in
-    match o with
-    | Some v -> helper (v::select_stack) aliases (InterfereGraph.remove v graph)
-    | None ->
-        let o = InterfereGraph.get_coalesce k graph in
-        match o with
-        | Some (x, y) -> helper (y::select_stack) (VarMap.add y x aliases) (InterfereGraph.combine x y graph)
-        | None ->
-            let o = InterfereGraph.get_freeze k graph in
-            match o with
-            | Some v -> helper select_stack aliases (InterfereGraph.freeze v graph)
-            | None -> 
-                let o = InterfereGraph.get_spill k graph in
-                match o with
-                | Some v -> Printf.printf "%s\n" ("need to spill " ^ v); raise FatalError
-                | None -> (select_stack, aliases)
-  in helper [] VarMap.empty graph
-
-let color (k: int) (graph: InterfereGraph.t) : int VarMap.t =
-  let rec range x y = 
-    if x >= y then IntSet.empty else IntSet.add x (range (x + 1) y) 
-  in
-  let all_colors = range 0 k in
-  let select_stack, aliases = gen_selected_and_aliases k graph in
-  let select_color (coloring: int VarMap.t) (node: var): int VarMap.t =
-    if VarMap.mem node aliases then
-      VarMap.add node (VarMap.find (VarMap.find node aliases) coloring) coloring
-    else
-      let neighbors = InterfereGraph.neighbors node graph in
-      let unavailable = VarSet.fold (fun v colors -> if VarMap.mem v coloring then IntSet.add (VarMap.find v coloring) colors else colors) neighbors IntSet.empty in
-      let chosen = IntSet.choose (IntSet.diff all_colors unavailable) in
-      VarMap.add node chosen coloring
-  in
-  List.fold_left select_color VarMap.empty select_stack
 
 type interfere_graph = VarSet.t VarMap.t
 
@@ -358,8 +327,63 @@ let build_interfere_graph (f: func) : InterfereGraph.t =
    function that doesn't use any variables (except for function
    names.)
 *)
+
+let gen_selected_and_aliases (k: int) (graph: InterfereGraph.t): (var list * var VarMap.t) =
+  let rec helper (select_stack: var list) (aliases: var VarMap.t) (graph: InterfereGraph.t): (var list * var VarMap.t) =
+    let o = InterfereGraph.get_simplify k graph in
+    match o with
+    | Some v -> helper (v::select_stack) aliases (InterfereGraph.remove v graph)
+    | None ->
+        let o = InterfereGraph.get_coalesce k graph in
+        match o with
+        | Some (x, y) -> helper (y::select_stack) (VarMap.add y x aliases) (InterfereGraph.combine x y graph)
+        | None ->
+            let o = InterfereGraph.get_freeze k graph in
+            match o with
+            | Some v -> helper select_stack aliases (InterfereGraph.freeze v graph)
+            | None -> 
+                let o = InterfereGraph.get_spill k graph in
+                match o with
+                | Some v -> Printf.printf "%s\n" ("potential spill: " ^ v);
+                    helper (v::select_stack) aliases(InterfereGraph.remove v graph)
+                | None -> (select_stack, aliases)
+  in helper [] VarMap.empty graph
+
+let attempt_color (k: int) (graph: InterfereGraph.t) : int VarMap.t * var list =
+  let rec range x y = 
+    if x >= y then IntSet.empty else IntSet.add x (range (x + 1) y) 
+  in
+  let all_colors = range 0 k in
+  let select_stack, aliases = gen_selected_and_aliases k graph in
+  let select_color (c: int VarMap.t * var list) (node: var): int VarMap.t * var list =
+    let (coloring, spilled) = c in
+      if VarMap.mem node aliases then
+        ((VarMap.add node (VarMap.find (VarMap.find node aliases) coloring) coloring), spilled)
+      else
+        let neighbors = InterfereGraph.neighbors node graph in
+        let unavailable = VarSet.fold (fun v colors -> if VarMap.mem v coloring then IntSet.add (VarMap.find v coloring) colors else colors) neighbors IntSet.empty in
+        let available = IntSet.diff all_colors unavailable in
+        if IntSet.is_empty available then (coloring, node::spilled) else
+          let chosen = IntSet.choose (IntSet.diff all_colors unavailable) in
+            (VarMap.add node chosen coloring, spilled)
+      in
+      List.fold_left select_color (VarMap.empty, []) select_stack
+
+let rewrite_program (f: func) (spilled_nodes: var list) =
+  f
+
+let rec color (k: int) (f: func) : int VarMap.t =
+  let graph = build_interfere_graph f in
+  let coloring, spilled_nodes = attempt_color k graph in
+  if spilled_nodes = [] then coloring else
+    let _ = Printf.printf "%s" "Now spilling: " in
+    let _ = List.iter (Printf.printf "%s ") spilled_nodes in
+    let _ = Printf.printf "%s" "\n" in
+    let new_f = rewrite_program f spilled_nodes in
+    color k new_f
+
 let reg_alloc (f: func) : func = 
-    raise Implement_Me
+  f
 
 let op_to_mips (op: operand) : Mips.operand =
   match op with
