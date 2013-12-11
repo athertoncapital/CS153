@@ -213,6 +213,11 @@ let vars_of_ops (ops: operand list) : VarSet.t =
     | _ -> vset
   in List.fold_left add_op VarSet.empty ops
 
+let is_that_shit_an_int (op: operand) : bool =
+  match op with
+  | Int i -> true
+  | _ -> false
+
 let gens (i: inst) : VarSet.t =
   match i with
   | Move (_, op) -> vars_of_ops [op]
@@ -301,7 +306,8 @@ let add_block_edges (b: block) (liveout: VarSet.t) (g: InterfereGraph.t) : Inter
       let genned = gens i in
       let killed = kills i in
       let g = (match i with
-        | Move (x, y) -> InterfereGraph.add_move (op2string x) (op2string y) g
+        | Move (x, y) -> if not (is_that_shit_an_int x) && not (is_that_shit_an_int y) then
+          InterfereGraph.add_move (op2string x) (op2string y) g else g
         | _ -> g) in
       let out_minus_killed = VarSet.diff liveout killed in
       let livein = VarSet.union genned out_minus_killed in
@@ -389,7 +395,7 @@ let rec color (k: int) (f: func) : int VarMap.t =
     color k new_f
 
 let reg_alloc (f: func) : func = 
-  let coloring = color 1000 f in
+  let _ = color 1 f in
   f
 
 let op_to_mips (op: operand) : Mips.operand =
