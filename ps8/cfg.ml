@@ -477,11 +477,11 @@ let reg_alloc (f: func) : func =
   let color_to_register = List.fold_left (fun m reg -> IntMap.add (VarMap.find reg coloring) reg m) IntMap.empty precolored in
   let var_to_reg (v: operand) : operand =
     match v with
-    | Var v -> Reg (string2reg (IntMap.find (VarMap.find v coloring) color_to_register))
-    | Lab l -> Reg (string2reg (IntMap.find (VarMap.find l coloring) color_to_register))
+    | Var v -> if VarMap.mem v coloring then Reg (string2reg (IntMap.find (VarMap.find v coloring) color_to_register)) else (Printf.printf "SUM TING GON WONG WIFF COLOR OF %s \n" v; raise FatalError)
+    | Lab v -> if VarMap.mem v coloring then Reg (string2reg (IntMap.find (VarMap.find v coloring) color_to_register)) else (Printf.printf "SUM TING GON WONG WIFF COLOR OF %s \n" v; raise FatalError)
     | _ -> v
   in
-  let substitute (i: inst) : inst = 
+  let substitute (i: inst) : inst= 
     match i with
     | Move (x, y) -> let r1, r2 = var_to_reg x, var_to_reg y in
         Move (r1, r2)
@@ -499,9 +499,9 @@ let reg_alloc (f: func) : func =
     match i with
     | Move (x, y) -> not (x = y)
     | _ -> true
-  in
+  in Printf.printf "%s\n" (fun2string f); 
   let out = List.map (fun b -> List.filter pred (List.map substitute b)) f in
-  Printf.printf "%s\n" (fun2string f); Printf.printf "%s\n" (fun2string out); out
+  Printf.printf "%s\n" (fun2string out); out
 
   
 let op_to_mips (op: operand) : Mips.operand =
