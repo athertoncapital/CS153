@@ -1,21 +1,4 @@
-<<<<<<< HEAD
 main() {
        let a = 3 + 5;
        return a;
 }
-=======
-fuck_this (x) {
-	return x + 1;
-}
-add(x, y) {
-	let d = fuck_this(x);
-	return d + x + y;
-}
-
-main () {
-	let a = 3;
-	let b = 4;
-	let c = add (a, b);
-	return c;
-}
->>>>>>> added caller/callee saved registers for the purpose of liveness analysis
