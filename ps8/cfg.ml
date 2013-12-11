@@ -199,8 +199,6 @@ module InterfereGraph =
 
 end
 
-type interfere_graph = VarSet.t VarMap.t
-
 let print_set s = 
   VarSet.iter (Printf.printf "%s ") s; print_string "\n"
 
@@ -342,6 +340,7 @@ let build_interfere_graph (f: func) : InterfereGraph.t =
 
 let gen_selected_and_aliases (k: int) (graph: InterfereGraph.t): (var list * var VarMap.t) =
   let rec helper (select_stack: var list) (aliases: var VarMap.t) (graph: InterfereGraph.t): (var list * var VarMap.t) =
+    let _ = print_string (InterfereGraph.to_string graph) in
     let o = InterfereGraph.get_simplify k graph in
     match o with
     | Some v -> Printf.printf "simplifying %s\n" v; helper (v::select_stack) aliases (InterfereGraph.remove v graph)
