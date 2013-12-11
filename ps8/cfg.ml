@@ -216,7 +216,7 @@ module InterfereGraph =
       find (can_simplify k graph) (VarSet.elements graph.nodes)
 
     let georges (k: int) (graph: t) (edge: var * var) : bool =
-      let (x, y) = edge in
+      let (y, x) = edge in
       if is_precolored graph x then false else
       let ts = neighbors x graph in
       not (VarSet.exists (fun t -> not (is_edge y t graph || degree t graph < k)) ts)
@@ -415,7 +415,7 @@ let gen_selected_and_aliases (k: int) (graph: InterfereGraph.t): (var list * var
                 | None -> (select_stack, aliases)
   in helper [] VarMap.empty graph
 
-let attempt_color (k: int) (graph: InterfereGraph.t) : int VarMap.t * var list =
+let attempt_color (k: int) (graph: InterfereGraph.t) (precoloring: int VarMap.t) : int VarMap.t * var list =
   let precolored = InterfereGraph.get_precolored graph in
   if (List.length precolored) > k then
     (Printf.printf "More precolored nodes than colors\n"; raise FatalError)
@@ -426,16 +426,10 @@ let attempt_color (k: int) (graph: InterfereGraph.t) : int VarMap.t * var list =
   in
 
   let all_colors = range 0 k in
-  let rec color_precolor (coloring: int VarMap.t) (color: int) (nodes: var list): (int VarMap.t) =
-    match nodes with
-    | hd :: tl -> color_precolor (VarMap.add hd color coloring) (color + 1) tl
-    | [] -> coloring
-  in
-
-  let precoloring = color_precolor VarMap.empty 0 precolored in
 
   let select_stack, aliases = gen_selected_and_aliases k graph in
   let _ = print_string "selection completed\n" in
+
   let select_color (c: int VarMap.t * var list) (node: var): int VarMap.t * var list =
     let _ = Printf.printf "coloring %s\n" node in
     let (coloring, spilled) = c in
@@ -464,26 +458,30 @@ let attempt_color (k: int) (graph: InterfereGraph.t) : int VarMap.t * var list =
 let rewrite_program (f: func) (spilled_nodes: var list) =
   raise Implement_Me
 
-let rec color (k: int) (precolored: var list) (f: func) : int VarMap.t =
+let rec color (k: int) (precolored: var list) (precoloring: int VarMap.t) (f: func) : int VarMap.t =
   let graph = build_interfere_graph f precolored in
-  let coloring, spilled_nodes = attempt_color k graph in
+  let coloring, spilled_nodes = attempt_color k graph precoloring in
   if spilled_nodes = [] then coloring else
     let _ = Printf.printf "%s" "Now spilling: " in
     let _ = List.iter (Printf.printf "%s ") spilled_nodes in
     let _ = Printf.printf "%s" "\n" in
     let new_f = rewrite_program f spilled_nodes in
-    color k precolored new_f
+    color k precolored precoloring new_f
 
 let reg_alloc (f: func) : func =
   let rec range x y = if x >= y then [] else x::(range (x+1) y) in
   let precolored = List.map (fun x -> "$" ^ string_of_int x) (range 1 32) in
-  let coloring = color 31 precolored f in
+  let colors = (range 0 31) in
+  let precoloring = List.fold_left2 (fun m x y -> VarMap.add x y m) VarMap.empty precolored colors in
+  let color_to_register = List.fold_left2 (fun m x y -> Printf.printf "%d is %s\n" y x; IntMap.add y x m) IntMap.empty precolored colors in
+
+  let coloring = color 31 precolored precoloring f in
   let _ = print_string "\ncoloring complete \n" in
-  let color_to_register = List.fold_left (fun m reg -> IntMap.add (VarMap.find reg coloring) reg m) IntMap.empty precolored in
+
   let var_to_reg (v: operand) : operand =
     match v with
-    | Var v -> if VarMap.mem v coloring then Reg (string2reg (IntMap.find (VarMap.find v coloring) color_to_register)) else (Printf.printf "SUM TING GON WONG WIFF COLOR OF %s \n" v; raise FatalError)
-    | Lab v -> if VarMap.mem v coloring then Reg (string2reg (IntMap.find (VarMap.find v coloring) color_to_register)) else (Printf.printf "SUM TING GON WONG WIFF COLOR OF %s \n" v; raise FatalError)
+    | Var v -> if (IntMap.mem (VarMap.find v coloring) color_to_register) then Reg (string2reg (IntMap.find (VarMap.find v coloring) color_to_register)) else (Printf.printf "SUM TING GON WONG WIFF COLOR OF %d \n" (VarMap.find v coloring); raise FatalError)
+    | Lab v -> if (IntMap.mem (VarMap.find v coloring) color_to_register) then Reg (string2reg (IntMap.find (VarMap.find v coloring) color_to_register)) else (Printf.printf "SUM TING GON WONG WIFF COLOR OF %d \n" (VarMap.find v coloring); raise FatalError)
     | _ -> v
   in
   let substitute (i: inst) : inst= 
@@ -506,6 +504,7 @@ let reg_alloc (f: func) : func =
     | _ -> true
   in Printf.printf "%s\n" (fun2string f); 
   let out = List.map (fun b -> List.filter pred (List.map substitute b)) f in
+  let _ = print_string "code gen complete \n" in
   Printf.printf "%s\n" (fun2string out); out
 
 let op_to_mips (op: operand) : Mips.operand =
