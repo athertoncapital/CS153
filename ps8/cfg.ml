@@ -370,7 +370,7 @@ let attempt_color (k: int) (graph: InterfereGraph.t) : int VarMap.t * var list =
       List.fold_left select_color (VarMap.empty, []) select_stack
 
 let rewrite_program (f: func) (spilled_nodes: var list) =
-  f
+  raise Implement_Me
 
 let rec color (k: int) (f: func) : int VarMap.t =
   let graph = build_interfere_graph f in
