@@ -466,7 +466,7 @@ let attempt_color (k: int) (graph: InterfereGraph.t) (precoloring: int VarMap.t)
             (VarMap.add node chosen coloring, spilled)
       in
       List.fold_left select_color (precoloring, []) select_stack
-(*
+
 let replace_op_with_var (v: var) (t: var) (op: operand) : operand =
   match op with
   | Var x -> if v = x then Var t else op
@@ -475,9 +475,9 @@ let replace_op_with_var (v: var) (t: var) (op: operand) : operand =
 let replace_label_with_var (v: var) (t: var) (lbl: label) : label =
   if lbl = v then t else lbl
 
-let rewrite_block (b: block) (spill: var) : block =
+let rec rewrite_block (b: block) (spill: var) (memory: int VarMap.t) : block =
   match b with
-  | head::tail -> let temp = Var(new_temp()) in
+  | head::tail -> let temp = new_temp() in
     let replace = replace_op_with_var spill temp in
     let replace_label = replace_label_with_var spill temp in
     (* if gens then load *) (match head with
@@ -490,16 +490,19 @@ let rewrite_block (b: block) (spill: var) : block =
     | Jump lbl -> Jump (replace_label lbl)
     | If (op1, comp, op2, lbl1, lbl2) -> If (replace op1, comp, replace op2, replace_label lbl1, replace_label lbl2)
     | Return -> Return
-    ) :: (rewrite_block tail spill)
+    ) :: (rewrite_block tail spill memory)
     (* if kills then save *)
   | _ -> []
 
 let rewrite_block_nodes (b: block) (spilled: var list) : block =
-  List.fold_left (fun b spill -> rewrite_block b spill) b spilled
+  let (memory, insts) = List.fold_left
+    (fun (map, insts) spill -> (VarMap.add spill 0 map, insts @ [Arith (Reg Mips.R29, Reg Mips.R29, Plus, Int (-4))]))
+    (VarMap.empty, []) spilled
+  in
+  insts @ (List.fold_left (fun b spill -> rewrite_block b spill memory) b spilled)
 
-let rewrite_program (f: func) (spilled_nodes: var list) : func =
-  List.fold_left (fun a b -> a @ rewrite_block b) [] f
-*)
+let rewrite_program (f: func) (spilled: var list) : func =
+  List.fold_left (fun a b -> a @ [rewrite_block_nodes b spilled]) [] f
 
 let rewrite_program f s = f
 
