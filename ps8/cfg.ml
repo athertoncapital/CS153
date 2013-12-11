@@ -187,11 +187,12 @@ module InterfereGraph =
       find (can_freeze k graph) (VarSet.elements graph.nodes)
 
     let can_spill (k: int) (graph: t) (u: var) : bool =
+      if is_precolored graph u then false else
       let _ = print_string "trying to spill" in
       if degree u graph < k then
         (Printf.printf "Error in can_spill\n"; raise FatalError)
       else
-        not (is_precolored graph u)
+        true
 
     let get_spill (k: int) (graph: t) : var option =
       let o = find (can_spill k graph) (VarSet.elements (VarSet.filter (fun v -> v.[0] != '?') graph.nodes)) in
@@ -428,7 +429,7 @@ let rec color (k: int) (f: func) : int VarMap.t =
     color k new_f
 
 let reg_alloc (f: func) : func = 
-  let _ = color 4 f in
+  let _ = color 31 f in
   f
 
 let op_to_mips (op: operand) : Mips.operand =
