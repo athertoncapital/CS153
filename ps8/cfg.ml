@@ -260,7 +260,7 @@ let vars_of_ops (ops: operand list) : VarSet.t =
     match op with
     | Var x -> VarSet.add x vset
     | Lab l -> VarSet.add l vset
-    | Reg r -> if r = Mips.R0 then vset else VarSet.add (Mips.reg2string r) vset
+    | Reg r -> if r = Mips.R0 or r = Mips.R1 or r = Mips.R26 or r = Mips.R27 then vset else VarSet.add (Mips.reg2string r) vset
     | _ -> vset
   in List.fold_left add_op VarSet.empty ops
 
@@ -470,12 +470,12 @@ let rec color (k: int) (precolored: var list) (precoloring: int VarMap.t) (f: fu
 
 let reg_alloc (f: func) : func =
   let rec range x y = if x >= y then [] else x::(range (x+1) y) in
-  let precolored = List.map (fun x -> "$" ^ string_of_int x) (range 1 32) in
-  let colors = (range 0 31) in
+  let precolored = List.map (fun x -> "$" ^ string_of_int x) [2;3;4;5;6;7;8;9;10;11;12;13;14;15;16;17;18;19;20;21;22;23;24;25;28;29;30;31] in
+  let colors = (range 0 28) in
   let precoloring = List.fold_left2 (fun m x y -> VarMap.add x y m) VarMap.empty precolored colors in
   let color_to_register = List.fold_left2 (fun m x y -> Printf.printf "%d is %s\n" y x; IntMap.add y x m) IntMap.empty precolored colors in
 
-  let coloring = color 31 precolored precoloring f in
+  let coloring = color 28 precolored precoloring f in
   let _ = print_string "\ncoloring complete \n" in
 
   let var_to_reg (v: operand) : operand =
