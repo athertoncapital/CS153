@@ -189,8 +189,14 @@ module InterfereGraph =
 
     let get_spill (k: int) (graph: t) : var option =
       let o = find (can_spill k graph) (VarSet.elements (VarSet.filter (fun v -> v.[0] != '?') graph.nodes)) in
-      if o = None then Printf.printf "%s\n" "Warning: potentially spilling a temporary variable generated from a spill"; 
-        find (can_spill k graph) (VarSet.elements graph.nodes)
+      if o = None then
+        let o = find (can_spill k graph) (VarSet.elements graph.nodes) in 
+          match o with
+          | None -> o
+          | _ ->
+              let _ = Printf.printf "%s\n" "Warning: potentially spilling a temporary variable generated from a spill" in o
+      else o
+
 end
 
 type interfere_graph = VarSet.t VarMap.t
@@ -332,15 +338,15 @@ let gen_selected_and_aliases (k: int) (graph: InterfereGraph.t): (var list * var
   let rec helper (select_stack: var list) (aliases: var VarMap.t) (graph: InterfereGraph.t): (var list * var VarMap.t) =
     let o = InterfereGraph.get_simplify k graph in
     match o with
-    | Some v -> helper (v::select_stack) aliases (InterfereGraph.remove v graph)
+    | Some v -> Printf.printf "simplifying %s\n" v; helper (v::select_stack) aliases (InterfereGraph.remove v graph)
     | None ->
         let o = InterfereGraph.get_coalesce k graph in
         match o with
-        | Some (x, y) -> helper (y::select_stack) (VarMap.add y x aliases) (InterfereGraph.combine x y graph)
+        | Some (x, y) -> Printf.printf "coalescing %s into %s\n" y x; helper (y::select_stack) (VarMap.add y x aliases) (InterfereGraph.combine x y graph)
         | None ->
             let o = InterfereGraph.get_freeze k graph in
             match o with
-            | Some v -> helper select_stack aliases (InterfereGraph.freeze v graph)
+            | Some v -> Printf.printf "freezing %s \n" v; helper select_stack aliases (InterfereGraph.freeze v graph)
             | None -> 
                 let o = InterfereGraph.get_spill k graph in
                 match o with
@@ -383,6 +389,7 @@ let rec color (k: int) (f: func) : int VarMap.t =
     color k new_f
 
 let reg_alloc (f: func) : func = 
+  let coloring = color 20000 f in
   f
 
 let op_to_mips (op: operand) : Mips.operand =
@@ -462,7 +469,8 @@ let print_interference_graph () (f: C.func) : unit =
   let bs = fn2blocks f in
   let _ = Printf.printf "%s\n" (fun2string bs) in
   let graph = build_interfere_graph bs in
-  Printf.printf "%s\n%s\n\n" (C.fn2string f) (InterfereGraph.to_string graph)
+  Printf.printf "%s\n%s\n\n" (C.fn2string f) (InterfereGraph.to_string graph);
+  let _ = reg_alloc bs in ()
 
 let _ =
   let prog = parse_file() in
