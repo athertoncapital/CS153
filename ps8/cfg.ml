@@ -466,4 +466,6 @@ let print_interference_graph () (f: C.func) : unit =
 
 let _ =
   let prog = parse_file() in
-  List.fold_left print_interference_graph () prog
+  List.fold_left print_interference_graph () prog;
+  let bs = cfg_to_mips (List.fold_left (fun a b -> a @ (fn2blocks b)) [] prog) in
+  List.iter (fun i -> Printf.printf "%s\n" (Mips.inst2string i)) bs
