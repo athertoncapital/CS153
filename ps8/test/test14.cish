@@ -1,0 +1,17 @@
+main() {
+    while (1 < 2) {
+        let a = 1 + 2;
+        let b = 2 * 3;
+        let c = 4 / 5;
+        let d = a - b * c;
+        if (d > 3) {
+            if (1 < 2) {
+                if (1 < 2 && 3 < 4) {
+                    return 2;
+                }
+            }
+        } else {
+            return 5;
+        }
+    }
+}
