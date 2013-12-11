@@ -218,7 +218,7 @@ let fn2blocks (C.Fn {C.name=name;C.args=args;C.body=body;C.pos=pos}) : block lis
             let _ = emit_cond env e1 true_lab f in
             let _ = emit_inst (Label f) in
             emit_cond env e2 true_lab false_lab
-        | C.Binop(e1, cond (* ((C.Eq | C.Neq | C.Lt | C.Gt | C.Lte | C.Gte) as cond) *), e2) ->
+        | C.Binop(e1, ((C.Eq | C.Neq | C.Lt | C.Gt | C.Lte | C.Gte) as cond), e2) ->
           let e1 = emit_exp env e1 in
           let e2 = emit_exp env e2 in
           let cond = (match cond with
@@ -232,30 +232,9 @@ let fn2blocks (C.Fn {C.name=name;C.args=args;C.body=body;C.pos=pos}) : block lis
           ) in
           let t1 = Var(new_temp()) in
           let t2 = Var(new_temp()) in
-          Printf.printf "sup bitch\n";
           emit_inst (Move (t1, e1));
           emit_inst (Move (t2, e2));
           emit_inst (If (t1, cond, t2, true_lab, false_lab))
-          (*
-        | C.Binop(e1,C.Eq,e2) ->
-            emit_inst (If(emit_exp env e1,Eq,emit_exp env e2,
-                          true_lab,false_lab))
-        | C.Binop(e1,C.Neq,e2) ->
-            emit_inst (If(emit_exp env e1,Neq,emit_exp env e2,
-                          true_lab,false_lab))
-        | C.Binop(e1,C.Lt,e2) ->
-            emit_inst (If(emit_exp env e1,Lt,emit_exp env e2,
-                          true_lab,false_lab))
-        | C.Binop(e1,C.Gt,e2) ->
-            emit_inst (If(emit_exp env e1,Gt,emit_exp env e2,
-                          true_lab,false_lab))
-        | C.Binop(e1,C.Lte,e2) ->
-            emit_inst (If(emit_exp env e1,Lte,emit_exp env e2,
-                          true_lab,false_lab))
-        | C.Binop(e1,C.Gte,e2) ->
-            emit_inst (If(emit_exp env e1,Gte,emit_exp env e2,
-                          true_lab,false_lab))
-            *)
         | _ ->
           let t1 = Var(new_temp()) in
           emit_inst (Move (t1, emit_exp env e));

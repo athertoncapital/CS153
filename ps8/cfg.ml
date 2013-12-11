@@ -199,7 +199,6 @@ module InterfereGraph =
       let remove_helper (edges: EdgeSet.t) : EdgeSet.t =
         EdgeSet.filter (function (x, y) -> x <> u && y <> u) edges
       in
-      Printf.printf "%d\n" (EdgeSet.cardinal (remove_helper graph.move_set));
       {graph with move_set = remove_helper graph.move_set}
 
     let move_related (u: var) (graph: t) : bool =
@@ -209,7 +208,7 @@ module InterfereGraph =
       List.mem u graph.precolored
 
     let can_simplify (k: int) (graph: t) (u: var) : bool =
-      let _ = print_string "trying to simplify\n" in
+      (* let _ = print_string "trying to simplify\n" in *)
       not (move_related u graph) && degree u graph < k && not (is_precolored graph u)
 
     let get_simplify (k: int) (graph: t) : var option =
@@ -222,19 +221,19 @@ module InterfereGraph =
       not (VarSet.exists (fun t -> not (is_edge y t graph || degree t graph < k)) ts)
 
     let get_coalesce (k: int) (graph: t) : (var * var) option =
-      let _ = print_string "trying to coalesce\n" in
+      (* let _ = print_string "trying to coalesce\n" in *)
       find (georges k graph) (EdgeSet.elements (EdgeSet.diff graph.move_set graph.adjacency_set))
 
     let can_freeze (k: int) (graph: t) (u: var) : bool =
       move_related u graph && degree u graph < k
 
     let get_freeze (k: int) (graph: t) : var option =
-      let _ = print_string "trying to freeze\n" in
+      (* let _ = print_string "trying to freeze\n" in *)
       find (can_freeze k graph) (VarSet.elements graph.nodes)
 
     let can_spill (k: int) (graph: t) (u: var) : bool =
       if is_precolored graph u then false else
-      let _ = print_string "trying to spill\n" in
+      (* let _ = print_string "trying to spill\n" in *)
       if degree u graph < k then
         (Printf.printf "Error in can_spill\n"; raise FatalError)
       else
@@ -528,23 +527,23 @@ let rec inst_list_to_mips (insts: inst list) : Mips.inst list =
   | head::tail ->
     (match head with
     | Label lbl -> [Mips.Label lbl]
-    | Move (op1, op2) -> Printf.printf "Move\n"; [Mips.Or (op_to_reg op1, Mips.R0, op_to_mips op2)]
-    | Arith (op, a, arith, b) -> Printf.printf "Arith\n";
+    | Move (op1, op2) -> (* Printf.printf "Move\n"; *) [Mips.Or (op_to_reg op1, Mips.R0, op_to_mips op2)]
+    | Arith (op, a, arith, b) -> (* Printf.printf "Arith\n"; *)
       let reg = op_to_reg op in
       let a_reg = op_to_reg a in
       (match arith with
       | Plus -> [Mips.Add (reg, a_reg, op_to_mips b)]
-      | Minus -> Printf.printf "Minus\n"; (match b with
+      | Minus -> (* Printf.printf "Minus\n"; *) (match b with
         | Int i -> [Mips.Add (reg, a_reg, Mips.Immed (Word32.fromInt (-i)))]
         | _ -> [Mips.Sub (reg, a_reg, op_to_reg b)])
-      | Times -> Printf.printf "Mul\n"; [Mips.Mul (reg, a_reg, op_to_reg b)]
-      | Div -> Printf.printf "Div\n"; [Mips.Div (reg, a_reg, op_to_reg b)]
+      | Times -> (* Printf.printf "Mul\n"; *) [Mips.Mul (reg, a_reg, op_to_reg b)]
+      | Div -> (* Printf.printf "Div\n"; *) [Mips.Div (reg, a_reg, op_to_reg b)]
       )
-    | Load (op1, op2, i) -> Printf.printf "Lw\n"; [Mips.Lw (op_to_reg op1, op_to_reg op2, Word32.fromInt i)]
-    | Store (op1, i, op2) -> Printf.printf "Sw\n"; [Mips.Sw (op_to_reg op2, op_to_reg op1, Word32.fromInt i)]
+    | Load (op1, op2, i) -> (* Printf.printf "Lw\n"; *) [Mips.Lw (op_to_reg op1, op_to_reg op2, Word32.fromInt i)]
+    | Store (op1, i, op2) -> (* Printf.printf "Sw\n"; *) [Mips.Sw (op_to_reg op2, op_to_reg op1, Word32.fromInt i)]
     | Call op -> [Mips.Jal (op_to_label op)]
     | Jump lbl -> [Mips.J lbl]
-    | If (op1, comp, op2, lbl1, lbl2) -> Printf.printf "If\n";
+    | If (op1, comp, op2, lbl1, lbl2) -> (* Printf.printf "If\n"; *)
       let reg1 = op_to_reg op1 in
       let reg2 = op_to_reg op2 in
       (match comp with
