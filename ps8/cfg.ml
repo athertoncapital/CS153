@@ -20,7 +20,20 @@ let r6 = Reg(Mips.R6)
 let r7 = Reg(Mips.R7)
 let r31 = Reg(Mips.R31)
 
-let string2reg (r:string): Mips.reg =
+let callee_regs = 
+    [fp;sp;ra] @ (List.map (fun x -> Reg x) 
+                  [Mips.R16;Mips.R17;Mips.R18;Mips.R19;Mips.R20;
+                   Mips.R21;Mips.R22;Mips.R23])
+
+let caller_regs = 
+    (List.map (fun x -> Reg x) 
+                    [Mips.R3;
+                      Mips.R4;Mips.R5;Mips.R6;Mips.R7;
+                      Mips.R8;Mips.R9;Mips.R10;Mips.R11;Mips.R12;Mips.R13;Mips.R14;Mips.R15;
+                      Mips.R24;Mips.R25;
+                      Mips.R28])
+
+let string2reg (r:string): Mips.reg = 
   match r with
   | "$0" -> Mips.R0
   | "$1" -> Mips.R1
@@ -275,8 +288,7 @@ let gens (i: inst) : VarSet.t =
   | Load (_, op, _) -> vars_of_ops [op]
   | Store (op1, _, op2) -> vars_of_ops [op1; op2]
   | If (op1, _, op2, _, _) -> vars_of_ops [op1; op2]
-  | Return -> vars_of_ops [r2; r31]
-  | Call _ ->  vars_of_ops [r4; r5; r6; r7]
+  | Return -> vars_of_ops ([r2; r31] @ callee_regs)
   | _ -> VarSet.empty
 
 let kills (i: inst) : VarSet.t =
@@ -284,7 +296,7 @@ let kills (i: inst) : VarSet.t =
   | Move (op, _) -> vars_of_ops [op]
   | Arith (op, _, _, _) -> vars_of_ops [op]
   | Load (op , _, _) -> vars_of_ops [op]
-  | Call _ -> vars_of_ops [r2]
+  | Call _ -> vars_of_ops ([r2; r31] @ caller_regs)
   | _ -> VarSet.empty
 
 let rec block_gens (b: block) : VarSet.t =
