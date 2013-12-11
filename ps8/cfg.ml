@@ -100,8 +100,8 @@ module InterfereGraph =
   struct
     type t = {adjacency_set: EdgeSet.t;
               move_set: EdgeSet.t;
-              nodes : VarSet.t;
-              precolored : var list;
+              nodes: VarSet.t;
+              precolored: var list;
              }
 
     let init (pc: var list) : t =
@@ -158,6 +158,9 @@ module InterfereGraph =
       let graph = add_one_way source sink graph in
       let graph = add_one_way sink source graph in
       graph
+
+    let add_nodes (other: VarSet.t) (graph: t) : t =
+      {graph with nodes = VarSet.union other graph.nodes}
 
     let neighbors (u: var) (graph: t) : VarSet.t =
       EdgeSet.fold (fun edge set -> if fst edge = u then VarSet.add (snd edge) set else set) graph.adjacency_set VarSet.empty
@@ -353,6 +356,8 @@ let add_block_edges (b: block) (liveout: VarSet.t) (g: InterfereGraph.t) : Inter
       let (g, liveout) = process_stmts b liveout g in
       let genned = gens i in
       let killed = kills i in
+      let g = InterfereGraph.add_nodes genned g in
+      let g = InterfereGraph.add_nodes killed g in
       let g = (match i with
         | Move (x, y) -> if not (is_that_shit_an_int x) && not (is_that_shit_an_int y) then
           InterfereGraph.add_move (op2string x) (op2string y) g else g
@@ -503,7 +508,6 @@ let reg_alloc (f: func) : func =
   let out = List.map (fun b -> List.filter pred (List.map substitute b)) f in
   Printf.printf "%s\n" (fun2string out); out
 
-  
 let op_to_mips (op: operand) : Mips.operand =
   match op with
   | Int i -> Mips.Immed (Word32.fromInt i)
@@ -525,23 +529,23 @@ let rec inst_list_to_mips (insts: inst list) : Mips.inst list =
   | head::tail ->
     (match head with
     | Label lbl -> [Mips.Label lbl]
-    | Move (op1, op2) -> [Mips.Or (op_to_reg op1, Mips.R0, op_to_mips op2)]
-    | Arith (op, a, arith, b) ->
+    | Move (op1, op2) -> Printf.printf "Move\n"; [Mips.Or (op_to_reg op1, Mips.R0, op_to_mips op2)]
+    | Arith (op, a, arith, b) -> Printf.printf "Arith\n";
       let reg = op_to_reg op in
       let a_reg = op_to_reg a in
       (match arith with
       | Plus -> [Mips.Add (reg, a_reg, op_to_mips b)]
-      | Minus -> (match b with
+      | Minus -> Printf.printf "Minus\n"; (match b with
         | Int i -> [Mips.Add (reg, a_reg, Mips.Immed (Word32.fromInt (-i)))]
         | _ -> [Mips.Sub (reg, a_reg, op_to_reg b)])
-      | Times -> [Mips.Mul (reg, a_reg, op_to_reg b)]
-      | Div -> [Mips.Div (reg, a_reg, op_to_reg b)]
+      | Times -> Printf.printf "Mul\n"; [Mips.Mul (reg, a_reg, op_to_reg b)]
+      | Div -> Printf.printf "Div\n"; [Mips.Div (reg, a_reg, op_to_reg b)]
       )
-    | Load (op1, op2, i) -> [Mips.Lw (op_to_reg op1, op_to_reg op2, Word32.fromInt i)]
-    | Store (op1, i, op2) -> [Mips.Sw (op_to_reg op2, op_to_reg op1, Word32.fromInt i)]
+    | Load (op1, op2, i) -> Printf.printf "Lw\n"; [Mips.Lw (op_to_reg op1, op_to_reg op2, Word32.fromInt i)]
+    | Store (op1, i, op2) -> Printf.printf "Sw\n"; [Mips.Sw (op_to_reg op2, op_to_reg op1, Word32.fromInt i)]
     | Call op -> [Mips.Jal (op_to_label op)]
     | Jump lbl -> [Mips.J lbl]
-    | If (op1, comp, op2, lbl1, lbl2) ->
+    | If (op1, comp, op2, lbl1, lbl2) -> Printf.printf "If\n";
       let reg1 = op_to_reg op1 in
       let reg2 = op_to_reg op2 in
       (match comp with
