@@ -1,0 +1,7 @@
+fucker(a,b,c,d,e,f,g,h) {
+	return a + b + c + d + e + f + g + h;
+}
+
+main () {
+	return fucker(1,2,3,4,5,6,7);
+}

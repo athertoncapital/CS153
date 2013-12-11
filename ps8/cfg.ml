@@ -478,11 +478,12 @@ let replace_label_with_var (v: var) (t: var) (lbl: label) : label =
 let rec rewrite_block (b: block) (spill: var) (memory: int VarMap.t) : block =
   match b with
   | head::tail -> let temp = new_temp() in
+    let offset = VarMap.find spill memory in
     let replace = replace_op_with_var spill temp in
     let replace_label = replace_label_with_var spill temp in
     let genned = gens head in
     let killed = kills head in
-    (if VarSet.mem spill genned then [Load (Var temp, Reg Mips.R29, 0)] else []) @
+    (if VarSet.mem spill genned then [Load (Var temp, Reg Mips.R29, offset)] else []) @
     (match head with
     | Label lbl -> [Label (replace_label lbl)]
     | Move (op1, op2) -> [Move (replace op1, replace op2)]
@@ -494,7 +495,7 @@ let rec rewrite_block (b: block) (spill: var) (memory: int VarMap.t) : block =
     | If (op1, comp, op2, lbl1, lbl2) -> [If (replace op1, comp, replace op2, replace_label lbl1, replace_label lbl2)]
     | Return -> [Return]
     ) @
-    (if VarSet.mem spill killed then [Store (Reg Mips.R29, 0, Var temp)] else []) @
+    (if VarSet.mem spill killed then [Store (Reg Mips.R29, offset, Var temp)] else []) @
     (rewrite_block tail spill memory)
   | _ -> []
 
@@ -575,7 +576,7 @@ let rec inst_list_to_mips (insts: inst list) : Mips.inst list =
   | head::tail ->
     (match head with
     | Label lbl -> [Mips.Label lbl]
-    | Move (op1, op2) -> (* Printf.printf "Move\n"; *) [Mips.Or (op_to_reg op1, Mips.R0, op_to_mips op2)]
+    | Move (op1, op2) -> (* Printf.printf "Move\n"; *)[Mips.Or (op_to_reg op1, Mips.R0, op_to_mips op2)]
     | Arith (op, a, arith, b) -> (* Printf.printf "Arith\n"; *)
       let reg = op_to_reg op in
       let a_reg = op_to_reg a in
@@ -587,14 +588,14 @@ let rec inst_list_to_mips (insts: inst list) : Mips.inst list =
       | Times -> (* Printf.printf "Mul\n"; *) [Mips.Mul (reg, a_reg, op_to_reg b)]
       | Div -> (* Printf.printf "Div\n"; *) [Mips.Div (reg, a_reg, op_to_reg b)]
       )
-    | Load (op1, op2, i) -> (* Printf.printf "Lw\n"; *) [Mips.Lw (op_to_reg op1, op_to_reg op2, Word32.fromInt i)]
-    | Store (op1, i, op2) -> (* Printf.printf "Sw\n"; *) [Mips.Sw (op_to_reg op2, op_to_reg op1, Word32.fromInt i)]
+    | Load (op1, op2, i) -> (* Printf.printf "Lw\n"; *)[Mips.Lw (op_to_reg op1, op_to_reg op2, Word32.fromInt i)]
+    | Store (op1, i, op2) -> (* Printf.printf "Sw %s %d %s \n"  (op2string op1) i (op2string op2); *) [Mips.Sw (op_to_reg op2, op_to_reg op1, Word32.fromInt i)]
     | Call op -> (match op with
       | Lab lbl -> [Mips.Jal lbl]
       | Reg r -> [Mips.Jalr (Mips.R31, r)]
       | _ -> raise FatalError)
     | Jump lbl -> [Mips.J lbl]
-    | If (op1, comp, op2, lbl1, lbl2) -> (* Printf.printf "If\n"; *)
+    | If (op1, comp, op2, lbl1, lbl2) -> (* Printf.printf "If\n" ;*)
       let reg1 = op_to_reg op1 in
       let reg2 = op_to_reg op2 in
       (match comp with

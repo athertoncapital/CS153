@@ -151,8 +151,10 @@ let fn2blocks (C.Fn {C.name=name;C.args=args;C.body=body;C.pos=pos}) : block lis
             t
         | C.Store(e1,e2) ->
             let x = emit_exp env e1 in
+            let t = Var(new_temp()) in
+            let _ = emit_inst (Move (t, x)) in
             let y = emit_exp env e2 in
-            let _ = emit_inst (Store(x,0,y)) in
+            let _ = emit_inst (Store(x,0,t)) in
             y
         | C.Malloc(e) ->
             emit_exp env (C.Call((C.Var "malloc",pos),[e]),pos)
@@ -172,8 +174,8 @@ let fn2blocks (C.Fn {C.name=name;C.args=args;C.body=body;C.pos=pos}) : block lis
                   (emit_inst (Move(Reg(Mips.R6),x)); move_args(xs,3))
               | (x::xs,3) ->
                 (emit_inst (Move(Reg(Mips.R7),x)); move_args(xs,4))
-              | (x::xs,i) ->
-                  (emit_inst (Store(sp,4*i,x)); move_args(xs,i+1))
+              | (x::xs,i) -> let t1 = Var(new_temp()) in
+                  (emit_inst (Move(t1, x)); emit_inst (Store(sp,4*i,t1)); move_args(xs,i+1))
               | ([],_) -> () in
             (* allocate space for arguments *)
             let _ = emit_inst (Arith(sp,sp,Minus,Int(arg_space))) in
