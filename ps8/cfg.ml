@@ -134,7 +134,9 @@ module InterfereGraph =
       let combine_helper (edges: EdgeSet.t) : EdgeSet.t = 
         let new_edges = EdgeSet.remove (v, u) (EdgeSet.remove (u, v) edges) in
         let (change, save) = EdgeSet.partition (function (x, y) -> x = v || y = v) new_edges in
-        EdgeSet.fold (fun edge set -> if (fst edge) = v then EdgeSet.add (u, (snd edge)) set else EdgeSet.add((fst edge), u) set) change save
+        EdgeSet.fold (fun edge set ->
+          if fst edge = v then EdgeSet.add (u, snd edge) set else
+          EdgeSet.add(fst edge, u) set) change save
       in
 
       {graph with adjacency_set = combine_helper graph.adjacency_set;
@@ -170,7 +172,7 @@ module InterfereGraph =
       find (can_simplify k graph) (VarSet.elements graph.nodes)
 
     let georges (k: int) (graph: t) (edge: var * var) : bool =
-      let (y, x) = edge in
+      let (x, y) = edge in
       if is_precolored graph x then false else
       let ts = neighbors x graph in
       not (VarSet.exists (fun t -> not (is_edge y t graph || degree t graph < k)) ts)
