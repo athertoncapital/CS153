@@ -20,7 +20,43 @@ let r6 = Reg(Mips.R6)
 let r7 = Reg(Mips.R7)
 let r31 = Reg(Mips.R31)
 
-module VarSet = Set.Make(struct
+let string2reg (r:string): Mips.reg = 
+  match r with
+  | "$0" -> Mips.R0
+  | "$1" -> Mips.R1
+  | "$2" -> Mips.R2
+  | "$3" -> Mips.R3
+  | "$4" -> Mips.R4
+  | "$5" -> Mips.R5
+  | "$6" -> Mips.R6
+  | "$7" -> Mips.R7
+  | "$8" -> Mips.R8
+  | "$9" -> Mips.R9
+  | "$10" -> Mips.R10
+  | "$11" -> Mips.R11
+  | "$12" -> Mips.R12
+  | "$13" -> Mips.R13
+  | "$14" -> Mips.R14
+  | "$15" -> Mips.R15
+  | "$16" -> Mips.R16
+  | "$17" -> Mips.R17
+  | "$18" -> Mips.R18
+  | "$19" -> Mips.R19
+  | "$20" -> Mips.R20
+  | "$21" -> Mips.R21
+  | "$22" -> Mips.R22
+  | "$23" -> Mips.R23
+  | "$24" -> Mips.R24
+  | "$25" -> Mips.R25
+  | "$26" -> Mips.R26
+  | "$27" -> Mips.R27
+  | "$28" -> Mips.R28
+  | "$29" -> Mips.R29
+  | "$30" -> Mips.R30
+  | "$31" -> Mips.R31
+  | _ -> raise FatalError
+
+module VarSet = Set.Make(struct 
     type t = var
     let compare = compare
   end)
@@ -46,6 +82,11 @@ module VarMap = Map.Make(struct
   end)
 
 module IntSet = Set.Make(struct
+    type t = int
+    let compare = compare
+  end)
+
+module IntMap = Map.Make(struct
     type t = int
     let compare = compare
   end)
@@ -431,9 +472,38 @@ let rec color (k: int) (precolored: var list) (f: func) : int VarMap.t =
 let reg_alloc (f: func) : func =
   let rec range x y = if x >= y then [] else x::(range (x+1) y) in
   let precolored = List.map (fun x -> "$" ^ string_of_int x) (range 1 32) in
-  let _ = color 31 precolored f in
-  f
+  let coloring = color 31 precolored f in
+  let _ = print_string "\ncoloring complete \n" in
+  let color_to_register = List.fold_left (fun m reg -> IntMap.add (VarMap.find reg coloring) reg m) IntMap.empty precolored in
+  let var_to_reg (v: operand) : operand =
+    match v with
+    | Var v -> Reg (string2reg (IntMap.find (VarMap.find v coloring) color_to_register))
+    | Lab l -> Reg (string2reg (IntMap.find (VarMap.find l coloring) color_to_register))
+    | _ -> v
+  in
+  let substitute (i: inst) : inst = 
+    match i with
+    | Move (x, y) -> let r1, r2 = var_to_reg x, var_to_reg y in
+        Move (r1, r2)
+    | Arith (x, y, o, z) -> let x2, y2, z2 = var_to_reg x, var_to_reg y, var_to_reg z in
+        Arith (x2, y2, o, z2)
+    | Load (x, y, i) -> let x2, y2 = var_to_reg x, var_to_reg y in
+        Load (x2, y2, i)
+    | Store (x, i, y) -> let x2, y2 = var_to_reg x, var_to_reg y in
+        Store(x2, i, y2)
+    | If (x, a, y, b, c) -> let x2, y2 = var_to_reg x, var_to_reg y in
+        If (x2, a, y2, b, c)
+    | _ -> i
+  in
+  let pred (i: inst) : bool =
+    match i with
+    | Move (x, y) -> not (x = y)
+    | _ -> true
+  in
+  let out = List.map (fun b -> List.filter pred (List.map substitute b)) f in
+  Printf.printf "%s\n" (fun2string f); Printf.printf "%s\n" (fun2string out); out
 
+  
 let op_to_mips (op: operand) : Mips.operand =
   match op with
   | Int i -> Mips.Immed (Word32.fromInt i)
@@ -512,8 +582,15 @@ let print_interference_graph () (f: C.func) : unit =
   let _ = Printf.printf "%s\n" (fun2string bs) in
   let _ = reg_alloc bs in ()
 
+let print_final_prog () (f: C.func) : unit =
+  let bs = fn2blocks f in
+  let _ = Printf.printf "%s\n" (fun2string bs) in
+  let new_fn = reg_alloc bs in
+  Printf.printf "%s\n" (fun2string new_fn)
+
 let _ =
   let prog = parse_file() in
-  List.fold_left print_interference_graph () prog;
-  let bs = cfg_to_mips (List.fold_left (fun a b -> a @ (fn2blocks b)) [] prog) in
+  List.fold_left print_final_prog () prog;
+  print_string "wtf";
+  let bs = cfg_to_mips (List.fold_left (fun a b -> a @ (reg_alloc (fn2blocks b))) [] prog) in
   List.iter (fun i -> Printf.printf "%s\n" (Mips.inst2string i)) bs
