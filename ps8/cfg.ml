@@ -210,14 +210,14 @@ let vars_of_ops (ops: operand list) : VarSet.t =
   let add_op vset op =
     match op with
     | Var x -> VarSet.add x vset
+    | Lab l -> VarSet.add l vset
     | Reg r -> VarSet.add (Mips.reg2string r) vset
     | _ -> vset
   in List.fold_left add_op VarSet.empty ops
 
-let is_that_shit_an_int_or_lbl (op: operand) : bool =
+let is_that_shit_an_int (op: operand) : bool =
   match op with
   | Int i -> true
-  | Lab l -> true
   | _ -> false
 
 let gens (i: inst) : VarSet.t =
@@ -308,7 +308,7 @@ let add_block_edges (b: block) (liveout: VarSet.t) (g: InterfereGraph.t) : Inter
       let genned = gens i in
       let killed = kills i in
       let g = (match i with
-        | Move (x, y) -> if not (is_that_shit_an_int_or_lbl x) && not (is_that_shit_an_int_or_lbl y) then
+        | Move (x, y) -> if not (is_that_shit_an_int x) && not (is_that_shit_an_int y) then
           InterfereGraph.add_move (op2string x) (op2string y) g else g
         | _ -> g) in
       let out_minus_killed = VarSet.diff liveout killed in
