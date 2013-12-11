@@ -466,20 +466,32 @@ let attempt_color (k: int) (graph: InterfereGraph.t) (precoloring: int VarMap.t)
             (VarMap.add node chosen coloring, spilled)
       in
       List.fold_left select_color (precoloring, []) select_stack
+(*
+let replace_op_with_var (v: var) (t: var) (op: operand) : operand =
+  match op with
+  | Var x -> if v = x then Var t else op
+  | _ -> op
+
+let replace_label_with_var (v: var) (t: var) (lbl: label) : label =
+  if lbl = v then t else lbl
 
 let rewrite_block (b: block) (spill: var) : block =
   match b with
-  | head::tail -> (match head with
-    | Label lbl ->
-    | Move (op1, op2) ->
-    | Arith (op, a, arith, b) ->
-    | Load (op1, op2, i) ->
-    | Store (op1, i, op2) ->
-    | Call op ->
-    | Jump lbl ->
-    | If (op1, comp, op2, lbl1, lbl2) ->
-    | Return ->
+  | head::tail -> let temp = Var(new_temp()) in
+    let replace = replace_op_with_var spill temp in
+    let replace_label = replace_label_with_var spill temp in
+    (* if gens then load *) (match head with
+    | Label lbl -> Label (replace_label lbl)
+    | Move (op1, op2) -> Move (replace op1, replace op2)
+    | Arith (op, a, arith, b) -> Arith (replace op, replace a, arith, replace b)
+    | Load (op1, op2, i) -> Load (replace op1, replace op2, i)
+    | Store (op1, i, op2) -> Store (replace op1, i, replace op2)
+    | Call op -> Call (replace op)
+    | Jump lbl -> Jump (replace_label lbl)
+    | If (op1, comp, op2, lbl1, lbl2) -> If (replace op1, comp, replace op2, replace_label lbl1, replace_label lbl2)
+    | Return -> Return
     ) :: (rewrite_block tail spill)
+    (* if kills then save *)
   | _ -> []
 
 let rewrite_block_nodes (b: block) (spilled: var list) : block =
@@ -487,6 +499,9 @@ let rewrite_block_nodes (b: block) (spilled: var list) : block =
 
 let rewrite_program (f: func) (spilled_nodes: var list) : func =
   List.fold_left (fun a b -> a @ rewrite_block b) [] f
+*)
+
+let rewrite_program f s = f
 
 let rec color (k: int) (precolored: var list) (precoloring: int VarMap.t) (f: func) : int VarMap.t =
   let graph = build_interfere_graph f precolored in
@@ -568,8 +583,8 @@ let rec inst_list_to_mips (insts: inst list) : Mips.inst list =
     | Load (op1, op2, i) -> (* Printf.printf "Lw\n"; *) [Mips.Lw (op_to_reg op1, op_to_reg op2, Word32.fromInt i)]
     | Store (op1, i, op2) -> (* Printf.printf "Sw\n"; *) [Mips.Sw (op_to_reg op2, op_to_reg op1, Word32.fromInt i)]
     | Call op -> (match op with
-      | Label lbl -> [Mips.Jal lbl]
-      | Reg r -> [Mips.Jalr r]
+      | Lab lbl -> [Mips.Jal lbl]
+      | Reg r -> [Mips.Jalr (Mips.R31, r)]
       | _ -> raise FatalError)
     | Jump lbl -> [Mips.J lbl]
     | If (op1, comp, op2, lbl1, lbl2) -> (* Printf.printf "If\n"; *)
