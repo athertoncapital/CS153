@@ -165,17 +165,14 @@ module InterfereGraph =
       find (can_simplify k graph) (VarSet.elements graph.nodes)
 
     let georges (k: int) (graph: t) (edge: var * var) : bool =
-      let (x, y) = edge in
-      if is_precolored graph x && is_precolored graph y then false else
+      let (y, x) = edge in
+      if is_precolored graph x then false else
       let ts = neighbors x graph in
       not (VarSet.exists (fun t -> not (is_edge y t graph || degree t graph < k)) ts)
 
     let get_coalesce (k: int) (graph: t) : (var * var) option =
       let _ = print_string "trying to coalesce" in
-      let o = find (georges k graph) (EdgeSet.elements (EdgeSet.diff graph.move_set graph.adjacency_set)) in
-      match o with
-      | Some (x, y) -> if is_precolored graph y then Some (y, x) else Some (x, y)
-      | None -> None
+      find (georges k graph) (EdgeSet.elements (EdgeSet.diff graph.move_set graph.adjacency_set))
 
     let can_freeze (k: int) (graph: t) (u: var) : bool =
       move_related u graph && degree u graph < k
@@ -378,7 +375,7 @@ let attempt_color (k: int) (graph: InterfereGraph.t) : int VarMap.t * var list =
         let alias = VarMap.find node aliases in
         let _ = Printf.printf "%s is an alias for %s\n" alias node in
         if VarMap.mem alias coloring then
-          let _ = Printf.printf "using color %d for %s \n" (VarMap.find alias coloring) alias in
+          let _ = Printf.printf "using color %d for %s \n" (VarMap.find alias coloring) node in
           ((VarMap.add node (VarMap.find alias coloring) coloring), spilled)
         else (coloring, spilled)
       else
@@ -410,7 +407,7 @@ let rec color (k: int) (f: func) : int VarMap.t =
     color k new_f
 
 let reg_alloc (f: func) : func = 
-  let _ = color 1 f in
+  let _ = color 4 f in
   f
 
 let op_to_mips (op: operand) : Mips.operand =
