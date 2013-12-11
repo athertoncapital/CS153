@@ -328,11 +328,9 @@ let add_block_edges (b: block) (liveout: VarSet.t) (g: InterfereGraph.t) : Inter
  * interference graph for that function.  This will require that
  * you build a dataflow analysis for calculating what set of variables
  * are live-in and live-out for each program point. *)
-let build_interfere_graph (f: func) : InterfereGraph.t =
+let build_interfere_graph (f: func) (precolored: var list) : InterfereGraph.t =
   let _ = init f in
   let _ = build_liveness() in
-  let rec range x y = if x >= y then [] else x::(range (x+1) y) in
-  let precolored = List.map (fun x -> "$" ^ string_of_int x) (range 1 32) in
   List.fold_left (fun g bloc -> add_block_edges bloc (LabelMap.find (label_of bloc) !liveout) g) (InterfereGraph.init (precolored)) f
 
 (*******************************************************************)
@@ -418,18 +416,20 @@ let attempt_color (k: int) (graph: InterfereGraph.t) : int VarMap.t * var list =
 let rewrite_program (f: func) (spilled_nodes: var list) =
   raise Implement_Me
 
-let rec color (k: int) (f: func) : int VarMap.t =
-  let graph = build_interfere_graph f in
+let rec color (k: int) (precolored: var list) (f: func) : int VarMap.t =
+  let graph = build_interfere_graph f precolored in
   let coloring, spilled_nodes = attempt_color k graph in
   if spilled_nodes = [] then coloring else
     let _ = Printf.printf "%s" "Now spilling: " in
     let _ = List.iter (Printf.printf "%s ") spilled_nodes in
     let _ = Printf.printf "%s" "\n" in
     let new_f = rewrite_program f spilled_nodes in
-    color k new_f
+    color k precolored new_f
 
 let reg_alloc (f: func) : func = 
-  let _ = color 31 f in
+  let rec range x y = if x >= y then [] else x::(range (x+1) y) in
+  let precolored = List.map (fun x -> "$" ^ string_of_int x) (range 1 32) in
+  let _ = color 31 precolored f in
   f
 
 let op_to_mips (op: operand) : Mips.operand =
@@ -508,8 +508,6 @@ let parse_stdin() =
 let print_interference_graph () (f: C.func) : unit =
   let bs = fn2blocks f in
   let _ = Printf.printf "%s\n" (fun2string bs) in
-  let graph = build_interfere_graph bs in
-  Printf.printf "%s\n%s\n\n" (C.fn2string f) (InterfereGraph.to_string graph);
   let _ = reg_alloc bs in ()
 
 let _ =
