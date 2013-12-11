@@ -20,12 +20,12 @@ let r6 = Reg(Mips.R6)
 let r7 = Reg(Mips.R7)
 let r31 = Reg(Mips.R31)
 
-let callee_regs = 
+let callee_regs =
     [fp;sp;ra] @ (List.map (fun x -> Reg x) 
                   [Mips.R16;Mips.R17;Mips.R18;Mips.R19;Mips.R20;
                    Mips.R21;Mips.R22;Mips.R23])
 
-let caller_regs = 
+let caller_regs =
     (List.map (fun x -> Reg x) 
                     [Mips.R3;
                       Mips.R4;Mips.R5;Mips.R6;Mips.R7;
@@ -288,6 +288,7 @@ let gens (i: inst) : VarSet.t =
   | Load (_, op, _) -> vars_of_ops [op]
   | Store (op1, _, op2) -> vars_of_ops [op1; op2]
   | If (op1, _, op2, _, _) -> vars_of_ops [op1; op2]
+  | Call (Var v) -> VarSet.singleton v
   | Return -> vars_of_ops ([r2; r31] @ callee_regs)
   | _ -> VarSet.empty
 
